@@ -1,3 +1,5 @@
+import { useColorScheme } from "@/hooks/useColorScheme";
+import AuthProvider from "@/providers/auth-provider";
 import {
   DarkTheme,
   DefaultTheme,
@@ -6,9 +8,9 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import "react-native-reanimated";
+import { ToastProvider } from "react-native-toast-notifications";
 
-import { useColorScheme } from "@/hooks/useColorScheme";
+import "react-native-reanimated";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -22,12 +24,19 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+            <Stack.Screen name="auth" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

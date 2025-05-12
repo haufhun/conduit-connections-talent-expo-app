@@ -1,15 +1,25 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
+import { ActivityIndicator, Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useAuth } from "@/providers/auth-provider";
 
 export default function TabLayout() {
+  const { session, mounting } = useAuth();
   const colorScheme = useColorScheme();
+
+  if (mounting) {
+    return <ActivityIndicator size="large" />;
+  }
+
+  if (!session) {
+    return <Redirect href="/auth" />;
+  }
 
   return (
     <Tabs
