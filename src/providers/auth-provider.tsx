@@ -34,14 +34,12 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       setSession(session);
 
       if (session) {
-        console.log("session", session);
         const { data: user, error } = await supabase
           .from("users")
           .select("*")
           .eq("id", session.user.id)
           .single();
 
-        console.log("user", user);
         if (error) {
           console.error("error", error);
         } else {
