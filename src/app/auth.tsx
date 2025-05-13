@@ -1,5 +1,5 @@
-import TokenForgotPassword from "@/components/auth/ForgotPassword";
-import TokenResetPassword from "@/components/auth/ResetPassword";
+import ForgotPassword from "@/components/auth/ForgotPassword";
+import ResetPassword from "@/components/auth/ResetPassword";
 import SignIn from "@/components/auth/SignIn";
 import SignUp from "@/components/auth/SignUp";
 import { Center } from "@/components/ui/center";
@@ -23,7 +23,7 @@ export default function Auth() {
       {screen === "signup" ? (
         <SignUp onSignInPress={() => setScreen("signin")} />
       ) : screen === "forgot-password" ? (
-        <TokenForgotPassword
+        <ForgotPassword
           onBackToSignIn={() => setScreen("signin")}
           onTokenSent={(email) => {
             setResetEmail(email);
@@ -31,7 +31,7 @@ export default function Auth() {
           }}
         />
       ) : screen === "reset-password" ? (
-        <TokenResetPassword
+        <ResetPassword
           email={resetEmail}
           onBackToForgot={() => setScreen("forgot-password")}
           onResetComplete={() => setScreen("signin")}
