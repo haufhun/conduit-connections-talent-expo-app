@@ -1,29 +1,49 @@
+import { Button, ButtonText } from "@/components/ui/button";
+import { Center } from "@/components/ui/center";
+import {
+  Checkbox,
+  CheckboxIcon,
+  CheckboxIndicator,
+  CheckboxLabel,
+} from "@/components/ui/checkbox";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { Heading } from "@/components/ui/heading";
+import { HStack } from "@/components/ui/hstack";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+import { VStack } from "@/components/ui/vstack";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/providers/auth-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Redirect } from "expo-router";
-import { Controller, useForm } from "react-hook-form";
 import {
-  Alert,
-  ImageBackground,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+  AlertCircleIcon,
+  CheckIcon,
+  EyeIcon,
+  EyeOffIcon,
+} from "lucide-react-native";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Alert, StyleSheet, Text } from "react-native";
 import { Toast } from "react-native-toast-notifications";
 import * as zod from "zod";
-import { supabase } from "../lib/supabase";
-import { useAuth } from "../providers/auth-provider";
 
 const authSchema = zod.object({
   email: zod.string().email({ message: "Invalid email address" }),
   password: zod
     .string()
-    .min(6, { message: "Password must be at least 6 characters long" }),
+    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 export default function Auth() {
   const { session } = useAuth();
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const { control, handleSubmit, formState } = useForm({
     resolver: zodResolver(authSchema),
@@ -44,6 +64,7 @@ export default function Auth() {
     });
 
     if (error) {
+      console.error("Error signing in:", error);
       Alert.alert(error.message);
     } else {
       Toast.show("Signed in successfully", {
@@ -61,6 +82,7 @@ export default function Auth() {
     });
 
     if (error) {
+      console.error("Error signing up:", error);
       Alert.alert(error.message);
     } else {
       Toast.show("Signed up successfully", {
@@ -72,82 +94,133 @@ export default function Auth() {
   };
 
   return (
-    <ImageBackground
-      source={{
-        uri: "https://images.pexels.com/photos/682933/pexels-photo-682933.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      }}
-      style={styles.backgroundImage}
-    >
-      <View style={styles.overlay} />
-      <View style={styles.container}>
-        <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+    <>
+      {/* <ImageBackground
+        source={{
+          uri: "https://images.pexels.com/photos/682933/pexels-photo-682933.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+        }}
+        style={styles.backgroundImage}
+      >
+        <View style={styles.overlay} /> */}
 
-        <Controller
-          control={control}
-          name="email"
-          render={({
-            field: { value, onChange, onBlur },
-            fieldState: { error },
-          }) => (
-            <>
-              <TextInput
-                placeholder="Email"
-                style={styles.input}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholderTextColor="#aaa"
-                autoCapitalize="none"
-                editable={!formState.isSubmitting}
-              />
-              {error && <Text style={styles.error}>{error.message}</Text>}
-            </>
-          )}
-        />
+      <Center className="flex-1 p-6">
+        <VStack className="rounded-xl border border-outline-200 bg-background-0 p-6 w-full max-w-[336px]">
+          <Heading>Log in</Heading>
+          <Text className="mt-2">Login to start using gluestack</Text>
 
-        <Controller
-          control={control}
-          name="password"
-          render={({
-            field: { value, onChange, onBlur },
-            fieldState: { error },
-          }) => (
-            <>
-              <TextInput
-                placeholder="Password"
-                style={styles.input}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholderTextColor="#aaa"
-                secureTextEntry
-                editable={!formState.isSubmitting}
-              />
-              {error && <Text style={styles.error}>{error.message}</Text>}
-            </>
-          )}
-        />
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <FormControl isInvalid={!!error} className="w-full mt-4">
+                <FormControlLabel>
+                  <FormControlLabelText>Email</FormControlLabelText>
+                </FormControlLabel>
+                <Input>
+                  <InputField
+                    type="text"
+                    placeholder="Enter your email"
+                    value={value}
+                    onChangeText={onChange}
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect={false}
+                    textContentType="emailAddress"
+                    keyboardType="email-address"
+                  />
+                </Input>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleSubmit(signIn)}
-          disabled={formState.isSubmitting}
-        >
-          <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
+                <FormControlError>
+                  <FormControlErrorIcon as={AlertCircleIcon} />
+                  <FormControlErrorText size="sm">
+                    {error?.message}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
 
-        <TouchableOpacity
-          style={[styles.button, styles.signUpButton]}
-          onPress={handleSubmit(signUp)}
-          disabled={formState.isSubmitting}
-        >
-          <Text style={[styles.buttonText, styles.signUpButtonText]}>
-            Sign Up
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ImageBackground>
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <FormControl isInvalid={!!error} className="mt-6 w-full">
+                <FormControlLabel>
+                  <FormControlLabelText>Password</FormControlLabelText>
+                </FormControlLabel>
+                <Input>
+                  <InputField
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={value}
+                    onChangeText={onChange}
+                    autoCapitalize="none"
+                    autoComplete="password"
+                    autoCorrect={false}
+                    textContentType="password"
+                    secureTextEntry={!showPassword}
+                  />
+                  <InputSlot
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="mr-3"
+                  >
+                    <InputIcon as={showPassword ? EyeIcon : EyeOffIcon} />
+                  </InputSlot>
+                </Input>
+
+                {/* <FormControlHelper>
+                  <FormControlHelperText>
+                    Must be at least 6 characters.
+                  </FormControlHelperText>
+                </FormControlHelper> */}
+
+                <FormControlError>
+                  <FormControlErrorIcon as={AlertCircleIcon} />
+                  <FormControlErrorText size="sm">
+                    {error?.message}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
+
+          <HStack className="justify-between my-5">
+            <Checkbox value={""} size="sm">
+              <CheckboxIndicator>
+                <CheckboxIcon as={CheckIcon} />
+              </CheckboxIndicator>
+              <CheckboxLabel>Remember me</CheckboxLabel>
+            </Checkbox>
+
+            <Button variant="link" size="sm">
+              <ButtonText className="underline underline-offset-1">
+                Forgot Password?
+              </ButtonText>
+            </Button>
+          </HStack>
+
+          <Button
+            className="w-full"
+            size="sm"
+            onPress={handleSubmit(signIn)}
+            disabled={formState.isSubmitting}
+          >
+            <ButtonText>Log in</ButtonText>
+          </Button>
+
+          <Button
+            className="w-full mt-4"
+            size="sm"
+            variant="outline"
+            onPress={handleSubmit(signUp)}
+            disabled={formState.isSubmitting}
+          >
+            <ButtonText>Sign up</ButtonText>
+          </Button>
+        </VStack>
+      </Center>
+      {/* </ImageBackground> */}
+    </>
   );
 }
 

@@ -5,6 +5,8 @@ import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { Button, ButtonText } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 export default function HomeScreen() {
   return (
@@ -17,6 +19,14 @@ export default function HomeScreen() {
         />
       }
     >
+      <Button
+        onPress={() => {
+          supabase.auth.signOut();
+        }}
+      >
+        <ButtonText>Logout</ButtonText>
+      </Button>
+
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
