@@ -21,7 +21,6 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // Async font loading only occurs in development.
     return null;
   }
 
@@ -32,9 +31,20 @@ export default function RootLayout() {
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
           >
-            <Stack>
+            <Stack
+              screenOptions={{
+                animation: "slide_from_right",
+                gestureDirection: "horizontal",
+              }}
+            >
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="auth"
+                options={{
+                  headerShown: false,
+                  animation: "slide_from_left",
+                }}
+              />
               <Stack.Screen name="+not-found" />
             </Stack>
             <StatusBar style="auto" />
