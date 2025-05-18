@@ -1,16 +1,5 @@
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
-import {
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 import { Collapsible } from "@/components/Collapsible";
+import { SkillCard } from "@/components/SkillCard";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
@@ -30,6 +19,18 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/providers/auth-provider";
+import { TalentSkill } from "@/types/skills";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface UserProfile {
   id: string;
@@ -46,7 +47,7 @@ interface UserProfile {
 
 export default function ProfileScreen() {
   const { session, user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setIsLoading] = useState(false);
   const [nameModalVisible, setNameModalVisible] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [bioModalVisible, setBioModalVisible] = useState(false);
@@ -59,11 +60,61 @@ export default function ProfileScreen() {
   const [city, setCity] = useState((user as UserProfile)?.city || "");
   const [state, setState] = useState((user as UserProfile)?.state || "");
   const [bio, setBio] = useState((user as UserProfile)?.metadata?.bio || "");
+  const [talentSkills, setSkills] = useState<TalentSkill[]>([]);
+
   const [tempFirstName, setTempFirstName] = useState("");
   const [tempLastName, setTempLastName] = useState("");
   const [tempCity, setTempCity] = useState("");
   const [tempState, setTempState] = useState("");
   const [tempBio, setTempBio] = useState("");
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setIsLoading(true);
+      if (!session?.user.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        Alert.alert(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: talentSkills, error: talentSkillsError } = await supabase
+        .from("talent_skills")
+        .select("*, skill:skills(*)")
+        .eq("user_id", session.user.id);
+
+      if (talentSkillsError) {
+        Alert.alert(talentSkillsError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      if (talentSkills) {
+        setSkills(talentSkills);
+      }
+
+      if (data) {
+        setFirstName(data.first_name || "");
+        setLastName(data.last_name || "");
+        setCity(data.city || "");
+        setState(data.state || "");
+        setBio(data.metadata?.bio || "");
+      }
+
+      setIsLoading(false);
+    };
+    fetchUserProfile();
+  }, [user.id, session?.user]);
 
   async function updateProfile(
     updates: Partial<{
@@ -75,7 +126,7 @@ export default function ProfileScreen() {
     }>
   ) {
     try {
-      setLoading(true);
+      setIsLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
 
       const { error } = await supabase
@@ -99,7 +150,7 @@ export default function ProfileScreen() {
         Alert.alert(error.message);
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -261,7 +312,17 @@ export default function ProfileScreen() {
           <Text size="lg" bold className="text-typography-900 mb-3">
             Skills
           </Text>
-          <Text className="text-typography-500">No skills added yet</Text>
+          {talentSkills.length > 0 ? (
+            talentSkills.map((talentSkill) => (
+              <SkillCard
+                key={talentSkill.id}
+                talentSkill={talentSkill}
+                onPress={() => {}}
+              />
+            ))
+          ) : (
+            <Text className="text-typography-500">No skills added yet</Text>
+          )}
         </VStack>
 
         <VStack space="md" style={styles.actions}>
