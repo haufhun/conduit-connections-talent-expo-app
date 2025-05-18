@@ -3,6 +3,7 @@
 import { Box } from "@/components/ui/box";
 import { Button, ButtonText } from "@/components/ui/button";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import { supabase } from "@/lib/supabase";
 import { useState } from "react";
 import { SafeAreaView } from "react-native";
 
@@ -19,6 +20,14 @@ export default function App() {
             }}
           >
             <ButtonText>Toggle color mode</ButtonText>
+          </Button>
+
+          <Button
+            onPress={() => {
+              supabase.auth.signOut();
+            }}
+          >
+            <ButtonText>Sign out</ButtonText>
           </Button>
         </Box>
       </GluestackUIProvider>

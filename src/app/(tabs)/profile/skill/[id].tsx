@@ -5,7 +5,7 @@ import {
 } from "@/api/api";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
-import { EditIcon } from "@/components/ui/icon";
+import { AddIcon, EditIcon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
@@ -18,9 +18,13 @@ import {
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
+import { uploadImageToSupabase } from "@/utils/storage";
 import { Image } from "expo-image";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
 import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
@@ -108,6 +112,68 @@ export default function SkillDetailScreen() {
     setExperienceModalVisible(false);
   };
 
+  const handleImagePick = async () => {
+    if (!skill || skill.image_urls.length >= 5) {
+      Alert.alert(
+        "Maximum Images",
+        "You can only add up to 5 portfolio images."
+      );
+      return;
+    }
+
+    try {
+      // Request permission first
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photo library to add portfolio images."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        if (!session?.user?.id) {
+          Alert.alert("Error", "You must be signed in to upload images");
+          return;
+        }
+
+        const originalUri = result.assets[0].uri;
+
+        // Compress and resize the image
+        const compressedImage = await ImageManipulator.manipulateAsync(
+          originalUri,
+          [{ resize: { width: 1080 } }],
+          {
+            compress: 0.7,
+            format: ImageManipulator.SaveFormat.JPEG,
+          }
+        );
+
+        // Upload the compressed image to Supabase Storage
+        const imageUrl = await uploadImageToSupabase(
+          compressedImage.uri,
+          SKILL_IMAGES_BUCKET,
+          `users/${session.user.id}/skills/${skill.id}`
+        );
+
+        // Update the skill with the new public URL
+        const updatedImageUrls = [...skill.image_urls, imageUrl];
+        await updateSkill({ image_urls: updatedImageUrls });
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to add image to portfolio");
+    }
+  };
+
   if (!skill) {
     return (
       <SafeAreaView style={styles.container}>
@@ -191,23 +257,39 @@ export default function SkillDetailScreen() {
               )}
             </VStack>
 
-            {skill.image_urls.length > 0 && (
-              <VStack space="xs" style={styles.section}>
+            <VStack space="xs" style={styles.section}>
+              <HStack className="justify-between items-center">
                 <Text bold className="text-typography-700">
                   Portfolio
                 </Text>
-                <HStack space="sm" style={styles.portfolioGrid}>
-                  {skill.image_urls.map((url, index) => (
-                    <Image
-                      key={index}
-                      source={{ uri: url }}
-                      style={styles.portfolioImage}
-                      contentFit="cover"
-                    />
-                  ))}
-                </HStack>
-              </VStack>
-            )}
+                <Button
+                  variant="link"
+                  onPress={handleImagePick}
+                  className="p-0"
+                  isDisabled={skill.image_urls.length >= 5}
+                >
+                  <HStack space="xs" className="items-center">
+                    <ButtonIcon as={AddIcon} />
+                    <ButtonText>Add Photo</ButtonText>
+                  </HStack>
+                </Button>
+              </HStack>
+              <HStack space="sm" style={styles.portfolioGrid}>
+                {skill.image_urls.map((url, index) => (
+                  <Image
+                    key={index}
+                    source={{ uri: url }}
+                    style={styles.portfolioImage}
+                    contentFit="cover"
+                  />
+                ))}
+              </HStack>
+              {skill.image_urls.length === 0 && (
+                <Text className="text-typography-500 italic">
+                  No portfolio images added
+                </Text>
+              )}
+            </VStack>
           </VStack>
         </VStack>
       </ScrollView>
