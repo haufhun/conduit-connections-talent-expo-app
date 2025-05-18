@@ -54,11 +54,15 @@ export default function ProfileScreen() {
   const [nameModalVisible, setNameModalVisible] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [bioModalVisible, setBioModalVisible] = useState(false);
+  const [phoneModalVisible, setPhoneModalVisible] = useState(false);
+  const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [tempFirstName, setTempFirstName] = useState(userProfile?.first_name);
   const [tempLastName, setTempLastName] = useState(userProfile?.last_name);
   const [tempCity, setTempCity] = useState(userProfile?.city);
   const [tempState, setTempState] = useState(userProfile?.state);
   const [tempBio, setTempBio] = useState(userProfile?.metadata?.bio);
+  const [tempEmail, setTempEmail] = useState(userProfile?.email);
+  const [tempPhone, setTempPhone] = useState(userProfile?.phone);
 
   const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
 
@@ -122,6 +126,20 @@ export default function ProfileScreen() {
     setLocationModalVisible(false);
   };
 
+  const handlePhoneUpdate = () => {
+    updateProfile({
+      phone: tempPhone,
+    });
+    setPhoneModalVisible(false);
+  };
+
+  const handleEmailUpdate = () => {
+    updateProfile({
+      email: tempEmail,
+    });
+    setEmailModalVisible(false);
+  };
+
   const openNameModal = () => {
     setTempFirstName(userProfile.first_name);
     setTempLastName(userProfile.last_name);
@@ -137,6 +155,15 @@ export default function ProfileScreen() {
   const openBioModal = () => {
     setTempBio(userProfile.metadata?.bio);
     setBioModalVisible(true);
+  };
+
+  const openPhoneModal = () => {
+    setTempPhone(userProfile.phone);
+    setPhoneModalVisible(true);
+  };
+  const openEmailModal = () => {
+    setTempEmail(userProfile.email);
+    setEmailModalVisible(true);
   };
 
   return (
@@ -257,6 +284,40 @@ export default function ProfileScreen() {
                 </Button>
               )}
             </Collapsible>
+          </VStack>
+
+          <VStack style={styles.section}>
+            <Text size="lg" bold className="text-typography-900 mb-3">
+              Contact Info
+            </Text>
+            <VStack space="sm">
+              <HStack space="sm" className="items-start">
+                <VStack style={{ flex: 1 }}>
+                  <Text bold className="text-typography-700">
+                    Email
+                  </Text>
+                  <Text className="text-typography-600">
+                    {userProfile.email}
+                  </Text>
+                </VStack>
+                <TouchableOpacity onPress={openEmailModal}>
+                  <IconSymbol name="square.and.pencil" size={16} color="#666" />
+                </TouchableOpacity>
+              </HStack>
+              <HStack space="sm" className="items-start">
+                <VStack style={{ flex: 1 }}>
+                  <Text bold className="text-typography-700">
+                    Phone
+                  </Text>
+                  <Text className="text-typography-600">
+                    {userProfile.phone || "Not provided"}
+                  </Text>
+                </VStack>
+                <TouchableOpacity onPress={openPhoneModal}>
+                  <IconSymbol name="square.and.pencil" size={16} color="#666" />
+                </TouchableOpacity>
+              </HStack>
+            </VStack>
           </VStack>
 
           <VStack style={styles.section} space="md">
@@ -442,6 +503,113 @@ export default function ProfileScreen() {
               variant="solid"
               action="primary"
               onPress={handleLocationUpdate}
+              isDisabled={isLoading}
+            >
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Email Edit Modal */}
+      <Modal
+        isOpen={emailModalVisible}
+        onClose={() => setEmailModalVisible(false)}
+        size="lg"
+      >
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text size="lg" bold>
+              Edit Email
+            </Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            <VStack space="md">
+              <VStack>
+                <Text bold className="text-typography-700 mb-2">
+                  Email
+                </Text>
+                <Input size="lg" variant="outline">
+                  <InputField
+                    placeholder="Email"
+                    value={tempEmail}
+                    onChangeText={setTempEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </Input>
+              </VStack>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setEmailModalVisible(false)}
+              className="mr-2"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              size="sm"
+              variant="solid"
+              action="primary"
+              onPress={handleEmailUpdate}
+              isDisabled={isLoading}
+            >
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Phone Edit Modal */}
+      <Modal
+        isOpen={phoneModalVisible}
+        onClose={() => setPhoneModalVisible(false)}
+        size="lg"
+      >
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text size="lg" bold>
+              Edit Phone
+            </Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            <VStack space="md">
+              <VStack>
+                <Text bold className="text-typography-700 mb-2">
+                  Phone
+                </Text>
+                <Input size="lg" variant="outline">
+                  <InputField
+                    placeholder="Phone"
+                    value={tempPhone}
+                    onChangeText={setTempPhone}
+                    keyboardType="phone-pad"
+                  />
+                </Input>
+              </VStack>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setPhoneModalVisible(false)}
+              className="mr-2"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              size="sm"
+              variant="solid"
+              action="primary"
+              onPress={handlePhoneUpdate}
               isDisabled={isLoading}
             >
               <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>

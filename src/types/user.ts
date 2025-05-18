@@ -8,5 +8,6 @@ export interface UserProfile {
     bio?: string;
   };
   email: string;
+  phone?: string;
   avatar_url?: string;
 }

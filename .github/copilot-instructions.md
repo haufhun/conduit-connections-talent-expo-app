@@ -28,7 +28,7 @@ Tab 1: Profile
   Tab 2: Schedule
 - Allow a user to view, create, or change the blockouts they've put on their schedule
 
-When creating, make sure to use Glustack components and nativewind classes (they are at /src/components/ui)
+When creating, make sure to use Glustack components and nativewind classes (they are at /src/components/ui. Use the npx gluestack-ui add command to add new components)
 When creating, make sure to use Expo Router for navigation
 When creating, make sure to use Tanstack Query for data fetching and caching
 When creating, make sure to use Zod and React Hook Form for form validation
@@ -62,21 +62,26 @@ Design Guidelines:
 - Use a design system that is easy to maintain and update
   And make sure that the designs use gluestack theme provider so that it's easy to change the theme
 
-COLOR SCHEME
+## icons
+
+Use icons from gluestack-ui first. If they are unavailable, use icons from lucide-react-native.
+
+## COLOR SCHEME
+
 Primary Color: Light Blue
 Secondary Color: Dark Blue
 Third Color: Yellow
 Fourth Color: White
 Gradient Style: Linear 180
 
-# Code:
+### Code:
 
 Light Blue: #5de0e6
 Dark Blue: #004aad
 White: #ffffff
 Yellow: #ffde59
 
-# Logo
+### Logo
 
 Background: Lighting Arc
 Foreground: Logo/Image

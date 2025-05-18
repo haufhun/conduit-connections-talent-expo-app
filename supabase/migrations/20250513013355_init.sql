@@ -4,12 +4,15 @@ create table users (
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),
   email text unique not null,
+  phone text,
   first_name text,
   last_name text,
-    city text,
+  city text,
   state text,
   metadata jsonb default '{}'::jsonb,
-  avatar_url text
+  avatar_url text,
+
+  constraint phone_length check (char_length(phone) <= 15)
 );
 
 -- This trigger automatically creates a profile entry when a new user signs up via Supabase Auth.

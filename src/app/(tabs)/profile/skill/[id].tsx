@@ -4,6 +4,7 @@ import {
   useUpdateTalentSkill,
 } from "@/api/api";
 import FilePickerActionSheet from "@/components/FilePickerActionSheet";
+import PortfolioImage from "@/components/PortfolioImage";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon, EditIcon } from "@/components/ui/icon";
@@ -50,6 +51,7 @@ export default function SkillDetailScreen() {
   const [tempSummary, setTempSummary] = useState("");
   const [tempExperience, setTempExperience] = useState("");
   const [showActionsheet, setShowActionsheet] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const isLoading = isLoadingUser || isLoadingTalentSkills;
 
@@ -160,6 +162,31 @@ export default function SkillDetailScreen() {
     setShowActionsheet(true);
   };
 
+  const handleDeleteImage = async (index: number) => {
+    if (!skill) return;
+    try {
+      const newUrls = [...skill.image_urls];
+      newUrls.splice(index, 1);
+      await updateSkill({ image_urls: newUrls });
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      Alert.alert("Error", "Failed to delete image");
+    }
+  };
+
+  const handleReorderImages = async (fromIndex: number, toIndex: number) => {
+    if (!skill) return;
+    try {
+      const newUrls = [...skill.image_urls];
+      const [movedItem] = newUrls.splice(fromIndex, 1);
+      newUrls.splice(toIndex, 0, movedItem);
+      await updateSkill({ image_urls: newUrls });
+    } catch (error) {
+      console.error("Error reordering images:", error);
+      Alert.alert("Error", "Failed to reorder images");
+    }
+  };
+
   if (!skill) {
     return (
       <SafeAreaView className="flex-1 bg-primary" edges={["bottom"]}>
@@ -246,25 +273,45 @@ export default function SkillDetailScreen() {
                 </Text>
                 <Button
                   variant="link"
-                  onPress={handleAdd}
+                  onPress={() => setIsEditing(!isEditing)}
                   className="p-0"
-                  isDisabled={skill.image_urls.length >= 5}
                 >
                   <HStack space="xs" className="items-center">
-                    <ButtonIcon as={AddIcon} />
-                    <ButtonText>Add Item</ButtonText>
+                    <ButtonIcon as={EditIcon} />
+                    <ButtonText>{isEditing ? "Done" : "Edit"}</ButtonText>
                   </HStack>
                 </Button>
               </HStack>
               <HStack space="sm" style={styles.imagesGrid}>
                 {skill.image_urls.map((url, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: url }}
-                    style={styles.talentSkillImage}
-                    contentFit="cover"
+                  <PortfolioImage
+                    key={url}
+                    url={url}
+                    index={index}
+                    onDelete={handleDeleteImage}
+                    onReorder={handleReorderImages}
+                    isEditing={isEditing}
                   />
                 ))}
+                {!isEditing && skill.image_urls.length < 5 && (
+                  <Button
+                    variant="outline"
+                    onPress={handleAdd}
+                    style={styles.addImageButton}
+                    className="items-center justify-center border-2 border-dashed border-opacity-75 border-typography-500 bg-white"
+                  >
+                    <VStack space="xs" className="items-center">
+                      <ButtonIcon
+                        as={AddIcon}
+                        size="xl"
+                        className="text-typography-300"
+                      />
+                      <ButtonText className="text-typography-300">
+                        Add Item
+                      </ButtonText>
+                    </VStack>
+                  </Button>
+                )}
               </HStack>
               {skill.image_urls.length === 0 && (
                 <Text className="text-typography-500 italic">
@@ -407,8 +454,14 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   imagesGrid: {
+    flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 8,
+    gap: 8,
+  },
+  addImageButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
   },
   talentSkillImage: {
     width: 100,
