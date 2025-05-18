@@ -1,13 +1,20 @@
 import { supabase } from "@/lib/supabase";
 import { decode } from "base64-arraybuffer";
 
-export async function uploadImageToSupabase(
+interface UploadFileOptions {
+  contentType?: string;
+  filename?: string;
+  fileExtension?: string;
+}
+
+export async function uploadFileToSupabase(
   uri: string,
   bucket: string,
-  path: string
+  path: string,
+  options: UploadFileOptions = {}
 ): Promise<string> {
   try {
-    // Fetch the image data from the local URI
+    // Fetch the file data from the URI
     const response = await fetch(uri);
     const blob = await response.blob();
 
@@ -24,13 +31,14 @@ export async function uploadImageToSupabase(
     const base64Data = await base64Promise;
 
     // Upload to Supabase Storage
-    const fileName = `${Date.now()}.jpg`;
+    const extension = options.fileExtension || "jpg";
+    const fileName = options.filename || `${Date.now()}.${extension}`;
     const filePath = `${path}/${fileName}`;
 
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(filePath, decode(base64Data), {
-        contentType: "image/jpeg",
+        contentType: options.contentType || "image/jpeg",
         upsert: false,
       });
 

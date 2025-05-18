@@ -3,6 +3,7 @@ import {
   useGetUserTalentSkills,
   useUpdateTalentSkill,
 } from "@/api/api";
+import FilePickerActionSheet from "@/components/FilePickerActionSheet";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon, EditIcon } from "@/components/ui/icon";
@@ -21,10 +22,9 @@ import { VStack } from "@/components/ui/vstack";
 import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
-import { uploadImageToSupabase } from "@/utils/storage";
+import { uploadFileToSupabase } from "@/utils/storage";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
-import * as ImagePicker from "expo-image-picker";
 import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
@@ -49,6 +49,7 @@ export default function SkillDetailScreen() {
   const [experienceModalVisible, setExperienceModalVisible] = useState(false);
   const [tempSummary, setTempSummary] = useState("");
   const [tempExperience, setTempExperience] = useState("");
+  const [showActionsheet, setShowActionsheet] = useState(false);
 
   const isLoading = isLoadingUser || isLoadingTalentSkills;
 
@@ -112,71 +113,56 @@ export default function SkillDetailScreen() {
     setExperienceModalVisible(false);
   };
 
-  const handleImagePick = async () => {
-    if (!skill || skill.image_urls.length >= 5) {
-      Alert.alert(
-        "Maximum Images",
-        "You can only add up to 5 portfolio images."
-      );
+  const handleImageFileUpload = async (uri: string, contentType: string) => {
+    if (!session?.user?.id || !skill) {
+      Alert.alert("Error", "You must be signed in to upload files");
       return;
     }
 
     try {
-      // Request permission first
-      const permissionResult =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission Required",
-          "Please allow access to your photo library to add portfolio images."
-        );
-        return;
-      }
+      let fileOptions = {
+        contentType,
+        fileExtension: "jpg",
+      };
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 1,
-      });
-
-      if (!result.canceled) {
-        if (!session?.user?.id) {
-          Alert.alert("Error", "You must be signed in to upload images");
-          return;
+      // If it's an image, compress it
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1080 } }],
+        {
+          compress: 0.7,
+          format: ImageManipulator.SaveFormat.JPEG,
         }
+      );
 
-        const originalUri = result.assets[0].uri;
+      // Upload file to Supabase
+      const fileUrl = await uploadFileToSupabase(
+        compressedImage.uri,
+        SKILL_IMAGES_BUCKET,
+        `users/${session.user.id}/skills/${skill.id}`,
+        fileOptions
+      );
 
-        // Compress and resize the image
-        const compressedImage = await ImageManipulator.manipulateAsync(
-          originalUri,
-          [{ resize: { width: 1080 } }],
-          {
-            compress: 0.7,
-            format: ImageManipulator.SaveFormat.JPEG,
-          }
-        );
-
-        // Upload the compressed image to Supabase Storage
-        const imageUrl = await uploadImageToSupabase(
-          compressedImage.uri,
-          SKILL_IMAGES_BUCKET,
-          `users/${session.user.id}/skills/${skill.id}`
-        );
-
-        // Update the skill with the new public URL
-        const updatedImageUrls = [...skill.image_urls, imageUrl];
-        await updateSkill({ image_urls: updatedImageUrls });
-      }
+      // Update the skill with the new URL
+      const updatedUrls = [...skill.image_urls, fileUrl];
+      await updateSkill({ image_urls: updatedUrls });
     } catch (error) {
-      console.error("Error picking image:", error);
-      Alert.alert("Error", "Failed to add image to portfolio");
+      console.error("Error uploading file:", error);
+      Alert.alert("Error", "Failed to upload file");
     }
+  };
+
+  const handleAdd = () => {
+    if (!skill || skill.image_urls.length >= 5) {
+      Alert.alert("Maximum Files", "You can only add up to 5 portfolio items.");
+      return;
+    }
+    setShowActionsheet(true);
   };
 
   if (!skill) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView className="flex-1 bg-primary" edges={["bottom"]}>
         <Text>Loading...</Text>
       </SafeAreaView>
     );
@@ -187,12 +173,8 @@ export default function SkillDetailScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={["bottom"]}
-      className="bg-primary"
-    >
-      <ScrollView style={styles.container} bounces={false}>
+    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+      <ScrollView className="flex-1">
         <VStack space="lg" className="p-[20px]">
           <HStack space="md" className="items-center py-4">
             <Image
@@ -260,33 +242,33 @@ export default function SkillDetailScreen() {
             <VStack space="xs" style={styles.section}>
               <HStack className="justify-between items-center">
                 <Text bold className="text-typography-700">
-                  Portfolio
+                  Images
                 </Text>
                 <Button
                   variant="link"
-                  onPress={handleImagePick}
+                  onPress={handleAdd}
                   className="p-0"
                   isDisabled={skill.image_urls.length >= 5}
                 >
                   <HStack space="xs" className="items-center">
                     <ButtonIcon as={AddIcon} />
-                    <ButtonText>Add Photo</ButtonText>
+                    <ButtonText>Add Item</ButtonText>
                   </HStack>
                 </Button>
               </HStack>
-              <HStack space="sm" style={styles.portfolioGrid}>
+              <HStack space="sm" style={styles.imagesGrid}>
                 {skill.image_urls.map((url, index) => (
                   <Image
                     key={index}
                     source={{ uri: url }}
-                    style={styles.portfolioImage}
+                    style={styles.talentSkillImage}
                     contentFit="cover"
                   />
                 ))}
               </HStack>
               {skill.image_urls.length === 0 && (
                 <Text className="text-typography-500 italic">
-                  No portfolio images added
+                  No images added
                 </Text>
               )}
             </VStack>
@@ -392,14 +374,18 @@ export default function SkillDetailScreen() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <FilePickerActionSheet
+        supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
+        showActionsheet={showActionsheet}
+        setShowActionsheet={setShowActionsheet}
+        handleFileUpload={handleImageFileUpload}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   skillImage: {
     width: 96,
     height: 96,
@@ -420,11 +406,11 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     textAlignVertical: "top",
   },
-  portfolioGrid: {
+  imagesGrid: {
     flexWrap: "wrap",
     marginTop: 8,
   },
-  portfolioImage: {
+  talentSkillImage: {
     width: 100,
     height: 100,
     borderRadius: 8,
