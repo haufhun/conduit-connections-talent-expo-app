@@ -63,6 +63,7 @@ export default function ProfileScreen() {
   const [tempBio, setTempBio] = useState(userProfile?.metadata?.bio);
   const [tempEmail, setTempEmail] = useState(userProfile?.email);
   const [tempPhone, setTempPhone] = useState(userProfile?.phone);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
 
@@ -287,9 +288,21 @@ export default function ProfileScreen() {
           </VStack>
 
           <VStack style={styles.section}>
-            <Text size="lg" bold className="text-typography-900 mb-3">
-              Contact Info
-            </Text>
+            <HStack className="justify-between items-center">
+              <Text size="lg" bold className="text-typography-900 mb-3">
+                Contact Info
+              </Text>
+              <TouchableOpacity
+                onPress={() => setInfoModalVisible(true)}
+                className="w-6 h-6 rounded-full bg-typography-100 items-center justify-center"
+              >
+                <IconSymbol
+                  name="questionmark.circle.fill"
+                  size={16}
+                  color="#666"
+                />
+              </TouchableOpacity>
+            </HStack>
             <VStack space="sm">
               <HStack space="sm" className="items-start">
                 <VStack style={{ flex: 1 }}>
@@ -613,6 +626,68 @@ export default function ProfileScreen() {
               isDisabled={isLoading}
             >
               <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Info Modal */}
+      <Modal
+        isOpen={infoModalVisible}
+        onClose={() => setInfoModalVisible(false)}
+        size="lg"
+      >
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text size="lg" bold>
+              About Your Profile
+            </Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            <VStack space="md">
+              <VStack space="sm">
+                <Text size="md" bold className="text-typography-900">
+                  Profile Visibility
+                </Text>
+                <Text className="text-typography-600">
+                  Your profile information is visible to event organizers and
+                  production companies looking for talent like you.
+                </Text>
+              </VStack>
+
+              <VStack space="sm">
+                <Text size="md" bold className="text-typography-900">
+                  Contact Information
+                </Text>
+                <Text className="text-typography-600">
+                  Your email and phone number will only be shared with
+                  organizers who are active in the system. This helps them
+                  communicate with you about job details and logistics.
+                </Text>
+              </VStack>
+
+              <VStack space="sm">
+                <Text size="md" bold className="text-typography-900">
+                  Privacy & Control
+                </Text>
+                <Text className="text-typography-600">
+                  You have full control over your profile information and can
+                  update or remove it at any time. We recommend keeping your
+                  profile up to date to receive the most relevant opportunities.
+                </Text>
+              </VStack>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              size="sm"
+              variant="solid"
+              action="primary"
+              onPress={() => setInfoModalVisible(false)}
+            >
+              <ButtonText>Got it</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>
