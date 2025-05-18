@@ -1,3 +1,8 @@
+import {
+  useGetUserProfile,
+  useGetUserTalentSkills,
+  useUpdateUserProfile,
+} from "@/api/api";
 import { Collapsible } from "@/components/Collapsible";
 import { SkillCard } from "@/components/SkillCard";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
@@ -18,12 +23,13 @@ import {
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/providers/auth-provider";
-import { TalentSkill } from "@/types/skills";
+import { UserProfile } from "@/types/user";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
@@ -32,130 +38,63 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-interface UserProfile {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  city?: string;
-  state?: string;
-  metadata?: {
-    bio?: string;
-  };
-  email: string;
-  avatar_url?: string;
-}
-
 export default function ProfileScreen() {
-  const { session, user } = useAuth();
-  const [loading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { mutateAsync: updateUserProfile } = useUpdateUserProfile();
+  const {
+    data: userProfile,
+    error: userProfileError,
+    isLoading: isLoadingUserProfile,
+  } = useGetUserProfile();
+  const {
+    data: talentSkills,
+    error: talentSkillsError,
+    isLoading: isLoadingTalentSkills,
+  } = useGetUserTalentSkills();
   const [nameModalVisible, setNameModalVisible] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [bioModalVisible, setBioModalVisible] = useState(false);
-  const [firstName, setFirstName] = useState(
-    (user as UserProfile)?.first_name || ""
-  );
-  const [lastName, setLastName] = useState(
-    (user as UserProfile)?.last_name || ""
-  );
-  const [city, setCity] = useState((user as UserProfile)?.city || "");
-  const [state, setState] = useState((user as UserProfile)?.state || "");
-  const [bio, setBio] = useState((user as UserProfile)?.metadata?.bio || "");
-  const [talentSkills, setSkills] = useState<TalentSkill[]>([]);
+  const [tempFirstName, setTempFirstName] = useState(userProfile?.first_name);
+  const [tempLastName, setTempLastName] = useState(userProfile?.last_name);
+  const [tempCity, setTempCity] = useState(userProfile?.city);
+  const [tempState, setTempState] = useState(userProfile?.state);
+  const [tempBio, setTempBio] = useState(userProfile?.metadata?.bio);
 
-  const [tempFirstName, setTempFirstName] = useState("");
-  const [tempLastName, setTempLastName] = useState("");
-  const [tempCity, setTempCity] = useState("");
-  const [tempState, setTempState] = useState("");
-  const [tempBio, setTempBio] = useState("");
+  const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      setIsLoading(true);
-      if (!session?.user.id) {
-        setIsLoading(false);
-        return;
-      }
+  if (isLoading) {
+    return <ActivityIndicator />;
+  }
 
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
+  if (userProfileError || !userProfile) {
+    return (
+      <Text>Error {userProfileError?.message || "An error occurred"}</Text>
+    );
+  }
 
-      if (error) {
-        Alert.alert(error.message);
-        setIsLoading(false);
-        return;
-      }
+  if (talentSkillsError || !talentSkills) {
+    return (
+      <Text>Error {talentSkillsError?.message || "An error occurred"}</Text>
+    );
+  }
 
-      const { data: talentSkills, error: talentSkillsError } = await supabase
-        .from("talent_skills")
-        .select("*, skill:skills(*)")
-        .eq("user_id", session.user.id);
-
-      if (talentSkillsError) {
-        Alert.alert(talentSkillsError.message);
-        setIsLoading(false);
-        return;
-      }
-
-      if (talentSkills) {
-        setSkills(talentSkills);
-      }
-
-      if (data) {
-        setFirstName(data.first_name || "");
-        setLastName(data.last_name || "");
-        setCity(data.city || "");
-        setState(data.state || "");
-        setBio(data.metadata?.bio || "");
-      }
-
-      setIsLoading(false);
-    };
-    fetchUserProfile();
-  }, [user.id, session?.user]);
-
-  async function updateProfile(
-    updates: Partial<{
-      first_name: string;
-      last_name: string;
-      city: string;
-      state: string;
-      metadata: { bio: string };
-    }>
-  ) {
+  async function updateProfile(updates: Partial<Omit<UserProfile, "id">>) {
     try {
-      setIsLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
+      if (!userProfile) throw new Error("User profile is not available");
 
-      const { error } = await supabase
-        .from("users")
-        .update({
-          ...updates,
-          updated_at: new Date(),
-        })
-        .eq("id", session.user.id);
-
-      if (error) throw error;
-
-      // Update local state based on which fields were updated
-      if (updates.first_name !== undefined) setFirstName(updates.first_name);
-      if (updates.last_name !== undefined) setLastName(updates.last_name);
-      if (updates.city !== undefined) setCity(updates.city);
-      if (updates.state !== undefined) setState(updates.state);
-      if (updates.metadata?.bio !== undefined) setBio(updates.metadata.bio);
+      await updateUserProfile(updates);
     } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message);
-      }
-    } finally {
-      setIsLoading(false);
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "An error occurred while updating the profile");
     }
   }
 
-  const fullName = `${firstName || ""} ${lastName || ""}`.trim();
-  const location = [city, state].filter(Boolean).join(", ");
+  const fullName = `${userProfile.first_name || ""} ${
+    userProfile.last_name || ""
+  }`.trim();
+  const location = [userProfile.city, userProfile.state]
+    .filter(Boolean)
+    .join(", ");
 
   const handleNameUpdate = () => {
     updateProfile({
@@ -168,7 +107,7 @@ export default function ProfileScreen() {
   const handleBioUpdate = () => {
     updateProfile({
       metadata: {
-        ...((user as UserProfile)?.metadata || {}),
+        ...((userProfile as UserProfile)?.metadata || {}),
         bio: tempBio,
       },
     });
@@ -184,160 +123,175 @@ export default function ProfileScreen() {
   };
 
   const openNameModal = () => {
-    setTempFirstName(firstName);
-    setTempLastName(lastName);
+    setTempFirstName(userProfile.first_name);
+    setTempLastName(userProfile.last_name);
     setNameModalVisible(true);
   };
 
-  const openBioModal = () => {
-    setTempBio(bio);
-    setBioModalVisible(true);
-  };
-
   const openLocationModal = () => {
-    setTempCity(city);
-    setTempState(state);
+    setTempCity(userProfile.city);
+    setTempState(userProfile.state);
     setLocationModalVisible(true);
   };
 
+  const openBioModal = () => {
+    setTempBio(userProfile.metadata?.bio);
+    setBioModalVisible(true);
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <ScrollView style={styles.container} bounces={false}>
-        <VStack style={styles.header}>
-          <Center style={styles.avatarContainer}>
-            <Image
-              source={
-                (user as UserProfile)?.avatar_url
-                  ? { uri: (user as UserProfile)?.avatar_url }
-                  : require("@/assets/images/icon.png")
-              }
-              style={styles.avatar}
-              contentFit="cover"
-            />
-            <LinearGradient
-              colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)"]}
-              style={styles.avatarGradient}
-            />
-            <Center style={styles.editAvatarButton}>
-              <IconSymbol name="camera.fill" size={20} color="#fff" />
+    <>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={true}
+        >
+          <VStack style={styles.header}>
+            <Center style={styles.avatarContainer}>
+              <Image
+                source={
+                  (userProfile as UserProfile)?.avatar_url
+                    ? { uri: (userProfile as UserProfile)?.avatar_url }
+                    : require("@/assets/images/icon.png")
+                }
+                style={styles.avatar}
+                contentFit="cover"
+              />
+              <LinearGradient
+                colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)"]}
+                style={styles.avatarGradient}
+              />
+              <Center style={styles.editAvatarButton}>
+                <IconSymbol name="camera.fill" size={20} color="#fff" />
+              </Center>
             </Center>
-          </Center>
 
-          <VStack space="sm">
-            <VStack>
-              {fullName ? (
-                <HStack className="items-center">
-                  <Text size="xl" bold className="text-typography-900">
-                    {fullName}
-                  </Text>
-                  <TouchableOpacity onPress={openLocationModal}>
-                    <IconSymbol
-                      name="square.and.pencil"
-                      size={16}
-                      color="#666"
-                      style={{ marginLeft: 8, marginBottom: 2 }}
-                    />
-                  </TouchableOpacity>
-                </HStack>
-              ) : (
-                <Button
-                  size="xl"
-                  variant="link"
-                  onPress={openNameModal}
-                  className="mt-2"
-                >
-                  <HStack space="xs" className="items-center">
-                    <ButtonIcon as={AddIcon} color="#666" />
-                    <ButtonText>Add name</ButtonText>
+            <VStack space="sm">
+              <VStack>
+                {fullName ? (
+                  <HStack className="items-center">
+                    <Text size="xl" bold className="text-typography-900">
+                      {fullName}
+                    </Text>
+                    <TouchableOpacity onPress={openNameModal}>
+                      <IconSymbol
+                        name="square.and.pencil"
+                        size={16}
+                        color="#666"
+                        style={{ marginLeft: 8, marginBottom: 2 }}
+                      />
+                    </TouchableOpacity>
                   </HStack>
-                </Button>
-              )}
-            </VStack>
+                ) : (
+                  <Button
+                    size="xl"
+                    variant="link"
+                    onPress={openNameModal}
+                    className="mt-2"
+                  >
+                    <HStack space="xs" className="items-center">
+                      <ButtonIcon as={AddIcon} color="#666" />
+                      <ButtonText>Add name</ButtonText>
+                    </HStack>
+                  </Button>
+                )}
+              </VStack>
 
-            <VStack>
-              {location ? (
-                <HStack className="items-center">
-                  <Text size="sm" bold className="text-typography-900">
-                    {location}
-                  </Text>
-                  <TouchableOpacity onPress={openLocationModal}>
-                    <IconSymbol
-                      name="square.and.pencil"
-                      size={16}
-                      color="#666"
-                      style={{ marginLeft: 8, marginBottom: 2 }}
-                    />
-                  </TouchableOpacity>
-                </HStack>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="link"
-                  onPress={openLocationModal}
-                  className="mt-2"
-                >
-                  <HStack space="xs" className="items-center">
-                    <ButtonIcon as={AddIcon} color="#666" />
-                    <ButtonText>Add location</ButtonText>
+              <VStack>
+                {location ? (
+                  <HStack className="items-center">
+                    <Text size="sm" bold className="text-typography-900">
+                      {location}
+                    </Text>
+                    <TouchableOpacity onPress={openLocationModal}>
+                      <IconSymbol
+                        name="square.and.pencil"
+                        size={16}
+                        color="#666"
+                        style={{ marginLeft: 8, marginBottom: 2 }}
+                      />
+                    </TouchableOpacity>
                   </HStack>
-                </Button>
-              )}
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="link"
+                    onPress={openLocationModal}
+                    className="mt-2"
+                  >
+                    <HStack space="xs" className="items-center">
+                      <ButtonIcon as={AddIcon} color="#666" />
+                      <ButtonText>Add location</ButtonText>
+                    </HStack>
+                  </Button>
+                )}
+              </VStack>
             </VStack>
           </VStack>
-        </VStack>
 
-        <VStack style={styles.section}>
-          <Collapsible title="About Me" initialIsOpen={bio === ""}>
-            {bio ? (
-              <HStack space="sm" className="items-start">
-                <Text className="text-typography-700 text-base leading-6 flex-1">
-                  {bio}
-                </Text>
-                <TouchableOpacity onPress={openBioModal}>
-                  <IconSymbol name="square.and.pencil" size={16} color="#666" />
-                </TouchableOpacity>
-              </HStack>
-            ) : (
-              <Button variant="link" onPress={openBioModal} className="mt-4">
-                <HStack space="xs" className="items-center">
-                  <ButtonIcon as={AddIcon} color="#666" />
-                  <ButtonText>Add bio</ButtonText>
+          <VStack style={styles.section}>
+            <Collapsible
+              title="About Me"
+              initialIsOpen={userProfile.metadata?.bio === ""}
+            >
+              {userProfile.metadata?.bio ? (
+                <HStack space="sm" className="items-start">
+                  <Text className="text-typography-700 text-base leading-6 flex-1">
+                    {userProfile.metadata?.bio}
+                  </Text>
+                  <TouchableOpacity onPress={openBioModal}>
+                    <IconSymbol
+                      name="square.and.pencil"
+                      size={16}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
                 </HStack>
-              </Button>
+              ) : (
+                <Button variant="link" onPress={openBioModal} className="mt-4">
+                  <HStack space="xs" className="items-center">
+                    <ButtonIcon as={AddIcon} color="#666" />
+                    <ButtonText>Add bio</ButtonText>
+                  </HStack>
+                </Button>
+              )}
+            </Collapsible>
+          </VStack>
+
+          <VStack style={styles.section}>
+            <Text size="lg" bold className="text-typography-900 mb-3">
+              Skills
+            </Text>
+            {talentSkills.length > 0 ? (
+              talentSkills.map((talentSkill) => (
+                <SkillCard
+                  key={talentSkill.id}
+                  talentSkill={talentSkill}
+                  onPress={() => {
+                    router.push(`/profile/skill/${talentSkill.id}`);
+                  }}
+                />
+              ))
+            ) : (
+              <Text className="text-typography-500">No skills added yet</Text>
             )}
-          </Collapsible>
-        </VStack>
+          </VStack>
 
-        <VStack style={styles.section}>
-          <Text size="lg" bold className="text-typography-900 mb-3">
-            Skills
-          </Text>
-          {talentSkills.length > 0 ? (
-            talentSkills.map((talentSkill) => (
-              <SkillCard
-                key={talentSkill.id}
-                talentSkill={talentSkill}
-                onPress={() => {}}
-              />
-            ))
-          ) : (
-            <Text className="text-typography-500">No skills added yet</Text>
-          )}
-        </VStack>
-
-        <VStack space="md" style={styles.actions}>
-          <Button
-            size="lg"
-            variant="outline"
-            onPress={() => {
-              supabase.auth.signOut();
-            }}
-            style={styles.logoutButton}
-          >
-            <ButtonText>Logout</ButtonText>
-          </Button>
-        </VStack>
-      </ScrollView>
+          <VStack space="md" style={styles.actions}>
+            <Button
+              size="lg"
+              variant="outline"
+              onPress={() => {
+                supabase.auth.signOut();
+              }}
+              style={styles.logoutButton}
+            >
+              <ButtonText>Logout</ButtonText>
+            </Button>
+          </VStack>
+        </ScrollView>
+      </SafeAreaView>
 
       {/* Name Edit Modal */}
       <Modal
@@ -385,9 +339,9 @@ export default function ProfileScreen() {
               variant="solid"
               action="primary"
               onPress={handleNameUpdate}
-              isDisabled={loading}
+              isDisabled={isLoading}
             >
-              <ButtonText>{loading ? "Saving..." : "Save"}</ButtonText>
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -434,9 +388,9 @@ export default function ProfileScreen() {
               variant="solid"
               action="primary"
               onPress={handleBioUpdate}
-              isDisabled={loading}
+              isDisabled={isLoading}
             >
-              <ButtonText>{loading ? "Saving..." : "Save"}</ButtonText>
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -488,14 +442,14 @@ export default function ProfileScreen() {
               variant="solid"
               action="primary"
               onPress={handleLocationUpdate}
-              isDisabled={loading}
+              isDisabled={isLoading}
             >
-              <ButtonText>{loading ? "Saving..." : "Save"}</ButtonText>
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 }
 
@@ -506,6 +460,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    paddingBottom: 32, // Add padding at the bottom of the content
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 32, // Add padding at the bottom of the content
   },
   header: {
     alignItems: "center",

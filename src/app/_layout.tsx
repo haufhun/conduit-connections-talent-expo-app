@@ -1,6 +1,7 @@
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import AuthProvider from "@/providers/auth-provider";
+import QueryProvider from "@/providers/query-provider";
 import {
   DarkTheme,
   DefaultTheme,
@@ -28,27 +29,29 @@ export default function RootLayout() {
     <GluestackUIProvider mode="light">
       <ToastProvider>
         <AuthProvider>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <Stack
-              screenOptions={{
-                animation: "slide_from_right",
-                gestureDirection: "horizontal",
-              }}
+          <QueryProvider>
+            <ThemeProvider
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
             >
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="auth"
-                options={{
-                  headerShown: false,
-                  animation: "slide_from_left",
+              <Stack
+                screenOptions={{
+                  animation: "slide_from_right",
+                  gestureDirection: "horizontal",
                 }}
-              />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
+              >
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="auth"
+                  options={{
+                    headerShown: false,
+                    animation: "slide_from_left",
+                  }}
+                />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </QueryProvider>
         </AuthProvider>
       </ToastProvider>
     </GluestackUIProvider>

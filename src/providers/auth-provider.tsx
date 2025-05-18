@@ -10,19 +10,16 @@ import { supabase } from "../lib/supabase";
 
 type AuthData = {
   session: Session | null;
-  user: any | null;
   mounting: boolean;
 };
 
 const AuthContext = createContext<AuthData>({
   session: null,
-  user: null,
   mounting: true,
 });
 
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<any | null>(null);
   const [mounting, setMounting] = useState(true);
 
   useEffect(() => {
@@ -32,21 +29,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       } = await supabase.auth.getSession();
 
       setSession(session);
-
-      if (session) {
-        const { data: user, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-
-        if (error) {
-          console.error("error", error);
-        } else {
-          setUser(user);
-        }
-      }
-
       setMounting(false);
     };
 
@@ -57,7 +39,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, mounting, user }}>
+    <AuthContext.Provider value={{ session, mounting }}>
       {children}
     </AuthContext.Provider>
   );

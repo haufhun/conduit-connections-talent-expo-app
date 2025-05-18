@@ -1,9 +1,9 @@
 DO $$ 
 DECLARE 
   user1_id UUID;
-  skill_react_id UUID;
-  skill_typescript_id UUID;
-  skill_node_id UUID;
+  skill_react_id bigint;
+  skill_typescript_id bigint;
+  skill_node_id bigint;
 BEGIN
   -- Create main user
   INSERT INTO
@@ -57,24 +57,24 @@ BEGIN
   WHERE id = user1_id;
 
   -- -- Insert sample skills
-  INSERT INTO skills (id, name, image_url)
+  INSERT INTO skills (name, image_url)
   VALUES
-    (uuid_generate_v4(), 'React', 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/1200px-React-icon.svg.png') RETURNING id INTO skill_react_id;
+    ('React', 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/1200px-React-icon.svg.png') RETURNING id INTO skill_react_id;
 
-  INSERT INTO skills (id, name, image_url)
+  INSERT INTO skills (name, image_url)
   VALUES
-    (uuid_generate_v4(), 'TypeScript', 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/1200px-Typescript_logo_2020.svg.png') RETURNING id INTO skill_typescript_id;
+    ('TypeScript', 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/1200px-Typescript_logo_2020.svg.png') RETURNING id INTO skill_typescript_id;
 
-  INSERT INTO skills (id, name, image_url)
+  INSERT INTO skills (name, image_url)
   VALUES
-    (uuid_generate_v4(), 'Node.js', 'https://nodejs.org/static/images/logo.svg') RETURNING id INTO skill_node_id;
+    ('Node.js', 'https://nodejs.org/static/images/logo.svg') RETURNING id INTO skill_node_id;
 
   -- Insert talent skills for user1
   INSERT INTO talent_skills (user_id, skill_id, summary, years_of_experience, image_urls)
   VALUES
-    (user1_id, skill_react_id, 'Built multiple production React applications with complex state management and custom hooks.', 3.5, ARRAY['https://example.com/project1.png', 'https://example.com/project2.png']),
-    (user1_id, skill_typescript_id, 'Extensive experience with TypeScript in both frontend and backend development.', 2.0, ARRAY['https://example.com/ts-project1.png']),
-    (user1_id, skill_node_id, 'Developed RESTful APIs and microservices using Node.js and Express.', 10.0, ARRAY['https://example.com/node-project1.png', 'https://example.com/node-project2.png', 'https://example.com/node-project3.png']);
+    (user1_id, skill_react_id, 'Built multiple production React applications with complex state management and custom hooks.', 3.5, ARRAY['https://picsum.photos/200/300', 'https://picsum.photos/200/301']),
+    (user1_id, skill_typescript_id, 'Extensive experience with TypeScript in both frontend and backend development.', 2.0, ARRAY['https://picsum.photos/200/302']),
+    (user1_id, skill_node_id, 'Developed RESTful APIs and microservices using Node.js and Express.', 10.0, ARRAY['https://picsum.photos/200/303', 'https://picsum.photos/200/304', 'https://picsum.photos/200/305']);
 END $$;
 
 -- Set up email identity for the user

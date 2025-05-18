@@ -1,5 +1,5 @@
 export interface Skill {
-  id: string;
+  id: number;
   created_at: string;
   updated_at: string;
   name: string;
@@ -7,7 +7,7 @@ export interface Skill {
 }
 
 export interface TalentSkill {
-  id: string;
+  id: number;
   created_at: string;
   updated_at: string;
   user_id: string;
