@@ -26,7 +26,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GluestackUIProvider mode="light">
+    <GluestackUIProvider mode={colorScheme ?? "light"}>
       <ToastProvider>
         <AuthProvider>
           <QueryProvider>

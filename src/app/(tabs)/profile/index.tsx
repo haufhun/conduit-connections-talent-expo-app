@@ -141,7 +141,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} className="bg-primary">
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}
@@ -259,7 +259,7 @@ export default function ProfileScreen() {
             </Collapsible>
           </VStack>
 
-          <VStack style={styles.section}>
+          <VStack style={styles.section} space="md">
             <Text size="lg" bold className="text-typography-900 mb-3">
               Skills
             </Text>
@@ -456,7 +456,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   container: {
     flex: 1,

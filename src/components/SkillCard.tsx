@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 
 import { HStack } from "@/components/ui/hstack";
 import { IconSymbol } from "@/components/ui/IconSymbol";
@@ -15,24 +15,27 @@ interface SkillCardProps {
 export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
   return (
     <TouchableOpacity
-      style={styles.container}
+      className="p-4 bg-white rounded-xl border border-black/10"
       onPress={onPress}
       disabled={!onPress}
     >
       <HStack space="md" className="items-center">
-        <View style={styles.imageContainer}>
+        <View className="w-14 h-14 rounded-full overflow-hidden bg-secondary-100">
           <Image
             source={
               talentSkill.skill?.image_url
                 ? { uri: talentSkill.skill.image_url }
                 : require("@/assets/images/icon.png")
             }
-            style={styles.image}
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
             contentFit="cover"
           />
         </View>
 
-        <VStack space="xs" style={styles.content}>
+        <VStack space="xs" className="flex-1">
           <HStack className="items-center justify-between">
             <Text size="lg" bold className="text-typography-900">
               {talentSkill.skill?.name}
@@ -64,17 +67,23 @@ export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
           {talentSkill.image_urls.length > 0 && (
             <HStack space="xs" className="mt-2">
               {talentSkill.image_urls.slice(0, 3).map((url, index) => (
-                <View key={index} style={styles.thumbnailContainer}>
+                <View
+                  key={index}
+                  className="w-12 h-12 rounded-lg overflow-hidden bg-secondary-100"
+                >
                   <Image
                     source={{ uri: url }}
-                    style={styles.thumbnail}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                    }}
                     contentFit="cover"
                   />
                 </View>
               ))}
               {talentSkill.image_urls.length > 3 && (
-                <View style={[styles.thumbnailContainer, styles.moreContainer]}>
-                  <Text size="sm" bold className="text-typography-0">
+                <View className="w-12 h-12 rounded-lg overflow-hidden bg-primary-500/50 justify-center items-center">
+                  <Text size="sm" bold className="text-white">
                     +{talentSkill.image_urls.length - 3}
                   </Text>
                 </View>
@@ -86,43 +95,3 @@ export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.1)",
-  },
-  imageContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: "hidden",
-    backgroundColor: "#f0f0f0",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  content: {
-    flex: 1,
-  },
-  thumbnailContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    overflow: "hidden",
-    backgroundColor: "#f0f0f0",
-  },
-  thumbnail: {
-    width: "100%",
-    height: "100%",
-  },
-  moreContainer: {
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

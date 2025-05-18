@@ -121,7 +121,11 @@ export default function SkillDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["bottom"]}
+      className="bg-primary"
+    >
       <ScrollView style={styles.container} bounces={false}>
         <VStack space="lg" className="p-[20px]">
           <HStack space="md" className="items-center py-4">
@@ -313,7 +317,6 @@ export default function SkillDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   skillImage: {
     width: 96,
