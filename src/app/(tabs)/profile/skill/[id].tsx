@@ -51,9 +51,10 @@ export default function SkillDetailScreen() {
   // Set the header title to user's name
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: userProfile.first_name + " " + userProfile.last_name || "Profile",
+      title:
+        userProfile?.first_name + " " + userProfile?.last_name || "Profile",
     });
-  }, [navigation, userProfile.first_name, userProfile.last_name]);
+  }, [navigation, userProfile?.first_name, userProfile?.last_name]);
 
   if (isLoading) {
     return <ActivityIndicator />;

@@ -1,4 +1,4 @@
-import { TalentSkill } from "@/types/skills";
+import { Skill, TalentSkill } from "@/types/skills";
 import { UserProfile } from "@/types/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
@@ -10,7 +10,7 @@ export const useGetUserProfile = () => {
   if (!id) {
     throw new Error("User ID is not available");
   }
-  return useQuery({
+  return useQuery<UserProfile>({
     queryKey: ["user", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,8 +37,8 @@ export const useUpdateUserProfile = () => {
   if (!id) {
     throw new Error("User ID is not available");
   }
-  return useMutation({
-    mutationFn: async (newUser: Partial<Omit<UserProfile, "id">>) => {
+  return useMutation<UserProfile, Error, Partial<Omit<UserProfile, "id">>>({
+    mutationFn: async (newUser) => {
       const { data, error } = await supabase
         .from("users")
         .update(newUser)
@@ -65,7 +65,7 @@ export const useGetUserTalentSkills = () => {
     throw new Error("User ID is not available");
   }
 
-  return useQuery({
+  return useQuery<(TalentSkill & { skill: Skill })[]>({
     queryKey: ["talent_skills", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -92,8 +92,13 @@ export const useCreateTalentSkill = () => {
     throw new Error("User ID is not available");
   }
 
-  return useMutation({
-    mutationFn: async (newSkill: any) => {
+  type CreateTalentSkillInput = Omit<
+    TalentSkill,
+    "id" | "created_at" | "updated_at" | "user_id" | "skill"
+  >;
+
+  return useMutation<TalentSkill, Error, CreateTalentSkillInput>({
+    mutationFn: async (newSkill) => {
       const { data, error } = await supabase
         .from("talent_skills")
         .insert({ ...newSkill, user_id: id })
@@ -121,14 +126,18 @@ export const useUpdateTalentSkill = () => {
     throw new Error("User ID is not available");
   }
 
-  return useMutation({
-    mutationFn: async ({
-      talentSkillId,
-      updateData,
-    }: {
-      talentSkillId: number;
-      updateData: Partial<Omit<TalentSkill, "id">>;
-    }) => {
+  interface UpdateTalentSkillParams {
+    talentSkillId: number;
+    updateData: Partial<
+      Omit<
+        TalentSkill,
+        "id" | "created_at" | "updated_at" | "user_id" | "skill"
+      >
+    >;
+  }
+
+  return useMutation<TalentSkill, Error, UpdateTalentSkillParams>({
+    mutationFn: async ({ talentSkillId, updateData }) => {
       const { data, error } = await supabase
         .from("talent_skills")
         .update(updateData)
