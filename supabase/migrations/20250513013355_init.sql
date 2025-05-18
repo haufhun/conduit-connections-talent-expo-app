@@ -49,6 +49,7 @@ create table talent_skills (
   skill_id bigint references skills(id) on delete cascade not null,
   summary text,
   years_of_experience numeric(4,1),
+  hourly_rate numeric(10,2),
   image_urls text[] default array[]::text[],
   constraint talent_skills_image_urls_length check (array_length(image_urls, 1) <= 5)
 );

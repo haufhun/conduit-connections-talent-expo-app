@@ -45,13 +45,20 @@ export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
             )}
           </HStack>
 
-          {talentSkill.years_of_experience > 0 && (
-            <Text size="sm" className="text-typography-500">
-              {talentSkill.years_of_experience}{" "}
-              {talentSkill.years_of_experience === 1 ? "year" : "years"} of
-              experience
-            </Text>
-          )}
+          <HStack space="sm">
+            {talentSkill.years_of_experience > 0 && (
+              <Text size="sm" className="text-typography-500">
+                {talentSkill.years_of_experience}{" "}
+                {talentSkill.years_of_experience === 1 ? "year" : "years"} of
+                experience
+              </Text>
+            )}
+            {talentSkill.hourly_rate && (
+              <Text size="sm" className="text-typography-500">
+                • ${talentSkill.hourly_rate}/hr
+              </Text>
+            )}
+          </HStack>
 
           {talentSkill.summary && (
             <Text

@@ -48,8 +48,10 @@ export default function SkillDetailScreen() {
   } = useGetUserTalentSkills();
   const [summaryModalVisible, setSummaryModalVisible] = useState(false);
   const [experienceModalVisible, setExperienceModalVisible] = useState(false);
+  const [hourlyRateModalVisible, setHourlyRateModalVisible] = useState(false);
   const [tempSummary, setTempSummary] = useState("");
   const [tempExperience, setTempExperience] = useState("");
+  const [tempHourlyRate, setTempHourlyRate] = useState("");
   const [showActionsheet, setShowActionsheet] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -113,6 +115,17 @@ export default function SkillDetailScreen() {
 
     updateSkill({ years_of_experience: experience });
     setExperienceModalVisible(false);
+  };
+
+  const handleHourlyRateUpdate = () => {
+    const rate = parseFloat(tempHourlyRate);
+    if (isNaN(rate)) {
+      Alert.alert("Please enter a valid number");
+      return;
+    }
+
+    updateSkill({ hourly_rate: rate });
+    setHourlyRateModalVisible(false);
   };
 
   const handleImageFileUpload = async (uri: string, contentType: string) => {
@@ -239,6 +252,33 @@ export default function SkillDetailScreen() {
                 {skill.years_of_experience}{" "}
                 {skill.years_of_experience === 1 ? "year" : "years"}
               </Text>
+            </VStack>
+
+            <VStack space="xs" style={styles.section}>
+              <HStack className="justify-between items-center">
+                <Text bold className="text-typography-700">
+                  Hourly Rate
+                </Text>
+                <Button
+                  variant="link"
+                  onPress={() => setHourlyRateModalVisible(true)}
+                  className="p-0"
+                >
+                  <HStack space="xs" className="items-center">
+                    <ButtonIcon as={EditIcon} />
+                    <ButtonText>Edit</ButtonText>
+                  </HStack>
+                </Button>
+              </HStack>
+              {skill.hourly_rate ? (
+                <Text className="text-typography-600">
+                  ${skill.hourly_rate}/hr
+                </Text>
+              ) : (
+                <Text className="text-typography-500 italic">
+                  No rate specified
+                </Text>
+              )}
             </VStack>
 
             <VStack space="xs" style={styles.section}>
@@ -414,6 +454,52 @@ export default function SkillDetailScreen() {
               variant="solid"
               action="primary"
               onPress={handleExperienceUpdate}
+              isDisabled={isLoading}
+            >
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Hourly Rate Edit Modal */}
+      <Modal
+        isOpen={hourlyRateModalVisible}
+        onClose={() => setHourlyRateModalVisible(false)}
+        size="lg"
+      >
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text size="lg" bold>
+              Edit Hourly Rate
+            </Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            <Input size="lg" variant="outline">
+              <InputField
+                placeholder="Hourly rate (e.g., 50)"
+                value={tempHourlyRate}
+                onChangeText={setTempHourlyRate}
+                keyboardType="decimal-pad"
+              />
+            </Input>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setHourlyRateModalVisible(false)}
+              className="mr-2"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              size="sm"
+              variant="solid"
+              action="primary"
+              onPress={handleHourlyRateUpdate}
               isDisabled={isLoading}
             >
               <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
