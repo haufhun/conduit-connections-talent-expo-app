@@ -24,7 +24,13 @@ import type { TalentSkill } from "@/types/skills";
 import { Image } from "expo-image";
 import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SkillDetailScreen() {
@@ -43,6 +49,7 @@ export default function SkillDetailScreen() {
     isLoading: isLoadingTalentSkills,
   } = useGetUserTalentSkills();
   const [summaryModalVisible, setSummaryModalVisible] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [experienceModalVisible, setExperienceModalVisible] = useState(false);
   const [hourlyRateModalVisible, setHourlyRateModalVisible] = useState(false);
   const [tempSummary, setTempSummary] = useState("");
@@ -126,6 +133,19 @@ export default function SkillDetailScreen() {
     setHourlyRateModalVisible(false);
   };
 
+  const getSummaryPreview = (summary: string) => {
+    // Split by common sentence endings
+    const sentences = summary.match(/[^.!?]+[.!?]+/g) || [summary];
+    const previewSentences = sentences.slice(0, 4);
+    const preview = previewSentences.join(" ").trim();
+
+    // If there's more content and we're not ending with ..., add ...
+    return (
+      preview +
+      (preview.length < summary.length && !preview.endsWith("...") ? "..." : "")
+    );
+  };
+
   if (!skill) {
     return (
       <SafeAreaView className="flex-1 bg-primary" edges={["bottom"]}>
@@ -140,7 +160,7 @@ export default function SkillDetailScreen() {
 
   return (
     <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
-      <ScrollView className="flex-1">
+      <ScrollView className="flex-1 pb-[100px]">
         <VStack space="lg" className="p-[20px]">
           <HStack space="md" className="items-center py-4">
             <Image
@@ -165,7 +185,10 @@ export default function SkillDetailScreen() {
                 </Text>
                 <Button
                   variant="link"
-                  onPress={() => setExperienceModalVisible(true)}
+                  onPress={() => {
+                    setTempExperience(skill.years_of_experience.toString());
+                    setExperienceModalVisible(true);
+                  }}
                   className="p-0"
                 >
                   <HStack space="xs" className="items-center">
@@ -187,7 +210,10 @@ export default function SkillDetailScreen() {
                 </Text>
                 <Button
                   variant="link"
-                  onPress={() => setHourlyRateModalVisible(true)}
+                  onPress={() => {
+                    setTempHourlyRate(skill.hourly_rate.toString());
+                    setHourlyRateModalVisible(true);
+                  }}
                   className="p-0"
                 >
                   <HStack space="xs" className="items-center">
@@ -214,7 +240,10 @@ export default function SkillDetailScreen() {
                 </Text>
                 <Button
                   variant="link"
-                  onPress={() => setSummaryModalVisible(true)}
+                  onPress={() => {
+                    setTempSummary(skill.summary);
+                    setSummaryModalVisible(true);
+                  }}
                   className="p-0"
                 >
                   <HStack space="xs" className="items-center">
@@ -224,7 +253,29 @@ export default function SkillDetailScreen() {
                 </Button>
               </HStack>
               {skill.summary ? (
-                <Text className="text-typography-600">{skill.summary}</Text>
+                <VStack space="sm">
+                  <TouchableOpacity
+                    onPress={() => setSummaryExpanded(!summaryExpanded)}
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-typography-600">
+                      {summaryExpanded
+                        ? skill.summary
+                        : getSummaryPreview(skill.summary)}
+                    </Text>
+                  </TouchableOpacity>
+                  {skill.summary.split("\n").length > 4 && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onPress={() => setSummaryExpanded(!summaryExpanded)}
+                    >
+                      <ButtonText className="text-primary-600">
+                        {summaryExpanded ? "Show less" : "Show more"}
+                      </ButtonText>
+                    </Button>
+                  )}
+                </VStack>
               ) : (
                 <Text className="text-typography-500 italic">
                   No summary added
@@ -239,6 +290,8 @@ export default function SkillDetailScreen() {
             />
           </VStack>
         </VStack>
+
+        <VStack className="h-24" />
       </ScrollView>
 
       {/* Summary Edit Modal */}
