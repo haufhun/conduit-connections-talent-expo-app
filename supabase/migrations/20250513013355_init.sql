@@ -107,6 +107,13 @@ create policy "Users can delete their own talent skills."
 insert into storage.buckets (id, name, public)
   values ('avatars', 'avatars', true);
 
+create policy "Avatars are publicly accessible."
+  on storage.objects for select to authenticated
+  using (bucket_id = 'avatars');
+
+create policy "Users can upload avatars."
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'avatars');
 
 insert into storage.buckets (id, name, public)
   values ('skill-images', 'skill-images', true);

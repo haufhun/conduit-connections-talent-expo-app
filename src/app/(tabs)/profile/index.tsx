@@ -3,6 +3,7 @@ import {
   useGetUserTalentSkills,
   useUpdateUserProfile,
 } from "@/api/api";
+import FilePickerActionSheet from "@/components/FilePickerActionSheet";
 import { SkillCard } from "@/components/SkillCard";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
@@ -24,7 +25,9 @@ import { VStack } from "@/components/ui/vstack";
 import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
+import { uploadFileToSupabase } from "@/utils/storage";
 import { Image } from "expo-image";
+import * as ImageManipulator from "expo-image-manipulator";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -32,6 +35,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -51,6 +55,7 @@ export default function ProfileScreen() {
     error: talentSkillsError,
     isLoading: isLoadingTalentSkills,
   } = useGetUserTalentSkills();
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [nameModalVisible, setNameModalVisible] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [bioModalVisible, setBioModalVisible] = useState(false);
@@ -181,6 +186,36 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleAvatarUpload = async (uri: string, contentType: string) => {
+    try {
+      let fileOptions = {
+        contentType,
+        fileExtension: "jpg",
+      };
+
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 400 } }],
+        {
+          compress: 0.7,
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
+
+      const fileUrl = await uploadFileToSupabase(
+        compressedImage.uri,
+        "avatars",
+        `users/${userProfile.id}`,
+        fileOptions
+      );
+
+      await updateProfile({ avatar_url: fileUrl });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      Alert.alert("Error", "Failed to upload profile picture");
+    }
+  };
+
   return (
     <>
       <SafeAreaView style={styles.safeArea} className="bg-primary">
@@ -190,24 +225,26 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={true}
         >
           <VStack style={styles.header}>
-            <Center style={styles.avatarContainer}>
-              <Image
-                source={
-                  (userProfile as UserProfile)?.avatar_url
-                    ? { uri: (userProfile as UserProfile)?.avatar_url }
-                    : require("@/assets/images/icon.png")
-                }
-                style={styles.avatar}
-                contentFit="cover"
-              />
-              <LinearGradient
-                colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)"]}
-                style={styles.avatarGradient}
-              />
-              <Center style={styles.editAvatarButton}>
-                <IconSymbol name="camera.fill" size={20} color="#fff" />
+            <Pressable onPress={() => setShowAvatarPicker(true)}>
+              <Center style={styles.avatarContainer}>
+                <Image
+                  source={
+                    (userProfile as UserProfile)?.avatar_url
+                      ? { uri: (userProfile as UserProfile)?.avatar_url }
+                      : require("@/assets/images/icon.png")
+                  }
+                  style={styles.avatar}
+                  contentFit="cover"
+                />
+                <LinearGradient
+                  colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)"]}
+                  style={styles.avatarGradient}
+                />
+                <Center style={styles.editAvatarButton}>
+                  <IconSymbol name="camera.fill" size={20} color="#fff" />
+                </Center>
               </Center>
-            </Center>
+            </Pressable>
 
             <VStack space="sm">
               <VStack>
@@ -754,6 +791,13 @@ export default function ProfileScreen() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <FilePickerActionSheet
+        supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
+        showActionsheet={showAvatarPicker}
+        setShowActionsheet={setShowAvatarPicker}
+        handleFileUpload={handleAvatarUpload}
+      />
     </>
   );
 }
