@@ -1,5 +1,8 @@
+import { Button, ButtonText } from "@/components/ui/button";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import { supabase } from "@/lib/supabase";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -34,6 +37,7 @@ const initialData: Item[] = [...Array(NUM_ITEMS)].map((d, index) => {
 
 export default function App() {
   const [data, setData] = useState(initialData);
+  const [colorMode, setColorMode] = useState<"light" | "dark">("light");
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<Item>) => {
     return (
@@ -53,16 +57,36 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <DraggableFlatList
-        data={data}
-        onDragEnd={({ data }) => setData(data)}
-        keyExtractor={(item) => item.key}
-        renderItem={renderItem}
-        horizontal
-        contentContainerStyle={{ paddingHorizontal: 10 }}
-      />
-    </SafeAreaView>
+    <GluestackUIProvider mode={colorMode}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <DraggableFlatList
+          data={data}
+          onDragEnd={({ data }) => setData(data)}
+          keyExtractor={(item) => item.key}
+          renderItem={renderItem}
+          horizontal
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+        />
+
+        <View>
+          <Button
+            onPress={() => {
+              setColorMode(colorMode === "light" ? "dark" : "light");
+            }}
+          >
+            <ButtonText>Toggle color mode</ButtonText>
+          </Button>
+
+          <Button
+            onPress={() => {
+              supabase.auth.signOut();
+            }}
+          >
+            <ButtonText>Sign out</ButtonText>
+          </Button>
+        </View>
+      </SafeAreaView>
+    </GluestackUIProvider>
   );
 }
 
