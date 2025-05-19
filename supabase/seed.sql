@@ -4,6 +4,9 @@ DECLARE
   skill_react_id bigint;
   skill_typescript_id bigint;
   skill_node_id bigint;
+  skill_guitar_id bigint;
+  skill_keyboard_id bigint;
+  skill_drums_id bigint;
 BEGIN
   -- Create main user
   INSERT INTO
@@ -69,12 +72,24 @@ BEGIN
   VALUES
     ('Node.js', 'https://nodejs.org/static/images/logo.svg') RETURNING id INTO skill_node_id;
 
-  -- Insert talent skills for user1
-  INSERT INTO talent_skills (user_id, skill_id, summary, years_of_experience, image_urls)
+  INSERT INTO skills (name, image_url)
   VALUES
-    (user1_id, skill_react_id, 'Built multiple production React applications with complex state management and custom hooks.', 3.5, ARRAY['https://picsum.photos/200/300', 'https://picsum.photos/200/301']),
-    (user1_id, skill_typescript_id, 'Extensive experience with TypeScript in both frontend and backend development.', 2.0, ARRAY['https://picsum.photos/200/302']),
-    (user1_id, skill_node_id, 'Developed RESTful APIs and microservices using Node.js and Express.', 10.0, ARRAY['https://picsum.photos/200/303', 'https://picsum.photos/200/304', 'https://picsum.photos/200/305']);
+    ('Guitar', 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=800&h=800') RETURNING id INTO skill_guitar_id;
+
+  INSERT INTO skills (name, image_url)
+  VALUES
+    ('Keyboard', 'https://images.unsplash.com/photo-1552056776-9b5657118ca4?auto=format&fit=crop&w=800&h=800') RETURNING id INTO skill_keyboard_id;
+
+  INSERT INTO skills (name, image_url)
+  VALUES
+    ('Drums', 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?auto=format&fit=crop&w=800&h=800') RETURNING id INTO skill_drums_id;
+
+  -- Insert talent skills for user1
+  INSERT INTO talent_skills (user_id, skill_id, summary, years_of_experience, image_urls, hourly_rate)
+    VALUES
+      (user1_id, skill_react_id, 'Built multiple production React applications with complex state management and custom hooks.', 3.5, ARRAY['https://picsum.photos/200/300', 'https://picsum.photos/200/301'], 75.00),
+      (user1_id, skill_typescript_id, 'Extensive experience with TypeScript in both frontend and backend development.', 2.0, ARRAY['https://picsum.photos/200/302'], 80.00),
+      (user1_id, skill_node_id, 'Developed RESTful APIs and microservices using Node.js and Express.', 10.0, ARRAY['https://picsum.photos/200/303', 'https://picsum.photos/200/304', 'https://picsum.photos/200/305'], 95.00);
 END $$;
 
 -- Set up email identity for the user

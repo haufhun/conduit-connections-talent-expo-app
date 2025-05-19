@@ -158,3 +158,20 @@ export const useUpdateTalentSkill = () => {
     },
   });
 };
+
+export const useGetSkills = () => {
+  return useQuery<Skill[]>({
+    queryKey: ["skills"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("skills").select("*");
+
+      if (error) {
+        throw new Error(
+          "An error occurred while fetching data: " + error.message
+        );
+      }
+
+      return data;
+    },
+  });
+};

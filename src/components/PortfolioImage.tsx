@@ -2,20 +2,20 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { MinusCircle } from "lucide-react-native";
 import { useCallback, useEffect } from "react";
-import { Alert, Dimensions, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import {
-  GestureDetector,
   Gesture,
+  GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import Reanimated, {
-  useSharedValue,
+  runOnJS,
   useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
   withSpring,
   withTiming,
-  withSequence,
-  withRepeat,
-  runOnJS,
 } from "react-native-reanimated";
 
 interface PortfolioImageProps {
@@ -46,22 +46,22 @@ export default function PortfolioImage({
 
   // Animation for editing mode shake effect
   const rotation = useSharedValue(0);
-  
+
   useEffect(() => {
     if (isEditing) {
       rotation.value = withSequence(
-        withTiming(-0.05, { duration: 100 }),
+        withTiming(-0.02, { duration: 200 }),
         withRepeat(
           withSequence(
-            withTiming(0.05, { duration: 100 }),
-            withTiming(-0.05, { duration: 100 })
+            withTiming(0.02, { duration: 200 }),
+            withTiming(-0.02, { duration: 200 })
           ),
           -1,
           true
         )
       );
     } else {
-      rotation.value = withTiming(0, { duration: 100 });
+      rotation.value = withTiming(0, { duration: 200 });
     }
   }, [isEditing, rotation]);
 
@@ -79,10 +79,10 @@ export default function PortfolioImage({
     })
     .onEnd((event) => {
       const dropPointX = event.absoluteX;
-      
+
       // Calculate the new index based on the drop position
       const newIndex = Math.floor(dropPointX / (100 + 8)); // 100 is image width, 8 is gap
-      
+
       if (newIndex !== index && newIndex >= 0) {
         runOnJS(onReorder)(index, newIndex);
       }
@@ -128,14 +128,25 @@ export default function PortfolioImage({
     <GestureHandlerRootView>
       <GestureDetector gesture={dragGesture}>
         <Reanimated.View style={[styles.container, rStyle]}>
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: url }} style={styles.image} contentFit="cover" />
+          <View style={styles.imageWrapper}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: url }}
+                style={styles.image}
+                contentFit="cover"
+              />
+            </View>
             {isEditing && (
-              <Pressable 
+              <Pressable
                 onPress={handleDelete}
                 style={styles.deleteButton}
+                hitSlop={8}
               >
-                <MinusCircle size={24} color="#FF3B30" style={styles.deleteIcon} />
+                <MinusCircle
+                  size={24}
+                  color="#FF3B30"
+                  style={styles.deleteIcon}
+                />
               </Pressable>
             )}
           </View>
@@ -151,6 +162,11 @@ const styles = StyleSheet.create({
     height: 100,
     marginBottom: 8,
   },
+  imageWrapper: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+  },
   imageContainer: {
     width: "100%",
     height: "100%",
@@ -162,13 +178,22 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   deleteButton: {
-    position: 'absolute',
-    top: -8,
-    left: -8,
+    position: "absolute",
+    top: -12,
+    left: -12,
     padding: 4,
+    zIndex: 1,
   },
   deleteIcon: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
   },
 });

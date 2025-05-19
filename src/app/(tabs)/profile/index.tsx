@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
 import { Image } from "expo-image";
@@ -334,9 +335,38 @@ export default function ProfileScreen() {
           </VStack>
 
           <VStack style={styles.section} space="md">
-            <Text size="lg" bold className="text-typography-900 mb-3">
-              Skills
-            </Text>
+            <HStack className="justify-between items-center mb-3">
+              <Text size="lg" bold className="text-typography-900">
+                Skills
+              </Text>
+              <Button
+                size="sm"
+                variant="link"
+                action="primary"
+                onPress={() => router.push("/profile/skill/create")}
+                disabled={talentSkills.length >= MAX_TALENT_SKILLS}
+                style={{
+                  opacity: talentSkills.length >= MAX_TALENT_SKILLS ? 0.5 : 1,
+                }}
+              >
+                <ButtonIcon
+                  as={AddIcon}
+                  color={
+                    talentSkills.length >= MAX_TALENT_SKILLS ? "#999" : "#666"
+                  }
+                />
+                <ButtonText
+                  style={{
+                    color:
+                      talentSkills.length >= MAX_TALENT_SKILLS
+                        ? "#999"
+                        : "#666",
+                  }}
+                >
+                  Add Skill
+                </ButtonText>
+              </Button>
+            </HStack>
             {talentSkills.length > 0 ? (
               talentSkills.map((talentSkill) => (
                 <SkillCard

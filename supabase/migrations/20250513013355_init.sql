@@ -47,10 +47,10 @@ create table talent_skills (
   updated_at timestamp with time zone default now(),
   user_id uuid references users(id) on delete cascade not null,
   skill_id bigint references skills(id) on delete cascade not null,
-  summary text,
-  years_of_experience numeric(4,1),
-  hourly_rate numeric(10,2),
-  image_urls text[] default array[]::text[],
+  summary text not null,
+  years_of_experience numeric(4,1) not null,
+  hourly_rate numeric(10,2) not null,
+  image_urls text[] default array[]::text[] not null,
   constraint talent_skills_image_urls_length check (array_length(image_urls, 1) <= 5)
 );
 
