@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
@@ -35,6 +35,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import YoutubePlayer from "react-native-youtube-iframe";
 import { z } from "zod";
 
 const createSkillSchema = z.object({
@@ -55,6 +56,7 @@ const createSkillSchema = z.object({
       invalid_type_error: "Please enter a valid number",
     })
     .min(0, "Hourly rate must be 0 or greater"),
+  youtube_url: z.string().optional(),
   image_urls: z
     .array(z.string())
     .nonempty("Please upload at least one image")
@@ -66,6 +68,21 @@ type CreateSkillFormData = z.infer<typeof createSkillSchema>;
 export default function CreateSkillScreen() {
   const router = useRouter();
   const { session } = useAuth();
+  const [playing, setPlaying] = useState(false);
+
+  const getYoutubeVideoId = (url: string) => {
+    if (!url) return null;
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const onStateChange = useCallback((state: string) => {
+    if (state === "ended") {
+      setPlaying(false);
+    }
+  }, []);
   const { mutateAsync: createSkill } = useCreateTalentSkill();
   const [showActionsheet, setShowActionsheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,6 +102,7 @@ export default function CreateSkillScreen() {
       summary: "",
       years_of_experience: undefined,
       hourly_rate: undefined,
+      youtube_url: "",
       image_urls: [],
     },
   });
@@ -106,6 +124,7 @@ export default function CreateSkillScreen() {
         summary: data.summary,
         years_of_experience: data.years_of_experience,
         hourly_rate: data.hourly_rate,
+        youtube_url: data.youtube_url || null,
         image_urls: data.image_urls,
       });
 
@@ -332,6 +351,41 @@ export default function CreateSkillScreen() {
               />
             </VStack>
           </HStack>
+
+          <Controller
+            control={control}
+            name="youtube_url"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <FormControl isInvalid={Boolean(error)}>
+                <FormControlLabel>
+                  <FormControlLabelText>YouTube Video URL</FormControlLabelText>
+                </FormControlLabel>
+                <Input size="lg" variant="outline">
+                  <InputField
+                    placeholder="Enter YouTube video URL..."
+                    value={value ?? ""}
+                    onChangeText={onChange}
+                  />
+                </Input>
+                {value && (
+                  <View style={{ height: 200, marginTop: 8 }}>
+                    <YoutubePlayer
+                      height={200}
+                      videoId={getYoutubeVideoId(value)}
+                      play={playing}
+                      onChangeState={onStateChange}
+                    />
+                  </View>
+                )}
+                <FormControlError>
+                  <FormControlErrorIcon as={AlertCircleIcon} />
+                  <FormControlErrorText size="sm">
+                    {error?.message}
+                  </FormControlErrorText>
+                </FormControlError>
+              </FormControl>
+            )}
+          />
 
           <VStack space="md">
             <Text bold className="text-typography-700">

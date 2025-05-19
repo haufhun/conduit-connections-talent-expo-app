@@ -15,6 +15,7 @@ export interface TalentSkill {
   summary: string;
   years_of_experience: number;
   hourly_rate: number;
+  youtube_url: string | null;
   image_urls: string[];
   skill?: Skill; // Optional joined skill data
 }

@@ -23,15 +23,17 @@ import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
 import { Image } from "expo-image";
 import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
-import { useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import YoutubePlayer from "react-native-youtube-iframe";
 
 export default function SkillDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -48,13 +50,33 @@ export default function SkillDetailScreen() {
     error: talentSkillsError,
     isLoading: isLoadingTalentSkills,
   } = useGetUserTalentSkills();
+
+  const skill = talentSkills?.find((s) => s?.id === parseInt(id as string));
+  const [playing, setPlaying] = useState(false);
+
+  const getYoutubeVideoId = (url: string | null) => {
+    if (!url) return null;
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const onStateChange = useCallback((state: string) => {
+    if (state === "ended") {
+      setPlaying(false);
+    }
+  }, []);
+
   const [summaryModalVisible, setSummaryModalVisible] = useState(false);
   const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [experienceModalVisible, setExperienceModalVisible] = useState(false);
   const [hourlyRateModalVisible, setHourlyRateModalVisible] = useState(false);
+  const [youtubeModalVisible, setYoutubeModalVisible] = useState(false);
   const [tempSummary, setTempSummary] = useState("");
   const [tempExperience, setTempExperience] = useState("");
   const [tempHourlyRate, setTempHourlyRate] = useState("");
+  const [tempYoutubeUrl, setTempYoutubeUrl] = useState("");
 
   const isLoading = isLoadingUser || isLoadingTalentSkills;
 
@@ -104,8 +126,6 @@ export default function SkillDetailScreen() {
     }
   };
 
-  const skill = talentSkills?.find((s) => s.id === parseInt(id));
-
   const handleSummaryUpdate = () => {
     updateSkill({ summary: tempSummary });
     setSummaryModalVisible(false);
@@ -131,6 +151,11 @@ export default function SkillDetailScreen() {
 
     updateSkill({ hourly_rate: rate });
     setHourlyRateModalVisible(false);
+  };
+
+  const handleYoutubeUrlUpdate = () => {
+    updateSkill({ youtube_url: tempYoutubeUrl });
+    setYoutubeModalVisible(false);
   };
 
   const getSummaryPreview = (summary: string) => {
@@ -283,6 +308,41 @@ export default function SkillDetailScreen() {
               )}
             </VStack>
 
+            <VStack space="xs" style={styles.section}>
+              <HStack className="justify-between items-center">
+                <Text bold className="text-typography-700">
+                  YouTube Video
+                </Text>
+                <Button
+                  variant="link"
+                  onPress={() => {
+                    setTempYoutubeUrl(skill.youtube_url || "");
+                    setYoutubeModalVisible(true);
+                  }}
+                  className="p-0"
+                >
+                  <HStack space="xs" className="items-center">
+                    <ButtonIcon as={EditIcon} />
+                    <ButtonText>Edit</ButtonText>
+                  </HStack>
+                </Button>
+              </HStack>
+              {skill.youtube_url ? (
+                <View style={{ height: 200 }}>
+                  <YoutubePlayer
+                    height={200}
+                    play={playing}
+                    videoId={getYoutubeVideoId(skill.youtube_url) || ""}
+                    onChangeState={onStateChange}
+                  />
+                </View>
+              ) : (
+                <Text className="text-typography-500 italic">
+                  No video added
+                </Text>
+              )}
+            </VStack>
+
             <SkillImagesSection
               skill={skill}
               userId={session.user.id}
@@ -431,6 +491,51 @@ export default function SkillDetailScreen() {
               variant="solid"
               action="primary"
               onPress={handleHourlyRateUpdate}
+              isDisabled={isLoading}
+            >
+              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* YouTube URL Edit Modal */}
+      <Modal
+        isOpen={youtubeModalVisible}
+        onClose={() => setYoutubeModalVisible(false)}
+        size="lg"
+      >
+        <ModalBackdrop />
+        <ModalContent>
+          <ModalHeader>
+            <Text size="lg" bold>
+              Edit YouTube URL
+            </Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            <Input size="lg" variant="outline">
+              <InputField
+                placeholder="Enter YouTube video URL"
+                value={tempYoutubeUrl}
+                onChangeText={setTempYoutubeUrl}
+              />
+            </Input>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setYoutubeModalVisible(false)}
+              className="mr-2"
+            >
+              <ButtonText>Cancel</ButtonText>
+            </Button>
+            <Button
+              size="sm"
+              variant="solid"
+              action="primary"
+              onPress={handleYoutubeUrlUpdate}
               isDisabled={isLoading}
             >
               <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>

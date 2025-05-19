@@ -50,6 +50,7 @@ create table talent_skills (
   summary text not null,
   years_of_experience numeric(4,1) not null,
   hourly_rate numeric(10,2) not null,
+  youtube_url text,
   image_urls text[] default array[]::text[] not null,
   constraint talent_skills_image_urls_length check (array_length(image_urls, 1) <= 5)
 );
