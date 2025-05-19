@@ -3,11 +3,10 @@ import {
   useGetUserTalentSkills,
   useUpdateTalentSkill,
 } from "@/api/api";
-import FilePickerActionSheet from "@/components/FilePickerActionSheet";
-import PortfolioImage from "@/components/PortfolioImage";
+import SkillImagesSection from "@/components/skills/SkillImagesSection";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
-import { AddIcon, EditIcon } from "@/components/ui/icon";
+import { EditIcon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
@@ -20,12 +19,9 @@ import {
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
-import { uploadFileToSupabase } from "@/utils/storage";
 import { Image } from "expo-image";
-import * as ImageManipulator from "expo-image-manipulator";
 import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
@@ -52,8 +48,6 @@ export default function SkillDetailScreen() {
   const [tempSummary, setTempSummary] = useState("");
   const [tempExperience, setTempExperience] = useState("");
   const [tempHourlyRate, setTempHourlyRate] = useState("");
-  const [showActionsheet, setShowActionsheet] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
   const isLoading = isLoadingUser || isLoadingTalentSkills;
 
@@ -82,6 +76,10 @@ export default function SkillDetailScreen() {
   }
   if (typeof id !== "string") {
     return <Redirect href="/+not-found" />;
+  }
+
+  if (!session?.user?.id) {
+    return <Redirect href="/auth" />;
   }
 
   const updateSkill = async (updates: Partial<TalentSkill>) => {
@@ -126,78 +124,6 @@ export default function SkillDetailScreen() {
 
     updateSkill({ hourly_rate: rate });
     setHourlyRateModalVisible(false);
-  };
-
-  const handleImageFileUpload = async (uri: string, contentType: string) => {
-    if (!session?.user?.id || !skill) {
-      Alert.alert("Error", "You must be signed in to upload files");
-      return;
-    }
-
-    try {
-      let fileOptions = {
-        contentType,
-        fileExtension: "jpg",
-      };
-
-      // If it's an image, compress it
-      const compressedImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 1080 } }],
-        {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-        }
-      );
-
-      // Upload file to Supabase
-      const fileUrl = await uploadFileToSupabase(
-        compressedImage.uri,
-        SKILL_IMAGES_BUCKET,
-        `users/${session.user.id}/skills/${skill.id}`,
-        fileOptions
-      );
-
-      // Update the skill with the new URL
-      const updatedUrls = [...skill.image_urls, fileUrl];
-      await updateSkill({ image_urls: updatedUrls });
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      Alert.alert("Error", "Failed to upload file");
-    }
-  };
-
-  const handleAdd = () => {
-    if (!skill || skill.image_urls.length >= 5) {
-      Alert.alert("Maximum Files", "You can only add up to 5 portfolio items.");
-      return;
-    }
-    setShowActionsheet(true);
-  };
-
-  const handleDeleteImage = async (index: number) => {
-    if (!skill) return;
-    try {
-      const newUrls = [...skill.image_urls];
-      newUrls.splice(index, 1);
-      await updateSkill({ image_urls: newUrls });
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      Alert.alert("Error", "Failed to delete image");
-    }
-  };
-
-  const handleReorderImages = async (fromIndex: number, toIndex: number) => {
-    if (!skill) return;
-    try {
-      const newUrls = [...skill.image_urls];
-      const [movedItem] = newUrls.splice(fromIndex, 1);
-      newUrls.splice(toIndex, 0, movedItem);
-      await updateSkill({ image_urls: newUrls });
-    } catch (error) {
-      console.error("Error reordering images:", error);
-      Alert.alert("Error", "Failed to reorder images");
-    }
   };
 
   if (!skill) {
@@ -306,59 +232,11 @@ export default function SkillDetailScreen() {
               )}
             </VStack>
 
-            <VStack space="xs" style={styles.section}>
-              <HStack className="justify-between items-center">
-                <Text bold className="text-typography-700">
-                  Images
-                </Text>
-                <Button
-                  variant="link"
-                  onPress={() => setIsEditing(!isEditing)}
-                  className="p-0"
-                >
-                  <HStack space="xs" className="items-center">
-                    <ButtonIcon as={EditIcon} />
-                    <ButtonText>{isEditing ? "Done" : "Edit"}</ButtonText>
-                  </HStack>
-                </Button>
-              </HStack>
-              <HStack space="sm" style={styles.imagesGrid}>
-                {skill.image_urls.map((url, index) => (
-                  <PortfolioImage
-                    key={url}
-                    url={url}
-                    index={index}
-                    onDelete={handleDeleteImage}
-                    onReorder={handleReorderImages}
-                    isEditing={isEditing}
-                  />
-                ))}
-                {!isEditing && skill.image_urls.length < 5 && (
-                  <Button
-                    variant="outline"
-                    onPress={handleAdd}
-                    style={styles.addImageButton}
-                    className="items-center justify-center border-2 border-dashed border-opacity-75 border-typography-500 bg-white"
-                  >
-                    <VStack space="xs" className="items-center">
-                      <ButtonIcon
-                        as={AddIcon}
-                        size="xl"
-                        className="text-typography-300"
-                      />
-                      <ButtonText className="text-typography-300">
-                        Add Item
-                      </ButtonText>
-                    </VStack>
-                  </Button>
-                )}
-              </HStack>
-              {skill.image_urls.length === 0 && (
-                <Text className="text-typography-500 italic">
-                  No images added
-                </Text>
-              )}
-            </VStack>
+            <SkillImagesSection
+              skill={skill}
+              userId={session.user.id}
+              onUpdateSkill={updateSkill}
+            />
           </VStack>
         </VStack>
       </ScrollView>
@@ -507,13 +385,6 @@ export default function SkillDetailScreen() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      <FilePickerActionSheet
-        supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
-        showActionsheet={showActionsheet}
-        setShowActionsheet={setShowActionsheet}
-        handleFileUpload={handleImageFileUpload}
-      />
     </SafeAreaView>
   );
 }
@@ -538,21 +409,5 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
     textAlignVertical: "top",
-  },
-  imagesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  addImageButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-  },
-  talentSkillImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    marginBottom: 8,
   },
 });

@@ -13,6 +13,7 @@ import { StatusBar } from "expo-status-bar";
 import { ToastProvider } from "react-native-toast-notifications";
 
 import "@/global.css";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
 export default function RootLayout() {
@@ -33,23 +34,28 @@ export default function RootLayout() {
             <ThemeProvider
               value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
             >
-              <Stack
-                screenOptions={{
-                  animation: "slide_from_right",
-                  gestureDirection: "horizontal",
-                }}
-              >
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="auth"
-                  options={{
-                    headerShown: false,
-                    animation: "slide_from_left",
+              <GestureHandlerRootView>
+                <Stack
+                  screenOptions={{
+                    animation: "slide_from_right",
+                    gestureDirection: "horizontal",
                   }}
-                />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
+                >
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="auth"
+                    options={{
+                      headerShown: false,
+                      animation: "slide_from_left",
+                    }}
+                  />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+              </GestureHandlerRootView>
             </ThemeProvider>
           </QueryProvider>
         </AuthProvider>
