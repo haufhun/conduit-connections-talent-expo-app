@@ -363,9 +363,14 @@ export default function ProfileScreen() {
 
           <VStack style={styles.section} space="md">
             <HStack className="justify-between items-center mb-3">
-              <Text size="lg" bold className="text-typography-900">
-                Skills
-              </Text>
+              <HStack space="sm" className="items-center">
+                <Text size="lg" bold className="text-typography-900">
+                  Skills
+                </Text>
+                <Text size="sm" className="text-typography-500">
+                  ({`${talentSkills.length}/${MAX_TALENT_SKILLS}`})
+                </Text>
+              </HStack>
               <Button
                 size="sm"
                 variant="link"
