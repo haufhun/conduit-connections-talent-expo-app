@@ -3,7 +3,6 @@ import {
   useGetUserTalentSkills,
   useUpdateUserProfile,
 } from "@/api/api";
-import { Collapsible } from "@/components/Collapsible";
 import { SkillCard } from "@/components/SkillCard";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
@@ -64,6 +63,7 @@ export default function ProfileScreen() {
   const [tempBio, setTempBio] = useState(userProfile?.metadata?.bio);
   const [tempEmail, setTempEmail] = useState(userProfile?.email);
   const [tempPhone, setTempPhone] = useState(userProfile?.phone);
+  const [bioExpanded, setBioExpanded] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
@@ -168,6 +168,19 @@ export default function ProfileScreen() {
     setEmailModalVisible(true);
   };
 
+  const getBioPreview = (bio: string) => {
+    // Split by common sentence endings
+    const sentences = bio.match(/[^.!?]+[.!?]+/g) || [bio];
+    const previewSentences = sentences.slice(0, 4);
+    const preview = previewSentences.join(" ").trim();
+
+    // If there's more content and we're not ending with ..., add ...
+    return (
+      preview +
+      (preview.length < bio.length && !preview.endsWith("...") ? "..." : "")
+    );
+  };
+
   return (
     <>
       <SafeAreaView style={styles.safeArea} className="bg-primary">
@@ -260,32 +273,46 @@ export default function ProfileScreen() {
           </VStack>
 
           <VStack style={styles.section}>
-            <Collapsible
-              title="About Me"
-              initialIsOpen={userProfile.metadata?.bio === ""}
-            >
-              {userProfile.metadata?.bio ? (
-                <HStack space="sm" className="items-start">
-                  <Text className="text-typography-700 text-base leading-6 flex-1">
-                    {userProfile.metadata?.bio}
+            <HStack className="justify-between items-center mb-3">
+              <Text size="lg" bold className="text-typography-900">
+                About Me
+              </Text>
+              <TouchableOpacity onPress={openBioModal}>
+                <IconSymbol name="square.and.pencil" size={16} color="#666" />
+              </TouchableOpacity>
+            </HStack>
+            {userProfile.metadata?.bio ? (
+              <VStack space="sm">
+                <TouchableOpacity
+                  onPress={() => setBioExpanded(!bioExpanded)}
+                  activeOpacity={0.7}
+                >
+                  <Text className="text-typography-700 text-base leading-6">
+                    {bioExpanded
+                      ? userProfile.metadata.bio
+                      : getBioPreview(userProfile.metadata.bio)}
                   </Text>
-                  <TouchableOpacity onPress={openBioModal}>
-                    <IconSymbol
-                      name="square.and.pencil"
-                      size={16}
-                      color="#666"
-                    />
-                  </TouchableOpacity>
+                </TouchableOpacity>
+                {userProfile.metadata.bio.split("\n").length > 4 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onPress={() => setBioExpanded(!bioExpanded)}
+                  >
+                    <ButtonText className="text-primary-600">
+                      {bioExpanded ? "Show less" : "Show more"}
+                    </ButtonText>
+                  </Button>
+                )}
+              </VStack>
+            ) : (
+              <Button variant="link" onPress={openBioModal}>
+                <HStack space="xs" className="items-center">
+                  <ButtonIcon as={AddIcon} color="#666" />
+                  <ButtonText>Add bio</ButtonText>
                 </HStack>
-              ) : (
-                <Button variant="link" onPress={openBioModal} className="mt-4">
-                  <HStack space="xs" className="items-center">
-                    <ButtonIcon as={AddIcon} color="#666" />
-                    <ButtonText>Add bio</ButtonText>
-                  </HStack>
-                </Button>
-              )}
-            </Collapsible>
+              </Button>
+            )}
           </VStack>
 
           <VStack style={styles.section}>
