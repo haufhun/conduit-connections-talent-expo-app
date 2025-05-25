@@ -21,6 +21,10 @@ import { VStack } from "@/components/ui/vstack";
 import { MAX_SKILL_IMAGES, SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import { useAuth } from "@/providers/auth-provider";
 import { uploadFileToSupabase } from "@/utils/storage";
+import {
+  CreateSkillSchemaType,
+  createSkillSchema,
+} from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -37,33 +41,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { z } from "zod";
-
-const createSkillSchema = z.object({
-  skill_id: z.number({
-    required_error: "Please select a skill",
-  }),
-  summary: z
-    .string()
-    .min(1, "Please provide a summary")
-    .max(500, "Summary must be 500 characters or less"),
-  years_of_experience: z
-    .number({
-      invalid_type_error: "Please enter a valid number",
-    })
-    .min(0, "Years of experience must be 0 or greater"),
-  hourly_rate: z
-    .number({
-      invalid_type_error: "Please enter a valid number",
-    })
-    .min(0, "Hourly rate must be 0 or greater"),
-  youtube_url: z.string().optional(),
-  image_urls: z
-    .array(z.string())
-    .nonempty("Please upload at least one image")
-    .max(5, "You can only add up to 5 images"),
-});
-
-type CreateSkillFormData = z.infer<typeof createSkillSchema>;
 
 export default function CreateSkillScreen() {
   const router = useRouter();
@@ -95,7 +72,7 @@ export default function CreateSkillScreen() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<CreateSkillFormData>({
+  } = useForm<CreateSkillSchemaType>({
     resolver: zodResolver(createSkillSchema),
     defaultValues: {
       skill_id: undefined,
