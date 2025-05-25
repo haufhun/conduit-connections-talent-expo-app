@@ -123,9 +123,21 @@ create policy "Skill images are publicly accessible."
   on storage.objects for select to authenticated
   using (bucket_id = 'skill-images');
 
+
+
 create policy "Users can upload skill images."
   on storage.objects for insert to authenticated
   with check (bucket_id = 'skill-images');
+
+-- TODO: Refactor the above and replace it with the following, which restricts uploads to a user's folder.
+-- create policy "Allow authenticated uploads"
+-- on storage.objects
+-- for insert
+-- to authenticated
+-- with check (
+--   bucket_id = 'my_bucket_id' and
+--   (storage.foldername(name))[1] = (select auth.uid()::text)
+-- );
 
 create policy "Users can update their own skill images."
   on storage.objects for update to authenticated

@@ -4,22 +4,16 @@ import {
   useUpdateUserProfile,
 } from "@/api/api";
 import FilePickerActionSheet from "@/components/FilePickerActionSheet";
+import ProfileBioSection from "@/components/profile/ProfileBioSection";
+import ProfileContactSection from "@/components/profile/ProfileContactSection";
+import ProfileLocationSection from "@/components/profile/ProfileLocationSection";
+import ProfileNameSection from "@/components/profile/ProfileNameSection";
 import { SkillCard } from "@/components/SkillCard";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon } from "@/components/ui/icon";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { Input, InputField } from "@/components/ui/input";
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
@@ -59,15 +53,7 @@ export default function ProfileScreen() {
   const [nameModalVisible, setNameModalVisible] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [bioModalVisible, setBioModalVisible] = useState(false);
-  const [phoneModalVisible, setPhoneModalVisible] = useState(false);
-  const [emailModalVisible, setEmailModalVisible] = useState(false);
-  const [tempFirstName, setTempFirstName] = useState(userProfile?.first_name);
-  const [tempLastName, setTempLastName] = useState(userProfile?.last_name);
-  const [tempCity, setTempCity] = useState(userProfile?.city);
-  const [tempState, setTempState] = useState(userProfile?.state);
-  const [tempBio, setTempBio] = useState(userProfile?.metadata?.bio);
-  const [tempEmail, setTempEmail] = useState(userProfile?.email);
-  const [tempPhone, setTempPhone] = useState(userProfile?.phone);
+  const [contactModalVisible, setContactModalVisible] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
 
@@ -89,10 +75,11 @@ export default function ProfileScreen() {
     );
   }
 
-  async function updateProfile(updates: Partial<Omit<UserProfile, "id">>) {
+  async function handleProfileUpdate(
+    updates: Partial<Omit<UserProfile, "id">>
+  ) {
     try {
       if (!userProfile) throw new Error("User profile is not available");
-
       await updateUserProfile(updates);
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -106,85 +93,6 @@ export default function ProfileScreen() {
   const location = [userProfile.city, userProfile.state]
     .filter(Boolean)
     .join(", ");
-
-  const handleNameUpdate = () => {
-    updateProfile({
-      first_name: tempFirstName,
-      last_name: tempLastName,
-    });
-    setNameModalVisible(false);
-  };
-
-  const handleBioUpdate = () => {
-    updateProfile({
-      metadata: {
-        ...((userProfile as UserProfile)?.metadata || {}),
-        bio: tempBio,
-      },
-    });
-    setBioModalVisible(false);
-  };
-
-  const handleLocationUpdate = () => {
-    updateProfile({
-      city: tempCity,
-      state: tempState,
-    });
-    setLocationModalVisible(false);
-  };
-
-  const handlePhoneUpdate = () => {
-    updateProfile({
-      phone: tempPhone,
-    });
-    setPhoneModalVisible(false);
-  };
-
-  const handleEmailUpdate = () => {
-    updateProfile({
-      email: tempEmail,
-    });
-    setEmailModalVisible(false);
-  };
-
-  const openNameModal = () => {
-    setTempFirstName(userProfile.first_name);
-    setTempLastName(userProfile.last_name);
-    setNameModalVisible(true);
-  };
-
-  const openLocationModal = () => {
-    setTempCity(userProfile.city);
-    setTempState(userProfile.state);
-    setLocationModalVisible(true);
-  };
-
-  const openBioModal = () => {
-    setTempBio(userProfile.metadata?.bio);
-    setBioModalVisible(true);
-  };
-
-  const openPhoneModal = () => {
-    setTempPhone(userProfile.phone);
-    setPhoneModalVisible(true);
-  };
-  const openEmailModal = () => {
-    setTempEmail(userProfile.email);
-    setEmailModalVisible(true);
-  };
-
-  const getBioPreview = (bio: string) => {
-    // Split by common sentence endings
-    const sentences = bio.match(/[^.!?]+[.!?]+/g) || [bio];
-    const previewSentences = sentences.slice(0, 4);
-    const preview = previewSentences.join(" ").trim();
-
-    // If there's more content and we're not ending with ..., add ...
-    return (
-      preview +
-      (preview.length < bio.length && !preview.endsWith("...") ? "..." : "")
-    );
-  };
 
   const handleAvatarUpload = async (uri: string, contentType: string) => {
     try {
@@ -209,11 +117,24 @@ export default function ProfileScreen() {
         fileOptions
       );
 
-      await updateProfile({ avatar_url: fileUrl });
+      await handleProfileUpdate({ avatar_url: fileUrl });
     } catch (error) {
       console.error("Error uploading avatar:", error);
       Alert.alert("Error", "Failed to upload profile picture");
     }
+  };
+
+  const getBioPreview = (bio: string) => {
+    // Split by common sentence endings
+    const sentences = bio.match(/[^.!?]+[.!?]+/g) || [bio];
+    const previewSentences = sentences.slice(0, 4);
+    const preview = previewSentences.join(" ").trim();
+
+    // If there's more content and we're not ending with ..., add ...
+    return (
+      preview +
+      (preview.length < bio.length && !preview.endsWith("...") ? "..." : "")
+    );
   };
 
   return (
@@ -253,7 +174,7 @@ export default function ProfileScreen() {
                     <Text size="xl" bold className="text-typography-900">
                       {fullName}
                     </Text>
-                    <TouchableOpacity onPress={openNameModal}>
+                    <TouchableOpacity onPress={() => setNameModalVisible(true)}>
                       <IconSymbol
                         name="square.and.pencil"
                         size={16}
@@ -266,7 +187,7 @@ export default function ProfileScreen() {
                   <Button
                     size="xl"
                     variant="link"
-                    onPress={openNameModal}
+                    onPress={() => setNameModalVisible(true)}
                     className="mt-2"
                   >
                     <HStack space="xs" className="items-center">
@@ -283,7 +204,9 @@ export default function ProfileScreen() {
                     <Text size="sm" bold className="text-typography-900">
                       {location}
                     </Text>
-                    <TouchableOpacity onPress={openLocationModal}>
+                    <TouchableOpacity
+                      onPress={() => setLocationModalVisible(true)}
+                    >
                       <IconSymbol
                         name="square.and.pencil"
                         size={16}
@@ -296,7 +219,7 @@ export default function ProfileScreen() {
                   <Button
                     size="sm"
                     variant="link"
-                    onPress={openLocationModal}
+                    onPress={() => setLocationModalVisible(true)}
                     className="mt-2"
                   >
                     <HStack space="xs" className="items-center">
@@ -314,7 +237,7 @@ export default function ProfileScreen() {
               <Text size="lg" bold className="text-typography-900">
                 About Me
               </Text>
-              <TouchableOpacity onPress={openBioModal}>
+              <TouchableOpacity onPress={() => setBioModalVisible(true)}>
                 <IconSymbol name="square.and.pencil" size={16} color="#666" />
               </TouchableOpacity>
             </HStack>
@@ -343,7 +266,7 @@ export default function ProfileScreen() {
                 )}
               </VStack>
             ) : (
-              <Button variant="link" onPress={openBioModal}>
+              <Button variant="link" onPress={() => setBioModalVisible(true)}>
                 <HStack space="xs" className="items-center">
                   <ButtonIcon as={AddIcon} color="#666" />
                   <ButtonText>Add bio</ButtonText>
@@ -378,7 +301,7 @@ export default function ProfileScreen() {
                     {userProfile.email}
                   </Text>
                 </VStack>
-                <TouchableOpacity onPress={openEmailModal}>
+                <TouchableOpacity onPress={() => setContactModalVisible(true)}>
                   <IconSymbol name="square.and.pencil" size={16} color="#666" />
                 </TouchableOpacity>
               </HStack>
@@ -391,7 +314,7 @@ export default function ProfileScreen() {
                     {userProfile.phone || "Not provided"}
                   </Text>
                 </VStack>
-                <TouchableOpacity onPress={openPhoneModal}>
+                <TouchableOpacity onPress={() => setContactModalVisible(true)}>
                   <IconSymbol name="square.and.pencil" size={16} color="#666" />
                 </TouchableOpacity>
               </HStack>
@@ -466,337 +389,78 @@ export default function ProfileScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Name Edit Modal */}
-      <Modal
+      {/* Profile Sections */}
+      <ProfileNameSection
         isOpen={nameModalVisible}
         onClose={() => setNameModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              Edit Name
-            </Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="md">
-              <Input size="lg" variant="outline">
-                <InputField
-                  placeholder="First Name"
-                  value={tempFirstName}
-                  onChangeText={setTempFirstName}
-                />
-              </Input>
-              <Input size="lg" variant="outline">
-                <InputField
-                  placeholder="Last Name"
-                  value={tempLastName}
-                  onChangeText={setTempLastName}
-                />
-              </Input>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setNameModalVisible(false)}
-              className="mr-2"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={handleNameUpdate}
-              isDisabled={isLoading}
-            >
-              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onSubmit={(data) => {
+          handleProfileUpdate({
+            first_name: data.first_name,
+            last_name: data.last_name,
+          });
+          setNameModalVisible(false);
+        }}
+        defaultValues={{
+          first_name: userProfile.first_name,
+          last_name: userProfile.last_name,
+        }}
+      />
 
-      {/* Bio Edit Modal */}
-      <Modal
-        isOpen={bioModalVisible}
-        onClose={() => setBioModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              Edit Bio
-            </Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            <Input size="lg" variant="outline" style={styles.bioInputContainer}>
-              <InputField
-                placeholder="Time to shine! ✨ Tell us what makes you uniquely you. Maybe share your favorite dad joke, your secret talent, or what gets you excited about tech. Keep it real, keep it fun!"
-                value={tempBio}
-                onChangeText={setTempBio}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                style={styles.bioInput}
-              />
-            </Input>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setBioModalVisible(false)}
-              className="mr-2"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={handleBioUpdate}
-              isDisabled={isLoading}
-            >
-              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Location Edit Modal */}
-      <Modal
+      <ProfileLocationSection
         isOpen={locationModalVisible}
         onClose={() => setLocationModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              Edit Location
-            </Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="md">
-              <Input size="lg" variant="outline">
-                <InputField
-                  placeholder="City"
-                  value={tempCity}
-                  onChangeText={setTempCity}
-                />
-              </Input>
-              <Input size="lg" variant="outline">
-                <InputField
-                  placeholder="State"
-                  value={tempState}
-                  onChangeText={setTempState}
-                />
-              </Input>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setLocationModalVisible(false)}
-              className="mr-2"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={handleLocationUpdate}
-              isDisabled={isLoading}
-            >
-              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+        onSubmit={(data) => {
+          handleProfileUpdate({
+            city: data.city,
+            state: data.state,
+          });
+          setLocationModalVisible(false);
+        }}
+        defaultValues={{
+          city: userProfile.city,
+          state: userProfile.state,
+        }}
+      />
 
-      {/* Email Edit Modal */}
-      <Modal
-        isOpen={emailModalVisible}
-        onClose={() => setEmailModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              Edit Email
-            </Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="md">
-              <VStack>
-                <Text bold className="text-typography-700 mb-2">
-                  Email
-                </Text>
-                <Input size="lg" variant="outline">
-                  <InputField
-                    placeholder="Email"
-                    value={tempEmail}
-                    onChangeText={setTempEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </Input>
-              </VStack>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setEmailModalVisible(false)}
-              className="mr-2"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={handleEmailUpdate}
-              isDisabled={isLoading}
-            >
-              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ProfileBioSection
+        isOpen={bioModalVisible}
+        onClose={() => setBioModalVisible(false)}
+        onSubmit={(data) => {
+          handleProfileUpdate({
+            metadata: {
+              ...userProfile.metadata,
+              bio: data.bio,
+            },
+          });
+          setBioModalVisible(false);
+        }}
+        defaultValues={{
+          bio: userProfile.metadata?.bio,
+        }}
+      />
 
-      {/* Phone Edit Modal */}
-      <Modal
-        isOpen={phoneModalVisible}
-        onClose={() => setPhoneModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              Edit Phone
-            </Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="md">
-              <VStack>
-                <Text bold className="text-typography-700 mb-2">
-                  Phone
-                </Text>
-                <Input size="lg" variant="outline">
-                  <InputField
-                    placeholder="Phone"
-                    value={tempPhone}
-                    onChangeText={setTempPhone}
-                    keyboardType="phone-pad"
-                  />
-                </Input>
-              </VStack>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setPhoneModalVisible(false)}
-              className="mr-2"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={handlePhoneUpdate}
-              isDisabled={isLoading}
-            >
-              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ProfileContactSection
+        isOpen={contactModalVisible}
+        onClose={() => setContactModalVisible(false)}
+        onSubmit={(data) => {
+          handleProfileUpdate({
+            email: data.email,
+            phone: data.phone,
+          });
+          setContactModalVisible(false);
+        }}
+        defaultValues={{
+          email: userProfile.email,
+          phone: userProfile.phone,
+        }}
+      />
 
-      {/* Info Modal */}
-      <Modal
-        isOpen={infoModalVisible}
-        onClose={() => setInfoModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              About Your Profile
-            </Text>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="md">
-              <VStack space="sm">
-                <Text size="md" bold className="text-typography-900">
-                  Profile Visibility
-                </Text>
-                <Text className="text-typography-600">
-                  Your profile information is visible to event organizers and
-                  production companies looking for talent like you.
-                </Text>
-              </VStack>
-
-              <VStack space="sm">
-                <Text size="md" bold className="text-typography-900">
-                  Contact Information
-                </Text>
-                <Text className="text-typography-600">
-                  Your email and phone number will only be shared with
-                  organizers who are active in the system. This helps them
-                  communicate with you about job details and logistics.
-                </Text>
-              </VStack>
-
-              <VStack space="sm">
-                <Text size="md" bold className="text-typography-900">
-                  Privacy & Control
-                </Text>
-                <Text className="text-typography-600">
-                  You have full control over your profile information and can
-                  update or remove it at any time. We recommend keeping your
-                  profile up to date to receive the most relevant opportunities.
-                </Text>
-              </VStack>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={() => setInfoModalVisible(false)}
-            >
-              <ButtonText>Got it</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
+      {/* File Picker */}
       <FilePickerActionSheet
-        supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
         showActionsheet={showAvatarPicker}
         setShowActionsheet={setShowAvatarPicker}
         handleFileUpload={handleAvatarUpload}
+        supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
       />
     </>
   );
