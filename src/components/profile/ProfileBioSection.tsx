@@ -4,7 +4,6 @@ import {
   FormControlError,
   FormControlErrorText,
 } from "@/components/ui/form-control";
-import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
   ModalBackdrop,
@@ -15,10 +14,12 @@ import {
   ModalHeader,
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
+import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
+import { StyleSheet } from "react-native";
 import {
   ProfileBioSchemaType,
   profileBioSchema,
@@ -73,17 +74,16 @@ const ProfileBioSection: React.FC<ProfileBioSectionProps> = ({
                 control={control}
                 name="bio"
                 render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
+                  <Textarea size="md" variant="default">
+                    <TextareaInput
                       placeholder="Tell us about yourself..."
                       maxLength={500}
                       value={value}
                       onChangeText={onChange}
-                      multiline
                       numberOfLines={6}
-                      textAlignVertical="top"
+                      style={styles.bioInput}
                     />
-                  </Input>
+                  </Textarea>
                 )}
               />
               <FormControlError>
@@ -115,5 +115,11 @@ const ProfileBioSection: React.FC<ProfileBioSectionProps> = ({
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  bioInput: {
+    height: 160,
+  },
+});
 
 export default ProfileBioSection;

@@ -1,7 +1,6 @@
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { FormControl } from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
-import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
   ModalBackdrop,
@@ -12,6 +11,7 @@ import {
   ModalHeader,
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
+import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { TalentSkill } from "@/types/skills";
 import {
@@ -139,21 +139,19 @@ export default function SkillSummarySection({
               name="summary"
               render={({ field: { value, onChange } }) => (
                 <FormControl isInvalid={Boolean(errors.summary)}>
-                  <Input
+                  <Textarea
                     size="lg"
-                    variant="outline"
+                    variant="default"
                     style={styles.summaryInputContainer}
                   >
-                    <InputField
+                    <TextareaInput
                       placeholder="Write a summary of your experience with this skill..."
                       value={value}
                       onChangeText={onChange}
-                      multiline
                       numberOfLines={6}
-                      textAlignVertical="top"
                       style={styles.summaryInput}
                     />
-                  </Input>
+                  </Textarea>
                   {errors.summary?.message && (
                     <Text size="xs" className="text-error-600">
                       {errors.summary.message}
@@ -200,8 +198,5 @@ const styles = StyleSheet.create({
   },
   summaryInput: {
     height: 160,
-    paddingTop: 12,
-    paddingBottom: 12,
-    textAlignVertical: "top",
   },
 });

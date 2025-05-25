@@ -22,6 +22,7 @@
     "@gluestack-ui/modal": "0.1.41",
     "@gluestack-ui/nativewind-utils": "1.0.26",
     "@gluestack-ui/overlay": "0.1.22",
+    "@gluestack-ui/textarea": "0.1.25",
     "@gluestack-ui/toast": "1.0.9",
     "@hookform/resolvers": "5.0.1",
     "@legendapp/motion": "2.4.0",
