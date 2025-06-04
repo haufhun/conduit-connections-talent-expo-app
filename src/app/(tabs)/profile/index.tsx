@@ -8,6 +8,7 @@ import ProfileBioSection from "@/components/profile/ProfileBioSection";
 import ProfileContactSection from "@/components/profile/ProfileContactSection";
 import ProfileLocationSection from "@/components/profile/ProfileLocationSection";
 import ProfileNameSection from "@/components/profile/ProfileNameSection";
+import ProfileVisibilityModal from "@/components/profile/ProfileVisibilityModal";
 import { SkillCard } from "@/components/SkillCard";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
@@ -453,6 +454,11 @@ export default function ProfileScreen() {
           email: userProfile.email,
           phone: userProfile.phone,
         }}
+      />
+
+      <ProfileVisibilityModal
+        isOpen={infoModalVisible}
+        onClose={() => setInfoModalVisible(false)}
       />
 
       {/* File Picker */}
