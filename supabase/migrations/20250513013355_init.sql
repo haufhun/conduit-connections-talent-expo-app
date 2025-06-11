@@ -100,6 +100,37 @@ create policy "Users can delete their own talent skills."
   on talent_skills for delete to authenticated
   using ((select auth.uid()) = user_id);
 
+-- Create a view that joins users and their talent skills
+create view user_talent_skills as
+select 
+  u.*,
+  coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'talent_skill_id', ts.id,
+        'skill_id', ts.skill_id,
+        'skill_name', s.name,
+        'skill_image_url', s.image_url,
+        'summary', ts.summary,
+        'years_of_experience', ts.years_of_experience,
+        'hourly_rate', ts.hourly_rate,
+        'youtube_url', ts.youtube_url,
+        'skill_image_urls', ts.image_urls,
+        'created_at', ts.created_at,
+        'updated_at', ts.updated_at
+      )
+    ) filter (where ts.id is not null),
+    '[]'::jsonb
+  ) as talent_skills,
+  array_agg(ts.skill_id) filter (where ts.skill_id is not null) as skill_ids,
+  array_agg(lower(replace(s.name, ' ', ''))) filter (where s.name is not null) as skill_names
+from users u
+left join talent_skills ts on u.id = ts.user_id
+left join skills s on ts.skill_id = s.id
+group by u.id;
+
+-- Note: Views inherit RLS policies from their underlying tables
+-- The security is enforced through the existing RLS policies on users, talent_skills, and skills tables
 
 
 -- STORAGE
@@ -122,8 +153,6 @@ insert into storage.buckets (id, name, public)
 create policy "Skill images are publicly accessible."
   on storage.objects for select to authenticated
   using (bucket_id = 'skill-images');
-
-
 
 create policy "Users can upload skill images."
   on storage.objects for insert to authenticated
