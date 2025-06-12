@@ -5,6 +5,7 @@ import {
   createTalentBlockout,
   deleteTalentBlockout,
   getTalentBlockouts,
+  getTalentBlockoutsById,
   updateTalentBlockout,
 } from "./blockouts_spb";
 import type { AvailabilityFilter } from "./talent_blockout_schedule_spb";
@@ -68,6 +69,23 @@ export const useCreateTalentBlockout = () => {
       queryClient.invalidateQueries({ queryKey: ["user-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["talent-blockouts"] });
     },
+  });
+};
+
+export const useGetTalentBlockoutById = (
+  blockoutId: number,
+  enabled: boolean = true
+) => {
+  return useQuery<TalentBlockout>({
+    queryKey: ["talent-blockout", blockoutId],
+    queryFn: () => {
+      if (!blockoutId) {
+        throw new Error("Blockout ID is required");
+      }
+      return getTalentBlockoutsById(blockoutId);
+    },
+    enabled: enabled && !!blockoutId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 

@@ -1,4 +1,7 @@
-import { useCreateTalentBlockout } from "@/api/blockouts_api";
+import {
+  useGetTalentBlockoutById,
+  useUpdateTalentBlockout,
+} from "@/api/blockouts_api";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
   Checkbox,
@@ -20,18 +23,31 @@ import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
-import { createBlockoutSchema } from "@/validators/blockouts.validators";
+import { UpdateTalentBlockout } from "@/types/blockouts";
+import { canEditBlockout } from "@/utils/blockout-permissions";
+import { updateBlockoutSchema } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function CreateBlockoutScreen() {
+export default function EditBlockoutScreen() {
   const router = useRouter();
-  const { mutateAsync: createBlockout } = useCreateTalentBlockout();
+  const params = useLocalSearchParams<{
+    id: string;
+  }>();
+
+  const blockoutId = params.id ? parseInt(params.id) : 0;
+
+  const {
+    data: blockout,
+    isLoading,
+    error,
+  } = useGetTalentBlockoutById(blockoutId, !!blockoutId);
+  const { mutateAsync: updateBlockout } = useUpdateTalentBlockout();
 
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
@@ -43,50 +59,130 @@ export default function CreateBlockoutScreen() {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { isSubmitting },
   } = useForm({
-    resolver: zodResolver(createBlockoutSchema),
+    resolver: zodResolver(updateBlockoutSchema),
     defaultValues: {
       title: "",
       description: "",
       start_time: new Date().toISOString(),
-      end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+      end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       is_all_day: false,
       is_recurring: false,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       rrule: "",
-      metadata: {},
     },
   });
+
+  // Update form when blockout data is loaded
+  useEffect(() => {
+    if (blockout) {
+      reset({
+        title: blockout.title,
+        description: blockout.description || "",
+        start_time: blockout.start_time,
+        end_time: blockout.end_time,
+        is_all_day: blockout.is_all_day,
+        is_recurring: blockout.is_recurring,
+        timezone: blockout.timezone,
+        rrule: blockout.rrule || "",
+      });
+    }
+  }, [blockout, reset]);
+
+  // Check if blockout can be edited (end time must be in the future)
+  const canEdit = blockout ? canEditBlockout(blockout) : false;
+
+  // Handle loading and error states
+  if (isLoading) {
+    return (
+      <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+        <VStack className="flex-1 justify-center items-center p-[20px]">
+          <Text className="text-typography-600">
+            Loading blockout details...
+          </Text>
+        </VStack>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !blockout) {
+    return (
+      <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+        <VStack
+          className="flex-1 justify-center items-center p-[20px]"
+          space="md"
+        >
+          <Text className="text-typography-600">
+            Error loading blockout details
+          </Text>
+          <Button onPress={() => router.back()}>
+            <ButtonText>Go Back</ButtonText>
+          </Button>
+        </VStack>
+      </SafeAreaView>
+    );
+  }
+
+  // Check if blockout can be edited
+  if (!canEdit) {
+    return (
+      <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+        <VStack
+          className="flex-1 justify-center items-center p-[20px]"
+          space="md"
+        >
+          <Text className="text-typography-600 text-center">
+            This blockout cannot be edited because it has already ended.
+          </Text>
+          <Text className="text-typography-500 text-center text-sm">
+            Blockouts can only be edited if their end time is in the future.
+          </Text>
+          <Button onPress={() => router.back()}>
+            <ButtonText>Go Back</ButtonText>
+          </Button>
+        </VStack>
+      </SafeAreaView>
+    );
+  }
 
   const isAllDay = watch("is_all_day");
   const isRecurring = watch("is_recurring");
   const startTime = watch("start_time");
   const endTime = watch("end_time");
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: UpdateTalentBlockout) => {
     try {
-      await createBlockout({
-        title: data.title,
-        description: data.description || undefined,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        is_all_day: data.is_all_day || false,
-        timezone:
-          data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        is_recurring: data.is_recurring || false,
-        rrule: data.is_recurring ? data.rrule : undefined,
-        metadata: data.metadata || {},
+      if (!blockoutId) {
+        Alert.alert("Error", "Blockout ID is missing");
+        return;
+      }
+
+      await updateBlockout({
+        blockoutId,
+        updates: {
+          title: data.title,
+          description: data.description || undefined,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          is_all_day: data.is_all_day || false,
+          timezone:
+            data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          is_recurring: data.is_recurring || false,
+          rrule: data.is_recurring ? data.rrule : undefined,
+        },
       });
 
       router.back();
     } catch (error) {
-      console.error("Error creating blockout:", error);
-      Alert.alert("Error", "Failed to create blockout");
+      console.error("Error updating blockout:", error);
+      Alert.alert("Error", "Failed to update blockout");
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "Select Date";
     const date = new Date(dateString);
     return date.toLocaleDateString();
   };
@@ -98,7 +194,10 @@ export default function CreateBlockoutScreen() {
   ) => {
     if (!selectedDate) return;
 
-    const currentDateTime = new Date(type === "start" ? startTime : endTime);
+    const currentTimeValue = type === "start" ? startTime : endTime;
+    if (!currentTimeValue) return;
+
+    const currentDateTime = new Date(currentTimeValue);
 
     if (mode === "date") {
       // Update only the date part
@@ -117,14 +216,14 @@ export default function CreateBlockoutScreen() {
     );
 
     // Auto-adjust times to maintain valid start < end relationship
-    if (type === "start") {
+    if (type === "start" && endTime) {
       const currentEndTime = new Date(endTime);
       if (currentDateTime >= currentEndTime) {
         // Set end time to 1 hour after the new start time
         const newEndTime = new Date(currentDateTime.getTime() + 60 * 60 * 1000);
         setValue("end_time", newEndTime.toISOString());
       }
-    } else if (type === "end") {
+    } else if (type === "end" && startTime) {
       const currentStartTime = new Date(startTime);
       if (currentDateTime <= currentStartTime) {
         // Set start time to 1 hour before the new end time
@@ -151,7 +250,7 @@ export default function CreateBlockoutScreen() {
         <VStack space="lg" className="p-[20px]">
           <VStack space="sm">
             <Text className="text-typography-600">
-              Block out time when you&apos;re unavailable for gigs
+              Update your blockout details
             </Text>
           </VStack>
 
@@ -257,10 +356,12 @@ export default function CreateBlockoutScreen() {
                         onPress={() => setShowStartTimePicker(true)}
                       >
                         <ButtonText>
-                          {new Date(value).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {value
+                            ? new Date(value).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "Select Time"}
                         </ButtonText>
                       </Button>
                     )}
@@ -302,10 +403,12 @@ export default function CreateBlockoutScreen() {
                         onPress={() => setShowEndTimePicker(true)}
                       >
                         <ButtonText>
-                          {new Date(value).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {value
+                            ? new Date(value).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "Select Time"}
                         </ButtonText>
                       </Button>
                     )}
@@ -385,13 +488,13 @@ export default function CreateBlockoutScreen() {
             isDisabled={isSubmitting}
           >
             <ButtonText>
-              {isSubmitting ? "Creating..." : "Create Blockout"}
+              {isSubmitting ? "Updating..." : "Update Blockout"}
             </ButtonText>
           </Button>
         </VStack>
 
         {/* Date/Time Pickers */}
-        {showStartDatePicker && (
+        {showStartDatePicker && startTime && (
           <DateTimePicker
             value={new Date(startTime)}
             mode="date"
@@ -402,7 +505,7 @@ export default function CreateBlockoutScreen() {
           />
         )}
 
-        {showStartTimePicker && !isAllDay && (
+        {showStartTimePicker && !isAllDay && startTime && (
           <DateTimePicker
             value={new Date(startTime)}
             mode="time"
@@ -413,7 +516,7 @@ export default function CreateBlockoutScreen() {
           />
         )}
 
-        {showEndDatePicker && (
+        {showEndDatePicker && endTime && (
           <DateTimePicker
             value={new Date(endTime)}
             mode="date"
@@ -424,7 +527,7 @@ export default function CreateBlockoutScreen() {
           />
         )}
 
-        {showEndTimePicker && !isAllDay && (
+        {showEndTimePicker && !isAllDay && endTime && (
           <DateTimePicker
             value={new Date(endTime)}
             mode="time"

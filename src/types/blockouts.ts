@@ -1,5 +1,12 @@
 // Types for talent blockouts
 
+/**
+ * Business Rules for Blockout Editing:
+ * - Blockouts can only be edited if their end_time is in the future
+ * - Past blockouts (where end_time <= current time) are read-only
+ * - This ensures data integrity for completed time periods
+ */
+
 export type TalentBlockout = {
   blockout_id: number;
   title: string;

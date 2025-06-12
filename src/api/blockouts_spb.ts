@@ -20,6 +20,17 @@ export const getTalentBlockouts = async (talentId: string) => {
   return data as TalentBlockout[];
 };
 
+export const getTalentBlockoutsById = async (blockoutId: number) => {
+  const { data, error } = await supabase
+    .from("talent_blockouts")
+    .select("*")
+    .eq("id", blockoutId)
+    .eq("is_active", true)
+    .single();
+  if (error) throw error;
+  return data as TalentBlockout;
+};
+
 /**
  * Get blockouts for a talent within a specific date range
  */
@@ -84,6 +95,25 @@ export const updateTalentBlockout = async (
   blockoutId: number,
   updates: UpdateTalentBlockout
 ) => {
+  // First, get the existing blockout to check if it can be edited
+  const { data: existingBlockout, error: fetchError } = await supabase
+    .from("talent_blockouts")
+    .select("end_time")
+    .eq("id", blockoutId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  // Check if blockout can be edited (end time must be in the future)
+  const now = new Date();
+  const endTime = new Date(existingBlockout.end_time);
+
+  if (endTime <= now) {
+    throw new Error(
+      "Cannot update blockout: This blockout has already ended and can only be edited if the end time is in the future."
+    );
+  }
+
   const { data, error } = await supabase
     .from("talent_blockouts")
     .update({

@@ -6,10 +6,12 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentBlockout } from "@/types/blockouts";
+import { getBlockoutStatus } from "@/utils/blockout-permissions";
 import { Redirect, useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -193,60 +195,93 @@ export default function ScheduleScreen() {
 
                   {/* Blockouts for this date */}
                   <VStack space="sm">
-                    {groupedBlockouts[date].map((blockout: TalentBlockout) => (
-                      <TouchableOpacity
-                        key={blockout.blockout_id}
-                        className="p-4 bg-white rounded-xl border border-black/10"
-                        activeOpacity={0.7}
-                        // TODO: Navigate to edit blockout screen
-                      >
-                        <HStack space="md" className="items-center">
-                          <VStack className="w-14 h-14 justify-center items-center">
-                            <CalendarDaysIcon className="h-6 w-6" />
-                          </VStack>
+                    {groupedBlockouts[date].map((blockout: TalentBlockout) => {
+                      const status = getBlockoutStatus(blockout);
 
-                          <VStack space="xs" className="flex-1">
-                            <HStack className="items-center justify-between">
-                              <Text
-                                size="lg"
-                                bold
-                                className="text-typography-900"
-                              >
-                                {blockout.title}
-                              </Text>
-                            </HStack>
+                      return (
+                        <TouchableOpacity
+                          key={blockout.blockout_id}
+                          className={`p-4 bg-white rounded-xl border border-black/10 ${
+                            !status.canEdit ? "opacity-60" : ""
+                          }`}
+                          activeOpacity={status.canEdit ? 0.7 : 1}
+                          onPress={() => {
+                            if (status.canEdit) {
+                              router.push({
+                                pathname: "/(tabs)/schedule/[id]/edit",
+                                params: {
+                                  id: blockout.blockout_id.toString(),
+                                },
+                              });
+                            } else {
+                              Alert.alert(
+                                "Cannot Edit",
+                                "This blockout cannot be edited because it has already ended. Blockouts can only be edited if their end time is in the future.",
+                                [{ text: "OK" }]
+                              );
+                            }
+                          }}
+                        >
+                          <HStack space="md" className="items-center">
+                            <VStack className="w-14 h-14 justify-center items-center">
+                              <CalendarDaysIcon className="h-6 w-6" />
+                            </VStack>
 
-                            <HStack space="sm">
-                              <Text size="sm" className="text-typography-500">
-                                {formatBlockoutTime(blockout)}
-                              </Text>
-                              <Text size="sm" className="text-typography-500">
-                                • {getBlockoutDuration(blockout)}
-                              </Text>
-                            </HStack>
-
-                            {blockout.description && (
-                              <Text
-                                size="sm"
-                                className="text-typography-700"
-                                numberOfLines={2}
-                                ellipsizeMode="tail"
-                              >
-                                {blockout.description}
-                              </Text>
-                            )}
-
-                            {blockout.is_recurring && (
-                              <HStack className="items-center mt-1" space="xs">
-                                <Text className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
-                                  Recurring
+                            <VStack space="xs" className="flex-1">
+                              <HStack className="items-center justify-between">
+                                <Text
+                                  size="lg"
+                                  bold
+                                  className="text-typography-900"
+                                >
+                                  {blockout.title}
                                 </Text>
                               </HStack>
-                            )}
-                          </VStack>
-                        </HStack>
-                      </TouchableOpacity>
-                    ))}
+
+                              <HStack space="sm">
+                                <Text size="sm" className="text-typography-500">
+                                  {formatBlockoutTime(blockout)}
+                                </Text>
+                                <Text size="sm" className="text-typography-500">
+                                  • {getBlockoutDuration(blockout)}
+                                </Text>
+                              </HStack>
+
+                              {blockout.description && (
+                                <Text
+                                  size="sm"
+                                  className="text-typography-700"
+                                  numberOfLines={2}
+                                  ellipsizeMode="tail"
+                                >
+                                  {blockout.description}
+                                </Text>
+                              )}
+
+                              {blockout.is_recurring && (
+                                <HStack
+                                  className="items-center mt-1"
+                                  space="xs"
+                                >
+                                  <Text className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
+                                    Recurring
+                                  </Text>
+                                </HStack>
+                              )}
+
+                              {/* Show status indicator only for ended blockouts */}
+                              {!status.canEdit && (
+                                <HStack className="items-center justify-between mt-2">
+                                  <Text className="text-xs text-gray-500">
+                                    Ended - View Only
+                                  </Text>
+                                </HStack>
+                              )}
+                            </VStack>
+                          </HStack>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </VStack>
                 </VStack>
               ))
