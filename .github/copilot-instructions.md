@@ -1,4 +1,4 @@
-We are creating an expo app using the following technologies:
+We are creating a react-native, iOS and Android expo app using the following technologies:
 
 - React Native
 - Expo
