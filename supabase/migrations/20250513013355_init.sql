@@ -164,53 +164,70 @@ create policy "Users can delete their own talent blockouts."
 
 -- Create a view that joins users and their talent skills and blockouts
 create view user_talent_skills as
+with user_skills_agg as (
+  select 
+    u.id as user_id,
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'talent_skill_id', ts.id,
+          'skill_id', ts.skill_id,
+          'skill_name', s.name,
+          'skill_image_url', s.image_url,
+          'summary', ts.summary,
+          'years_of_experience', ts.years_of_experience,
+          'hourly_rate', ts.hourly_rate,
+          'youtube_url', ts.youtube_url,
+          'skill_image_urls', ts.image_urls,
+          'created_at', ts.created_at,
+          'updated_at', ts.updated_at
+        )
+      ) filter (where ts.id is not null),
+      '[]'::jsonb
+    ) as talent_skills,
+    array_agg(ts.skill_id) filter (where ts.skill_id is not null) as skill_ids,
+    array_agg(lower(replace(s.name, ' ', ''))) filter (where s.name is not null) as skill_names
+  from users u
+  left join talent_skills ts on u.id = ts.user_id
+  left join skills s on ts.skill_id = s.id
+  group by u.id
+),
+user_blockouts_agg as (
+  select 
+    u.id as user_id,
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'blockout_id', tb.id,
+          'title', tb.title,
+          'description', tb.description,
+          'start_time', tb.start_time,
+          'end_time', tb.end_time,
+          'is_all_day', tb.is_all_day,
+          'timezone', tb.timezone,
+          'is_recurring', tb.is_recurring,
+          'rrule', tb.rrule,
+          'is_active', tb.is_active,
+          'metadata', tb.metadata,
+          'created_at', tb.created_at,
+          'updated_at', tb.updated_at
+        )
+      ) filter (where tb.id is not null and tb.is_active = true),
+      '[]'::jsonb
+    ) as talent_blockouts
+  from users u
+  left join talent_blockouts tb on u.id = tb.talent_id
+  group by u.id
+)
 select 
   u.*,
-  coalesce(
-    jsonb_agg(
-      jsonb_build_object(
-        'talent_skill_id', ts.id,
-        'skill_id', ts.skill_id,
-        'skill_name', s.name,
-        'skill_image_url', s.image_url,
-        'summary', ts.summary,
-        'years_of_experience', ts.years_of_experience,
-        'hourly_rate', ts.hourly_rate,
-        'youtube_url', ts.youtube_url,
-        'skill_image_urls', ts.image_urls,
-        'created_at', ts.created_at,
-        'updated_at', ts.updated_at
-      )
-    ) filter (where ts.id is not null),
-    '[]'::jsonb
-  ) as talent_skills,
-  coalesce(
-    jsonb_agg(
-      jsonb_build_object(
-        'blockout_id', tb.id,
-        'title', tb.title,
-        'description', tb.description,
-        'start_time', tb.start_time,
-        'end_time', tb.end_time,
-        'is_all_day', tb.is_all_day,
-        'timezone', tb.timezone,
-        'is_recurring', tb.is_recurring,
-        'rrule', tb.rrule,
-        'is_active', tb.is_active,
-        'metadata', tb.metadata,
-        'created_at', tb.created_at,
-        'updated_at', tb.updated_at
-      )
-    ) filter (where tb.id is not null and tb.is_active = true),
-    '[]'::jsonb
-  ) as talent_blockouts,
-  array_agg(ts.skill_id) filter (where ts.skill_id is not null) as skill_ids,
-  array_agg(lower(replace(s.name, ' ', ''))) filter (where s.name is not null) as skill_names
+  coalesce(usa.talent_skills, '[]'::jsonb) as talent_skills,
+  coalesce(uba.talent_blockouts, '[]'::jsonb) as talent_blockouts,
+  usa.skill_ids,
+  usa.skill_names
 from users u
-left join talent_skills ts on u.id = ts.user_id
-left join skills s on ts.skill_id = s.id
-left join talent_blockouts tb on u.id = tb.talent_id
-group by u.id;
+left join user_skills_agg usa on u.id = usa.user_id
+left join user_blockouts_agg uba on u.id = uba.user_id;
 
 -- Note: Views inherit RLS policies from their underlying tables
 -- The security is enforced through the existing RLS policies on users, talent_skills, talent_blockouts, and skills tables
