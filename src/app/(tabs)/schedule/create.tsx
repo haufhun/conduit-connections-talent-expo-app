@@ -1,4 +1,5 @@
 import { useCreateTalentBlockout } from "@/api/blockouts_api";
+import { RecurringScheduleForm } from "@/components/schedule/RecurringScheduleForm";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
   Checkbox,
@@ -24,7 +25,7 @@ import { createBlockoutSchema } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -63,6 +64,15 @@ export default function CreateBlockoutScreen() {
   const isRecurring = watch("is_recurring");
   const startTime = watch("start_time");
   const endTime = watch("end_time");
+
+  // Memoized callback to prevent infinite re-renders
+  const handleRRuleChange = useCallback(
+    (rrule: string) => setValue("rrule", rrule),
+    [setValue]
+  );
+
+  // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
+  const memoizedStartDate = useMemo(() => new Date(startTime), [startTime]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -146,7 +156,7 @@ export default function CreateBlockoutScreen() {
   };
 
   return (
-    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary pb-[50px]">
       <ScrollView className="flex-1">
         <VStack space="lg" className="p-[20px]">
           <VStack space="sm">
@@ -343,37 +353,10 @@ export default function CreateBlockoutScreen() {
           />
 
           {isRecurring && (
-            <Controller
-              control={control}
-              name="rrule"
-              render={({
-                field: { value, onChange },
-                fieldState: { error },
-              }) => (
-                <FormControl isInvalid={Boolean(error)}>
-                  <FormControlLabel>
-                    <FormControlLabelText>
-                      Recurrence Rule (RRULE)
-                    </FormControlLabelText>
-                  </FormControlLabel>
-                  <Input size="lg" variant="outline">
-                    <InputField
-                      placeholder="e.g., FREQ=WEEKLY;BYDAY=MO,WE,FR"
-                      value={value ?? ""}
-                      onChangeText={onChange}
-                    />
-                  </Input>
-                  <Text size="sm" className="text-typography-500 mt-1">
-                    Use standard RRULE format for recurrence pattern
-                  </Text>
-                  <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText size="sm">
-                      {error?.message}
-                    </FormControlErrorText>
-                  </FormControlError>
-                </FormControl>
-              )}
+            <RecurringScheduleForm
+              startDate={memoizedStartDate}
+              onRRuleChange={handleRRuleChange}
+              initialRRule={watch("rrule") || ""}
             />
           )}
 

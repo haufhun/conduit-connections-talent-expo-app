@@ -128,7 +128,7 @@ export default function EditBlockoutScreen() {
   // Check if blockout can be edited
   if (!canEdit) {
     return (
-      <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+      <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary pb-[50px]">
         <VStack
           className="flex-1 justify-center items-center p-[20px]"
           space="md"

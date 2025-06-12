@@ -138,7 +138,7 @@ export default function ScheduleScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} className="bg-white">
+    <SafeAreaView className="flex-1 bg-white pb-[50px]">
       <VStack className="flex-1 px-0">
         {/* Header */}
         <VStack className="pt-6 pb-2 px-5">
@@ -293,7 +293,6 @@ export default function ScheduleScreen() {
         <Fab
           placement="bottom right"
           size="lg"
-          style={styles.fab}
           onPress={() => {
             router.push("/(tabs)/schedule/create");
           }}
@@ -306,9 +305,6 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
   },
@@ -321,18 +317,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-  },
-  fab: {
-    position: "absolute",
-    right: 16,
-    bottom: 63, // Moved up to clear the tab bar
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 8,
   },
 });
