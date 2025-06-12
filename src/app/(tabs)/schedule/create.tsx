@@ -25,7 +25,7 @@ import { createBlockoutSchema } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,10 +34,13 @@ export default function CreateBlockoutScreen() {
   const router = useRouter();
   const { mutateAsync: createBlockout } = useCreateTalentBlockout();
 
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [selectedField, setSelectedField] = useState<string | null>(null);
+
+  // Computed values based on selectedField
+  const showStartDatePicker = selectedField === "start-date";
+  const showStartTimePicker = selectedField === "start-time";
+  const showEndDatePicker = selectedField === "end-date";
+  const showEndTimePicker = selectedField === "end-time";
 
   const {
     control,
@@ -73,6 +76,16 @@ export default function CreateBlockoutScreen() {
 
   // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
   const memoizedStartDate = useMemo(() => new Date(startTime), [startTime]);
+
+  // Clear time field selections when all-day is toggled
+  useEffect(() => {
+    if (
+      isAllDay &&
+      (selectedField === "start-time" || selectedField === "end-time")
+    ) {
+      setSelectedField(null);
+    }
+  }, [isAllDay, selectedField]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -145,13 +158,15 @@ export default function CreateBlockoutScreen() {
       }
     }
 
-    // Hide pickers
-    if (type === "start") {
-      setShowStartDatePicker(false);
-      setShowStartTimePicker(false);
+    // Don't clear selected field - let user manually deselect
+  };
+
+  const handleFieldPress = (fieldType: string) => {
+    // Toggle selection or select new field
+    if (selectedField === fieldType) {
+      setSelectedField(null);
     } else {
-      setShowEndDatePicker(false);
-      setShowEndTimePicker(false);
+      setSelectedField(fieldType);
     }
   };
 
@@ -253,18 +268,30 @@ export default function CreateBlockoutScreen() {
                   <HStack space="sm">
                     <Button
                       size="lg"
-                      variant="outline"
+                      variant={
+                        selectedField === "start-date" ? "solid" : "outline"
+                      }
+                      action={
+                        selectedField === "start-date" ? "primary" : "secondary"
+                      }
                       className="flex-1"
-                      onPress={() => setShowStartDatePicker(true)}
+                      onPress={() => handleFieldPress("start-date")}
                     >
                       <ButtonText>{formatDate(value)}</ButtonText>
                     </Button>
                     {!isAllDay && (
                       <Button
                         size="lg"
-                        variant="outline"
+                        variant={
+                          selectedField === "start-time" ? "solid" : "outline"
+                        }
+                        action={
+                          selectedField === "start-time"
+                            ? "primary"
+                            : "secondary"
+                        }
                         className="flex-1"
-                        onPress={() => setShowStartTimePicker(true)}
+                        onPress={() => handleFieldPress("start-time")}
                       >
                         <ButtonText>
                           {new Date(value).toLocaleTimeString([], {
@@ -275,6 +302,38 @@ export default function CreateBlockoutScreen() {
                       </Button>
                     )}
                   </HStack>
+
+                  {/* Date/Time Picker positioned directly below start time fields */}
+                  {selectedField === "start-date" && showStartDatePicker && (
+                    <VStack className="items-center mt-4">
+                      <DateTimePicker
+                        value={new Date(startTime)}
+                        mode="date"
+                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        onChange={(event, selectedDate) =>
+                          handleDateTimeChange("start", "date", selectedDate)
+                        }
+                      />
+                    </VStack>
+                  )}
+
+                  {selectedField === "start-time" &&
+                    showStartTimePicker &&
+                    !isAllDay && (
+                      <VStack className="items-center mt-4">
+                        <DateTimePicker
+                          value={new Date(startTime)}
+                          mode="time"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(event, selectedDate) =>
+                            handleDateTimeChange("start", "time", selectedDate)
+                          }
+                        />
+                      </VStack>
+                    )}
+
                   <FormControlError>
                     <FormControlErrorIcon as={AlertCircleIcon} />
                     <FormControlErrorText size="sm">
@@ -298,18 +357,28 @@ export default function CreateBlockoutScreen() {
                   <HStack space="sm">
                     <Button
                       size="lg"
-                      variant="outline"
+                      variant={
+                        selectedField === "end-date" ? "solid" : "outline"
+                      }
+                      action={
+                        selectedField === "end-date" ? "primary" : "secondary"
+                      }
                       className="flex-1"
-                      onPress={() => setShowEndDatePicker(true)}
+                      onPress={() => handleFieldPress("end-date")}
                     >
                       <ButtonText>{formatDate(value)}</ButtonText>
                     </Button>
                     {!isAllDay && (
                       <Button
                         size="lg"
-                        variant="outline"
+                        variant={
+                          selectedField === "end-time" ? "solid" : "outline"
+                        }
+                        action={
+                          selectedField === "end-time" ? "primary" : "secondary"
+                        }
                         className="flex-1"
-                        onPress={() => setShowEndTimePicker(true)}
+                        onPress={() => handleFieldPress("end-time")}
                       >
                         <ButtonText>
                           {new Date(value).toLocaleTimeString([], {
@@ -320,6 +389,38 @@ export default function CreateBlockoutScreen() {
                       </Button>
                     )}
                   </HStack>
+
+                  {/* Date/Time Picker positioned directly below end time fields */}
+                  {selectedField === "end-date" && showEndDatePicker && (
+                    <VStack className="items-center mt-4">
+                      <DateTimePicker
+                        value={new Date(endTime)}
+                        mode="date"
+                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                        onChange={(event, selectedDate) =>
+                          handleDateTimeChange("end", "date", selectedDate)
+                        }
+                      />
+                    </VStack>
+                  )}
+
+                  {selectedField === "end-time" &&
+                    showEndTimePicker &&
+                    !isAllDay && (
+                      <VStack className="items-center mt-4">
+                        <DateTimePicker
+                          value={new Date(endTime)}
+                          mode="time"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(event, selectedDate) =>
+                            handleDateTimeChange("end", "time", selectedDate)
+                          }
+                        />
+                      </VStack>
+                    )}
+
                   <FormControlError>
                     <FormControlErrorIcon as={AlertCircleIcon} />
                     <FormControlErrorText size="sm">
@@ -372,51 +473,6 @@ export default function CreateBlockoutScreen() {
             </ButtonText>
           </Button>
         </VStack>
-
-        {/* Date/Time Pickers */}
-        {showStartDatePicker && (
-          <DateTimePicker
-            value={new Date(startTime)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("start", "date", selectedDate)
-            }
-          />
-        )}
-
-        {showStartTimePicker && !isAllDay && (
-          <DateTimePicker
-            value={new Date(startTime)}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("start", "time", selectedDate)
-            }
-          />
-        )}
-
-        {showEndDatePicker && (
-          <DateTimePicker
-            value={new Date(endTime)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("end", "date", selectedDate)
-            }
-          />
-        )}
-
-        {showEndTimePicker && !isAllDay && (
-          <DateTimePicker
-            value={new Date(endTime)}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("end", "time", selectedDate)
-            }
-          />
-        )}
       </ScrollView>
     </SafeAreaView>
   );
