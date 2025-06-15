@@ -2,6 +2,7 @@ import {
   useGetTalentBlockoutById,
   useUpdateTalentBlockout,
 } from "@/api/blockouts_api";
+import { RecurringScheduleForm } from "@/components/schedule/RecurringScheduleForm";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
   Checkbox,
@@ -29,7 +30,7 @@ import { updateBlockoutSchema } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,10 +50,13 @@ export default function EditBlockoutScreen() {
   } = useGetTalentBlockoutById(blockoutId, !!blockoutId);
   const { mutateAsync: updateBlockout } = useUpdateTalentBlockout();
 
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [selectedField, setSelectedField] = useState<string | null>(null);
+
+  // Computed values based on selectedField
+  const showStartDatePicker = selectedField === "start-date";
+  const showStartTimePicker = selectedField === "start-time";
+  const showEndDatePicker = selectedField === "end-date";
+  const showEndTimePicker = selectedField === "end-time";
 
   const {
     control,
@@ -93,6 +97,33 @@ export default function EditBlockoutScreen() {
 
   // Check if blockout can be edited (end time must be in the future)
   const canEdit = blockout ? canEditBlockout(blockout) : false;
+
+  const isAllDay = watch("is_all_day");
+  const isRecurring = watch("is_recurring");
+  const startTime = watch("start_time");
+  const endTime = watch("end_time");
+
+  // Memoized callback to prevent infinite re-renders
+  const handleRRuleChange = useCallback(
+    (rrule: string) => setValue("rrule", rrule),
+    [setValue]
+  );
+
+  // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
+  const memoizedStartDate = useMemo(
+    () => new Date(startTime || new Date().toISOString()),
+    [startTime]
+  );
+
+  // Clear time field selections when all-day is toggled
+  useEffect(() => {
+    if (
+      isAllDay &&
+      (selectedField === "start-time" || selectedField === "end-time")
+    ) {
+      setSelectedField(null);
+    }
+  }, [isAllDay, selectedField]);
 
   // Handle loading and error states
   if (isLoading) {
@@ -146,11 +177,6 @@ export default function EditBlockoutScreen() {
       </SafeAreaView>
     );
   }
-
-  const isAllDay = watch("is_all_day");
-  const isRecurring = watch("is_recurring");
-  const startTime = watch("start_time");
-  const endTime = watch("end_time");
 
   const onSubmit = async (data: UpdateTalentBlockout) => {
     try {
@@ -234,18 +260,20 @@ export default function EditBlockoutScreen() {
       }
     }
 
-    // Hide pickers
-    if (type === "start") {
-      setShowStartDatePicker(false);
-      setShowStartTimePicker(false);
+    // Don't clear selected field - let user manually deselect
+  };
+
+  const handleFieldPress = (fieldType: string) => {
+    // Toggle selection or select new field
+    if (selectedField === fieldType) {
+      setSelectedField(null);
     } else {
-      setShowEndDatePicker(false);
-      setShowEndTimePicker(false);
+      setSelectedField(fieldType);
     }
   };
 
   return (
-    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
+    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary pb-[50px]">
       <ScrollView className="flex-1">
         <VStack space="lg" className="p-[20px]">
           <VStack space="sm">
@@ -342,18 +370,22 @@ export default function EditBlockoutScreen() {
                   <HStack space="sm">
                     <Button
                       size="lg"
-                      variant="outline"
+                      variant={
+                        selectedField === "start-date" ? "solid" : "outline"
+                      }
                       className="flex-1"
-                      onPress={() => setShowStartDatePicker(true)}
+                      onPress={() => handleFieldPress("start-date")}
                     >
                       <ButtonText>{formatDate(value)}</ButtonText>
                     </Button>
                     {!isAllDay && (
                       <Button
                         size="lg"
-                        variant="outline"
+                        variant={
+                          selectedField === "start-time" ? "solid" : "outline"
+                        }
                         className="flex-1"
-                        onPress={() => setShowStartTimePicker(true)}
+                        onPress={() => handleFieldPress("start-time")}
                       >
                         <ButtonText>
                           {value
@@ -366,6 +398,43 @@ export default function EditBlockoutScreen() {
                       </Button>
                     )}
                   </HStack>
+
+                  {/* Date/Time Picker positioned directly below start time fields */}
+                  {selectedField === "start-date" &&
+                    showStartDatePicker &&
+                    value && (
+                      <VStack className="items-center mt-4">
+                        <DateTimePicker
+                          value={new Date(value)}
+                          mode="date"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(event, selectedDate) =>
+                            handleDateTimeChange("start", "date", selectedDate)
+                          }
+                        />
+                      </VStack>
+                    )}
+
+                  {selectedField === "start-time" &&
+                    showStartTimePicker &&
+                    !isAllDay &&
+                    value && (
+                      <VStack className="items-center mt-4">
+                        <DateTimePicker
+                          value={new Date(value)}
+                          mode="time"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(event, selectedDate) =>
+                            handleDateTimeChange("start", "time", selectedDate)
+                          }
+                        />
+                      </VStack>
+                    )}
+
                   <FormControlError>
                     <FormControlErrorIcon as={AlertCircleIcon} />
                     <FormControlErrorText size="sm">
@@ -389,18 +458,22 @@ export default function EditBlockoutScreen() {
                   <HStack space="sm">
                     <Button
                       size="lg"
-                      variant="outline"
+                      variant={
+                        selectedField === "end-date" ? "solid" : "outline"
+                      }
                       className="flex-1"
-                      onPress={() => setShowEndDatePicker(true)}
+                      onPress={() => handleFieldPress("end-date")}
                     >
                       <ButtonText>{formatDate(value)}</ButtonText>
                     </Button>
                     {!isAllDay && (
                       <Button
                         size="lg"
-                        variant="outline"
+                        variant={
+                          selectedField === "end-time" ? "solid" : "outline"
+                        }
                         className="flex-1"
-                        onPress={() => setShowEndTimePicker(true)}
+                        onPress={() => handleFieldPress("end-time")}
                       >
                         <ButtonText>
                           {value
@@ -413,6 +486,43 @@ export default function EditBlockoutScreen() {
                       </Button>
                     )}
                   </HStack>
+
+                  {/* Date/Time Picker positioned directly below end time fields */}
+                  {selectedField === "end-date" &&
+                    showEndDatePicker &&
+                    value && (
+                      <VStack className="items-center mt-4">
+                        <DateTimePicker
+                          value={new Date(value)}
+                          mode="date"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(event, selectedDate) =>
+                            handleDateTimeChange("end", "date", selectedDate)
+                          }
+                        />
+                      </VStack>
+                    )}
+
+                  {selectedField === "end-time" &&
+                    showEndTimePicker &&
+                    !isAllDay &&
+                    value && (
+                      <VStack className="items-center mt-4">
+                        <DateTimePicker
+                          value={new Date(value)}
+                          mode="time"
+                          display={
+                            Platform.OS === "ios" ? "spinner" : "default"
+                          }
+                          onChange={(event, selectedDate) =>
+                            handleDateTimeChange("end", "time", selectedDate)
+                          }
+                        />
+                      </VStack>
+                    )}
+
                   <FormControlError>
                     <FormControlErrorIcon as={AlertCircleIcon} />
                     <FormControlErrorText size="sm">
@@ -446,37 +556,10 @@ export default function EditBlockoutScreen() {
           />
 
           {isRecurring && (
-            <Controller
-              control={control}
-              name="rrule"
-              render={({
-                field: { value, onChange },
-                fieldState: { error },
-              }) => (
-                <FormControl isInvalid={Boolean(error)}>
-                  <FormControlLabel>
-                    <FormControlLabelText>
-                      Recurrence Rule (RRULE)
-                    </FormControlLabelText>
-                  </FormControlLabel>
-                  <Input size="lg" variant="outline">
-                    <InputField
-                      placeholder="e.g., FREQ=WEEKLY;BYDAY=MO,WE,FR"
-                      value={value ?? ""}
-                      onChangeText={onChange}
-                    />
-                  </Input>
-                  <Text size="sm" className="text-typography-500 mt-1">
-                    Use standard RRULE format for recurrence pattern
-                  </Text>
-                  <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText size="sm">
-                      {error?.message}
-                    </FormControlErrorText>
-                  </FormControlError>
-                </FormControl>
-              )}
+            <RecurringScheduleForm
+              startDate={memoizedStartDate}
+              onRRuleChange={handleRRuleChange}
+              initialRRule={watch("rrule") || ""}
             />
           )}
 
@@ -492,51 +575,6 @@ export default function EditBlockoutScreen() {
             </ButtonText>
           </Button>
         </VStack>
-
-        {/* Date/Time Pickers */}
-        {showStartDatePicker && startTime && (
-          <DateTimePicker
-            value={new Date(startTime)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("start", "date", selectedDate)
-            }
-          />
-        )}
-
-        {showStartTimePicker && !isAllDay && startTime && (
-          <DateTimePicker
-            value={new Date(startTime)}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("start", "time", selectedDate)
-            }
-          />
-        )}
-
-        {showEndDatePicker && endTime && (
-          <DateTimePicker
-            value={new Date(endTime)}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("end", "date", selectedDate)
-            }
-          />
-        )}
-
-        {showEndTimePicker && !isAllDay && endTime && (
-          <DateTimePicker
-            value={new Date(endTime)}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={(event, selectedDate) =>
-              handleDateTimeChange("end", "time", selectedDate)
-            }
-          />
-        )}
       </ScrollView>
     </SafeAreaView>
   );

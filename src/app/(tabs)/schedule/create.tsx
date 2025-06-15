@@ -271,9 +271,6 @@ export default function CreateBlockoutScreen() {
                       variant={
                         selectedField === "start-date" ? "solid" : "outline"
                       }
-                      action={
-                        selectedField === "start-date" ? "primary" : "secondary"
-                      }
                       className="flex-1"
                       onPress={() => handleFieldPress("start-date")}
                     >
@@ -284,11 +281,6 @@ export default function CreateBlockoutScreen() {
                         size="lg"
                         variant={
                           selectedField === "start-time" ? "solid" : "outline"
-                        }
-                        action={
-                          selectedField === "start-time"
-                            ? "primary"
-                            : "secondary"
                         }
                         className="flex-1"
                         onPress={() => handleFieldPress("start-time")}
@@ -360,9 +352,6 @@ export default function CreateBlockoutScreen() {
                       variant={
                         selectedField === "end-date" ? "solid" : "outline"
                       }
-                      action={
-                        selectedField === "end-date" ? "primary" : "secondary"
-                      }
                       className="flex-1"
                       onPress={() => handleFieldPress("end-date")}
                     >
@@ -373,9 +362,6 @@ export default function CreateBlockoutScreen() {
                         size="lg"
                         variant={
                           selectedField === "end-time" ? "solid" : "outline"
-                        }
-                        action={
-                          selectedField === "end-time" ? "primary" : "secondary"
                         }
                         className="flex-1"
                         onPress={() => handleFieldPress("end-time")}
