@@ -1,3 +1,6 @@
+-- Create enum type for user types
+CREATE TYPE user_type AS ENUM ('TALENT', 'ORGANIZER');
+
 -- Create a table for public users
 create table users (
   id uuid references auth.users on delete cascade not null primary key,
@@ -11,6 +14,7 @@ create table users (
   state text,
   metadata jsonb default '{}'::jsonb,
   avatar_url text,
+  user_type user_type NOT NULL DEFAULT 'TALENT',
 
   constraint phone_length check (char_length(phone) <= 15)
 );
@@ -21,8 +25,25 @@ returns trigger
 set search_path = ''
 as $$
 begin
-  insert into public.users (id, email)
-  values (new.id, new.email);
+  insert into public.users (id, email, user_type)
+  values (
+    new.id, 
+    new.email,
+    coalesce(
+      (new.raw_user_meta_data->>'user_type')::public.user_type,
+      'TALENT'
+    )
+  );
+  
+  -- Update the auth.users table to sync raw_app_meta_data with raw_user_meta_data user_type
+  update auth.users
+  set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || 
+    jsonb_build_object('user_type', coalesce(
+      (new.raw_user_meta_data->>'user_type'),
+      'TALENT'
+    ))
+  where id = new.id;
+
   return new;
 end;
 $$ language plpgsql security definer;
@@ -55,7 +76,7 @@ create table talent_skills (
   constraint talent_skills_image_urls_length check (array_length(image_urls, 1) <= 5)
 );
 
--- Create unique constraint to prevent duplicate skills for a user
+-- Create unique index to prevent duplicate skills for a user
 create unique index talent_skills_user_skill_unique on talent_skills(user_id, skill_id);
 
 -- Create a talent_blockouts table
@@ -100,6 +121,9 @@ create index talent_blockouts_end_time_idx on talent_blockouts(end_time);
 create index talent_blockouts_active_idx on talent_blockouts(is_active) where is_active = true;
 create index talent_blockouts_recurring_idx on talent_blockouts(is_recurring) where is_recurring = true;
 create index talent_blockouts_all_day_idx on talent_blockouts(is_all_day);
+
+-- Add index for user_type for better query performance
+create index idx_users_user_type on users(user_type);
 
 -- Set up Row Level Security (RLS)
 alter table users enable row level security;

@@ -47,7 +47,7 @@ BEGIN
       select
         'user1@example.com',
         crypt('password123', gen_salt('bf')),
-        '{"first_name":"John","last_name":"Doe"}',
+        '{"first_name":"John","last_name":"Doe","user_type":"TALENT"}',
         '{"provider":"email","providers":["email"]}',
         '00000000-0000-0000-0000-000000000000',
         uuid_generate_v4(),
@@ -73,6 +73,56 @@ BEGIN
     state = 'CA',
     metadata = '{"bio": "Full-stack developer with a passion for building great user experiences"}'::jsonb
   WHERE id = user1_id;
+
+  -- Create organizer user
+  INSERT INTO
+    auth.users (
+      email,
+      encrypted_password,
+      raw_user_meta_data,
+      raw_app_meta_data,
+      instance_id,
+      id,
+      aud,
+      role,
+      email_confirmed_at,
+      recovery_sent_at,
+      last_sign_in_at,
+      created_at,
+      updated_at,
+      confirmation_token,
+      email_change,
+      email_change_token_new,
+      recovery_token
+    ) VALUES (
+      'user2@example.com',
+      crypt('password123', gen_salt('bf')),
+      '{"first_name":"Sarah","last_name":"Martinez","user_type":"ORGANIZER"}',
+      '{"provider":"email","providers":["email"]}',
+      '00000000-0000-0000-0000-000000000000',
+      uuid_generate_v4(),
+      'authenticated',
+      'authenticated',
+      current_timestamp,
+      current_timestamp,
+      current_timestamp,
+      current_timestamp,
+      current_timestamp,
+      '',
+      '',
+      '',
+      ''
+    );
+
+  -- Update the public users profile for organizer
+  UPDATE public.users 
+  SET 
+    first_name = 'Sarah',
+    last_name = 'Martinez',
+    city = 'Austin',
+    state = 'TX',
+    metadata = '{"bio": "Event organizer specializing in music festivals and corporate events. Passionate about creating memorable experiences."}'::jsonb
+  WHERE email = 'user2@example.com';
 
   -- -- Insert sample skills
   INSERT INTO skills (name, image_url)
@@ -149,7 +199,7 @@ BEGIN
         ) VALUES (
           'harry.potter@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Harry","last_name":"Potter"}',
+          '{"first_name":"Harry","last_name":"Potter","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -166,7 +216,7 @@ BEGIN
           ''
         ) RETURNING id INTO harry_id;
 
-        -- Create remaining characters
+        -- Create Hermione Granger
         INSERT INTO auth.users (
           email,
           encrypted_password,
@@ -188,7 +238,7 @@ BEGIN
         ) VALUES (
           'hermione.granger@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Hermione","last_name":"Granger"}',
+          '{"first_name":"Hermione","last_name":"Granger","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -227,7 +277,7 @@ BEGIN
         ) VALUES (
           'ron.weasley@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Ron","last_name":"Weasley"}',
+          '{"first_name":"Ron","last_name":"Weasley","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -266,7 +316,7 @@ BEGIN
         ) VALUES (
           'luna.lovegood@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Luna","last_name":"Lovegood"}',
+          '{"first_name":"Luna","last_name":"Lovegood","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -305,7 +355,7 @@ BEGIN
         ) VALUES (
           'neville.longbottom@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Neville","last_name":"Longbottom"}',
+          '{"first_name":"Neville","last_name":"Longbottom","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -344,7 +394,7 @@ BEGIN
         ) VALUES (
           'ginny.weasley@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Ginny","last_name":"Weasley"}',
+          '{"first_name":"Ginny","last_name":"Weasley","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -383,7 +433,7 @@ BEGIN
         ) VALUES (
           'draco.malfoy@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Draco","last_name":"Malfoy"}',
+          '{"first_name":"Draco","last_name":"Malfoy","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -422,7 +472,7 @@ BEGIN
         ) VALUES (
           'cho.chang@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Cho","last_name":"Chang"}',
+          '{"first_name":"Cho","last_name":"Chang","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -461,7 +511,7 @@ BEGIN
         ) VALUES (
           'cedric.diggory@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Cedric","last_name":"Diggory"}',
+          '{"first_name":"Cedric","last_name":"Diggory","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),
@@ -500,7 +550,7 @@ BEGIN
         ) VALUES (
           'fred.weasley@hogwarts.edu',
           crypt('password123', gen_salt('bf')),
-          '{"first_name":"Fred","last_name":"Weasley"}',
+          '{"first_name":"Fred","last_name":"Weasley","user_type":"TALENT"}',
           '{"provider":"email","providers":["email"]}',
           '00000000-0000-0000-0000-000000000000',
           uuid_generate_v4(),

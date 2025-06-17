@@ -1,3 +1,8 @@
+export enum UserType {
+  TALENT = "TALENT",
+  ORGANIZER = "ORGANIZER",
+}
+
 export interface UserProfile {
   id: string;
   first_name?: string;
@@ -10,4 +15,5 @@ export interface UserProfile {
   email: string;
   phone?: string;
   avatar_url?: string;
+  user_type: UserType;
 }
