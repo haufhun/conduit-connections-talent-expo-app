@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../providers/auth-provider";
-import type { CreateTalentBlockout, TalentBlockout } from "../types/blockouts";
+import type {
+  CreateTalentBlockout,
+  TalentExpandedBlockout,
+} from "../types/blockouts";
 import {
   createTalentBlockout,
   deleteTalentBlockout,
@@ -61,7 +64,7 @@ export const useCreateTalentBlockout = () => {
     throw new Error("User ID is not available");
   }
 
-  return useMutation<TalentBlockout, Error, CreateTalentBlockout>({
+  return useMutation<TalentExpandedBlockout, Error, CreateTalentBlockout>({
     mutationFn: async (blockoutData) => {
       return createTalentBlockout(talentId, blockoutData);
     },
@@ -76,7 +79,7 @@ export const useGetTalentBlockoutById = (
   blockoutId: number,
   enabled: boolean = true
 ) => {
-  return useQuery<TalentBlockout>({
+  return useQuery<TalentExpandedBlockout>({
     queryKey: ["talent-blockout", blockoutId],
     queryFn: () => {
       if (!blockoutId) {
@@ -97,7 +100,7 @@ export const useGetTalentBlockouts = (enabled: boolean = true) => {
     throw new Error("User ID is not available");
   }
 
-  return useQuery<TalentBlockout[]>({
+  return useQuery<TalentExpandedBlockout[]>({
     queryKey: ["talent-blockouts", talentId],
     queryFn: () => getTalentBlockouts(talentId),
     enabled: enabled && !!talentId,
@@ -109,7 +112,7 @@ export const useUpdateTalentBlockout = () => {
   const queryClient = useQueryClient();
 
   return useMutation<
-    TalentBlockout,
+    TalentExpandedBlockout,
     Error,
     { blockoutId: number; updates: Partial<CreateTalentBlockout> }
   >({
@@ -126,7 +129,7 @@ export const useUpdateTalentBlockout = () => {
 export const useDeleteTalentBlockout = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<TalentBlockout, Error, number>({
+  return useMutation<TalentExpandedBlockout, Error, number>({
     mutationFn: async (blockoutId) => {
       return deleteTalentBlockout(blockoutId);
     },

@@ -1,7 +1,7 @@
 import { supabase } from "../lib/supabase";
 import type {
   CreateTalentBlockout,
-  TalentBlockout,
+  TalentExpandedBlockout,
   UpdateTalentBlockout,
 } from "../types/blockouts";
 
@@ -17,7 +17,7 @@ export const getTalentBlockouts = async (talentId: string) => {
     .order("start_time", { ascending: true });
 
   if (error) throw error;
-  return data as TalentBlockout[];
+  return data as TalentExpandedBlockout[];
 };
 
 export const getTalentBlockoutsById = async (blockoutId: number) => {
@@ -28,7 +28,7 @@ export const getTalentBlockoutsById = async (blockoutId: number) => {
     .eq("is_active", true)
     .single();
   if (error) throw error;
-  return data as TalentBlockout;
+  return data as TalentExpandedBlockout;
 };
 
 /**
@@ -49,7 +49,7 @@ export const getTalentBlockoutsInRange = async (
     .order("start_time", { ascending: true });
 
   if (error) throw error;
-  return data as TalentBlockout[];
+  return data as TalentExpandedBlockout[];
 };
 
 /**
@@ -65,7 +65,7 @@ export const getTalentRecurringBlockouts = async (talentId: string) => {
     .order("start_time", { ascending: true });
 
   if (error) throw error;
-  return data as TalentBlockout[];
+  return data as TalentExpandedBlockout[];
 };
 
 /**
@@ -85,7 +85,7 @@ export const createTalentBlockout = async (
     .single();
 
   if (error) throw error;
-  return data as TalentBlockout;
+  return data as TalentExpandedBlockout;
 };
 
 /**
@@ -125,7 +125,7 @@ export const updateTalentBlockout = async (
     .single();
 
   if (error) throw error;
-  return data as TalentBlockout;
+  return data as TalentExpandedBlockout;
 };
 
 /**
@@ -143,7 +143,7 @@ export const deleteTalentBlockout = async (blockoutId: number) => {
     .single();
 
   if (error) throw error;
-  return data as TalentBlockout;
+  return data as TalentExpandedBlockout;
 };
 
 /**
@@ -204,7 +204,7 @@ export const getOverlappingBlockouts = async (
     );
 
   if (error) throw error;
-  return data as TalentBlockout[];
+  return data as TalentExpandedBlockout[];
 };
 
 /**
@@ -225,7 +225,7 @@ export const createMultipleTalentBlockouts = async (
     .select();
 
   if (error) throw error;
-  return data as TalentBlockout[];
+  return data as TalentExpandedBlockout[];
 };
 
 /**
@@ -246,5 +246,5 @@ export const getUpcomingTalentBlockouts = async (talentId: string) => {
     .order("start_time", { ascending: true });
 
   if (error) throw error;
-  return data as TalentBlockout[];
+  return data as TalentExpandedBlockout[];
 };

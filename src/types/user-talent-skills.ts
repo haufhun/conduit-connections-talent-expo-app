@@ -1,4 +1,4 @@
-import type { TalentBlockout } from "./blockouts";
+import type { TalentExpandedBlockout } from "./blockouts";
 
 type TalentSkill = {
   talent_skill_id: number;
@@ -31,7 +31,7 @@ export type TalentWithSkills = {
   // Array of talent skills
   talent_skills: TalentSkill[];
   // Array of talent blockouts
-  talent_blockouts: TalentBlockout[];
+  talent_blockouts: TalentExpandedBlockout[];
   // Array of skill IDs for efficient querying
   skill_ids: number[];
   // Array of skill names for efficient text searching

@@ -7,20 +7,30 @@
  * - This ensures data integrity for completed time periods
  */
 
-export type TalentBlockout = {
+export type TalentBlockoutDatabase = {
   blockout_id: number;
-  title: string;
-  description: string | null;
-  start_time: string;
   end_time: string;
   is_all_day: boolean;
+  start_time: string;
   timezone: string;
+  title: string;
+  description: string | null;
   is_recurring: boolean;
   rrule: string | null;
   is_active: boolean;
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
+};
+
+export type TalentExpandedBlockout = {
+  blockout_id: number;
+  end_time: string;
+  is_all_day: boolean;
+  start_time: string;
+  timezone: string;
+  title: string;
+  original_blockout: TalentBlockoutDatabase;
 };
 
 // For creating new blockouts
