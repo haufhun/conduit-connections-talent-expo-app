@@ -95,7 +95,7 @@ BEGIN
       email_change_token_new,
       recovery_token
     ) VALUES (
-      'user2@example.com',
+      'organizer@example.com',
       crypt('password123', gen_salt('bf')),
       '{"first_name":"Sarah","last_name":"Martinez","user_type":"ORGANIZER"}',
       '{"provider":"email","providers":["email"]}',
@@ -122,7 +122,7 @@ BEGIN
     city = 'Austin',
     state = 'TX',
     metadata = '{"bio": "Event organizer specializing in music festivals and corporate events. Passionate about creating memorable experiences."}'::jsonb
-  WHERE email = 'user2@example.com';
+  WHERE email = 'organizer@example.com';
 
   -- -- Insert sample skills
   INSERT INTO skills (name, image_url)
