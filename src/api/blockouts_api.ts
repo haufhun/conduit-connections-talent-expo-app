@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../providers/auth-provider";
 import type {
   CreateTalentBlockout,
-  TalentExpandedBlockout,
+  TalentBlockoutDatabase,
 } from "../types/blockouts";
 import {
   createTalentBlockout,
@@ -64,7 +64,7 @@ export const useCreateTalentBlockout = () => {
     throw new Error("User ID is not available");
   }
 
-  return useMutation<TalentExpandedBlockout, Error, CreateTalentBlockout>({
+  return useMutation<TalentBlockoutDatabase, Error, CreateTalentBlockout>({
     mutationFn: async (blockoutData) => {
       return createTalentBlockout(talentId, blockoutData);
     },
@@ -79,7 +79,7 @@ export const useGetTalentBlockoutById = (
   blockoutId: number,
   enabled: boolean = true
 ) => {
-  return useQuery<TalentExpandedBlockout>({
+  return useQuery<TalentBlockoutDatabase>({
     queryKey: ["talent-blockout", blockoutId],
     queryFn: () => {
       if (!blockoutId) {
@@ -100,7 +100,7 @@ export const useGetTalentBlockouts = (enabled: boolean = true) => {
     throw new Error("User ID is not available");
   }
 
-  return useQuery<TalentExpandedBlockout[]>({
+  return useQuery<TalentBlockoutDatabase[]>({
     queryKey: ["talent-blockouts", talentId],
     queryFn: () => getTalentBlockouts(talentId),
     enabled: enabled && !!talentId,
@@ -112,7 +112,7 @@ export const useUpdateTalentBlockout = () => {
   const queryClient = useQueryClient();
 
   return useMutation<
-    TalentExpandedBlockout,
+    TalentBlockoutDatabase,
     Error,
     { blockoutId: number; updates: Partial<CreateTalentBlockout> }
   >({
@@ -129,7 +129,7 @@ export const useUpdateTalentBlockout = () => {
 export const useDeleteTalentBlockout = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<TalentExpandedBlockout, Error, number>({
+  return useMutation<TalentBlockoutDatabase, Error, number>({
     mutationFn: async (blockoutId) => {
       return deleteTalentBlockout(blockoutId);
     },

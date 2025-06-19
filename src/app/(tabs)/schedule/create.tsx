@@ -24,15 +24,40 @@ import { VStack } from "@/components/ui/vstack";
 import { createBlockoutSchema } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Enable timezone plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 export default function CreateBlockoutScreen() {
   const router = useRouter();
   const { mutateAsync: createBlockout } = useCreateTalentBlockout();
+
+  // Get user's timezone, with fallback for development
+  const getTimezone = useCallback(() => {
+    if (__DEV__) {
+      return "America/Chicago"; // Central Time for local simulator
+    }
+    return dayjs.tz.guess();
+  }, []);
+
+  // Format date using dayjs in user's timezone
+  const formatDate = (dateString: string) => {
+    return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
+  };
+
+  // Format time using dayjs in user's timezone
+  const formatTime = (dateString: string) => {
+    return dayjs(dateString).tz(getTimezone()).format("h:mm A");
+  };
 
   const [selectedField, setSelectedField] = useState<string | null>(null);
 
@@ -75,7 +100,10 @@ export default function CreateBlockoutScreen() {
   );
 
   // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
-  const memoizedStartDate = useMemo(() => new Date(startTime), [startTime]);
+  const memoizedStartDate = useMemo(
+    () => dayjs(startTime).tz(getTimezone()).toDate(),
+    [startTime, getTimezone]
+  );
 
   // Clear time field selections when all-day is toggled
   useEffect(() => {
@@ -109,11 +137,6 @@ export default function CreateBlockoutScreen() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
   const handleDateTimeChange = (
     type: "start" | "end",
     mode: "date" | "time",
@@ -121,39 +144,51 @@ export default function CreateBlockoutScreen() {
   ) => {
     if (!selectedDate) return;
 
-    const currentDateTime = new Date(type === "start" ? startTime : endTime);
+    // Get current datetime using dayjs and update only the date or time portion
+    // This preserves the user's timezone while updating the selected component
+    const currentTimeValue = type === "start" ? startTime : endTime;
+    const currentDateTime = dayjs(currentTimeValue).tz(getTimezone());
 
+    let updatedDateTime;
     if (mode === "date") {
       // Update only the date part
-      currentDateTime.setFullYear(selectedDate.getFullYear());
-      currentDateTime.setMonth(selectedDate.getMonth());
-      currentDateTime.setDate(selectedDate.getDate());
+      const selected = dayjs(selectedDate); // TODO: Look at this for potential timezone issues
+      updatedDateTime = currentDateTime
+        .year(selected.year())
+        .month(selected.month())
+        .date(selected.date());
     } else {
       // Update only the time part
-      currentDateTime.setHours(selectedDate.getHours());
-      currentDateTime.setMinutes(selectedDate.getMinutes());
+      const selected = dayjs(selectedDate); // TODO: Look at this for potential timezone issues
+      updatedDateTime = currentDateTime
+        .hour(selected.hour())
+        .minute(selected.minute());
     }
 
     setValue(
       type === "start" ? "start_time" : "end_time",
-      currentDateTime.toISOString()
+      updatedDateTime.toISOString()
     );
 
     // Auto-adjust times to maintain valid start < end relationship
     if (type === "start") {
-      const currentEndTime = new Date(endTime);
-      if (currentDateTime >= currentEndTime) {
+      const currentEndTime = dayjs(endTime);
+      if (
+        updatedDateTime.isAfter(currentEndTime) ||
+        updatedDateTime.isSame(currentEndTime)
+      ) {
         // Set end time to 1 hour after the new start time
-        const newEndTime = new Date(currentDateTime.getTime() + 60 * 60 * 1000);
+        const newEndTime = updatedDateTime.add(1, "hour");
         setValue("end_time", newEndTime.toISOString());
       }
     } else if (type === "end") {
-      const currentStartTime = new Date(startTime);
-      if (currentDateTime <= currentStartTime) {
+      const currentStartTime = dayjs(startTime);
+      if (
+        updatedDateTime.isBefore(currentStartTime) ||
+        updatedDateTime.isSame(currentStartTime)
+      ) {
         // Set start time to 1 hour before the new end time
-        const newStartTime = new Date(
-          currentDateTime.getTime() - 60 * 60 * 1000
-        );
+        const newStartTime = updatedDateTime.subtract(1, "hour");
         setValue("start_time", newStartTime.toISOString());
       }
     }
@@ -255,6 +290,10 @@ export default function CreateBlockoutScreen() {
           />
 
           <VStack space="md">
+            <Text size="sm" className="text-typography-500 px-1">
+              All times are displayed in your local timezone ({getTimezone()})
+            </Text>
+
             <Controller
               control={control}
               name="start_time"
@@ -285,12 +324,7 @@ export default function CreateBlockoutScreen() {
                         className="flex-1"
                         onPress={() => handleFieldPress("start-time")}
                       >
-                        <ButtonText>
-                          {new Date(value).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </ButtonText>
+                        <ButtonText>{formatTime(value)}</ButtonText>
                       </Button>
                     )}
                   </HStack>
@@ -299,7 +333,7 @@ export default function CreateBlockoutScreen() {
                   {selectedField === "start-date" && showStartDatePicker && (
                     <VStack className="items-center mt-4">
                       <DateTimePicker
-                        value={new Date(startTime)}
+                        value={dayjs(startTime).tz(getTimezone()).toDate()}
                         mode="date"
                         display={Platform.OS === "ios" ? "spinner" : "default"}
                         onChange={(event, selectedDate) =>
@@ -314,7 +348,7 @@ export default function CreateBlockoutScreen() {
                     !isAllDay && (
                       <VStack className="items-center mt-4">
                         <DateTimePicker
-                          value={new Date(startTime)}
+                          value={dayjs(startTime).tz(getTimezone()).toDate()}
                           mode="time"
                           display={
                             Platform.OS === "ios" ? "spinner" : "default"
@@ -366,12 +400,7 @@ export default function CreateBlockoutScreen() {
                         className="flex-1"
                         onPress={() => handleFieldPress("end-time")}
                       >
-                        <ButtonText>
-                          {new Date(value).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </ButtonText>
+                        <ButtonText>{formatTime(value)}</ButtonText>
                       </Button>
                     )}
                   </HStack>
@@ -380,7 +409,7 @@ export default function CreateBlockoutScreen() {
                   {selectedField === "end-date" && showEndDatePicker && (
                     <VStack className="items-center mt-4">
                       <DateTimePicker
-                        value={new Date(endTime)}
+                        value={dayjs(endTime).tz(getTimezone()).toDate()}
                         mode="date"
                         display={Platform.OS === "ios" ? "spinner" : "default"}
                         onChange={(event, selectedDate) =>
@@ -395,7 +424,7 @@ export default function CreateBlockoutScreen() {
                     !isAllDay && (
                       <VStack className="items-center mt-4">
                         <DateTimePicker
-                          value={new Date(endTime)}
+                          value={dayjs(endTime).tz(getTimezone()).toDate()}
                           mode="time"
                           display={
                             Platform.OS === "ios" ? "spinner" : "default"

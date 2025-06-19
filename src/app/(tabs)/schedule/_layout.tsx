@@ -11,6 +11,13 @@ const ScheduleLayout = () => {
           headerBackTitle: "Back",
         }}
       />
+      <Stack.Screen
+        name="[id]/edit"
+        options={{
+          title: "Edit Blockout",
+          headerBackTitle: "Back",
+        }}
+      />
     </Stack>
   );
 };

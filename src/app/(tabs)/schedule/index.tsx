@@ -7,6 +7,9 @@ import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentExpandedBlockout } from "@/types/blockouts";
 import { getBlockoutStatus } from "@/utils/blockout-permissions";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { Redirect, useRouter } from "expo-router";
 import { RefreshCw } from "lucide-react-native";
 import React from "react";
@@ -18,6 +21,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// Enable timezone plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const DEFAULT_DAYS = 365;
 
@@ -44,23 +51,19 @@ export default function ScheduleScreen() {
   const blockouts = scheduleData?.data || [];
 
   // Format date and time helper functions
+  const getTimezone = () => {
+    if (__DEV__) {
+      return "America/Chicago"; // Central Time for local simulator
+    }
+    return dayjs.tz.guess();
+  };
+
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    return dayjs(dateString).tz(getTimezone()).format("h:mm A");
   };
 
   const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {

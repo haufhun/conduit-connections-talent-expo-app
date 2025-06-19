@@ -1,4 +1,7 @@
-import { TalentExpandedBlockout } from "@/types/blockouts";
+import {
+  TalentBlockoutDatabase,
+  TalentExpandedBlockout,
+} from "@/types/blockouts";
 
 /**
  * Utility functions for checking blockout permissions
@@ -11,7 +14,7 @@ import { TalentExpandedBlockout } from "@/types/blockouts";
  * @param blockout - The blockout to check
  * @returns true if the blockout can be edited, false otherwise
  */
-export const canEditBlockout = (blockout: TalentExpandedBlockout): boolean => {
+export const canEditBlockout = (blockout: TalentBlockoutDatabase): boolean => {
   const now = new Date();
   const endTime = new Date(blockout.end_time);
   return endTime > now;
@@ -25,7 +28,7 @@ export const canEditBlockout = (blockout: TalentExpandedBlockout): boolean => {
  * @returns true if the blockout can be deleted, false otherwise
  */
 export const canDeleteBlockout = (
-  blockout: TalentExpandedBlockout
+  blockout: TalentBlockoutDatabase
 ): boolean => {
   // Same rule as editing for now
   return canEditBlockout(blockout);
