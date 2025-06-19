@@ -214,6 +214,7 @@ with user_skills_agg as (
   from users u
   left join talent_skills ts on u.id = ts.user_id
   left join skills s on ts.skill_id = s.id
+  where u.user_type = 'TALENT'
   group by u.id
 ),
 user_blockouts_agg as (
@@ -241,6 +242,7 @@ user_blockouts_agg as (
     ) as talent_blockouts
   from users u
   left join talent_blockouts tb on u.id = tb.talent_id
+  where u.user_type = 'TALENT'
   group by u.id
 )
 select 
@@ -251,7 +253,8 @@ select
   usa.skill_names
 from users u
 left join user_skills_agg usa on u.id = usa.user_id
-left join user_blockouts_agg uba on u.id = uba.user_id;
+left join user_blockouts_agg uba on u.id = uba.user_id
+where u.user_type = 'TALENT';
 
 -- Note: Views inherit RLS policies from their underlying tables
 -- The security is enforced through the existing RLS policies on users, talent_skills, talent_blockouts, and skills tables
