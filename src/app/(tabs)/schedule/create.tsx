@@ -21,7 +21,10 @@ import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
-import { createBlockoutSchema } from "@/validators/blockouts.validators";
+import {
+  CreateBlockoutInput,
+  createBlockoutSchema,
+} from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
@@ -37,27 +40,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+// Get user's timezone, with fallback for development
+const getTimezone = () => {
+  if (__DEV__) {
+    return "America/Chicago"; // Central Time for local simulator
+  }
+  return dayjs.tz.guess();
+};
+
+// Format date using dayjs in user's timezone
+const formatDate = (dateString: string) => {
+  return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
+};
+
+// Format time using dayjs in user's timezone
+const formatTime = (dateString: string) => {
+  return dayjs(dateString).tz(getTimezone()).format("h:mm A");
+};
+
 export default function CreateBlockoutScreen() {
   const router = useRouter();
   const { mutateAsync: createBlockout } = useCreateTalentBlockout();
-
-  // Get user's timezone, with fallback for development
-  const getTimezone = useCallback(() => {
-    if (__DEV__) {
-      return "America/Chicago"; // Central Time for local simulator
-    }
-    return dayjs.tz.guess();
-  }, []);
-
-  // Format date using dayjs in user's timezone
-  const formatDate = (dateString: string) => {
-    return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
-  };
-
-  // Format time using dayjs in user's timezone
-  const formatTime = (dateString: string) => {
-    return dayjs(dateString).tz(getTimezone()).format("h:mm A");
-  };
 
   const [selectedField, setSelectedField] = useState<string | null>(null);
 
@@ -78,10 +81,11 @@ export default function CreateBlockoutScreen() {
     defaultValues: {
       title: "",
       description: "",
-      start_time: new Date().toISOString(),
-      end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+      start_time: dayjs().tz(getTimezone()).toISOString(),
+      end_time: dayjs().tz(getTimezone()).add(1, "hour").toISOString(),
       is_all_day: false,
       is_recurring: false,
+      // timezone: getTimezone(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       rrule: "",
       metadata: {},
@@ -102,7 +106,7 @@ export default function CreateBlockoutScreen() {
   // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
   const memoizedStartDate = useMemo(
     () => dayjs(startTime).tz(getTimezone()).toDate(),
-    [startTime, getTimezone]
+    [startTime]
   );
 
   // Clear time field selections when all-day is toggled
@@ -115,7 +119,7 @@ export default function CreateBlockoutScreen() {
     }
   }, [isAllDay, selectedField]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: CreateBlockoutInput) => {
     try {
       await createBlockout({
         title: data.title,
@@ -123,6 +127,7 @@ export default function CreateBlockoutScreen() {
         start_time: data.start_time,
         end_time: data.end_time,
         is_all_day: data.is_all_day || false,
+        // timezone: getTimezone(),
         timezone:
           data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         is_recurring: data.is_recurring || false,

@@ -67,9 +67,23 @@ export default function ScheduleScreen() {
   };
 
   const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {
+    const start = dayjs(blockout.start_time).tz(getTimezone());
+    const end = dayjs(blockout.end_time).tz(getTimezone());
+
     if (blockout.is_all_day) {
+      if (!start.isSame(end, "day")) {
+        return `${start.format("MMM D")} - ${end.format("MMM D")}`;
+      }
       return "All Day";
     }
+
+    // If spans multiple days, show dates + times
+    if (!start.isSame(end, "day")) {
+      return `${start.format("MMM D, h:mm A")} - ${end.format(
+        "MMM D, h:mm A"
+      )}`;
+    }
+
     return `${formatTime(blockout.start_time)} - ${formatTime(
       blockout.end_time
     )}`;
@@ -77,12 +91,26 @@ export default function ScheduleScreen() {
 
   const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
     if (blockout.is_all_day) {
+      const start = dayjs(blockout.start_time).tz(getTimezone());
+      const end = dayjs(blockout.end_time).tz(getTimezone());
+      const days = end.diff(start, "day") + 1;
+
+      if (days > 1) {
+        return `${days} days`;
+      }
       return "All Day Event";
     }
 
-    const start = new Date(blockout.start_time);
-    const end = new Date(blockout.end_time);
-    const durationMs = end.getTime() - start.getTime();
+    const start = dayjs(blockout.start_time).tz(getTimezone());
+    const end = dayjs(blockout.end_time).tz(getTimezone());
+
+    // Check if it spans multiple days
+    if (!start.isSame(end, "day")) {
+      const days = end.diff(start, "day") + 1;
+      return `${days} days`;
+    }
+
+    const durationMs = end.diff(start);
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -96,12 +124,43 @@ export default function ScheduleScreen() {
   };
 
   // Group blockouts by date and format for SectionList
+  // For multi-day blockouts, create entries for each day they span (from today onwards)
   const groupedBlockouts = blockouts.reduce((acc, blockout) => {
-    const date = new Date(blockout.start_time).toDateString();
-    if (!acc[date]) {
-      acc[date] = [];
+    const start = dayjs(blockout.start_time).tz(getTimezone());
+    const end = dayjs(blockout.end_time).tz(getTimezone());
+    const today = dayjs().tz(getTimezone()).startOf("day");
+
+    // If it's a single day blockout, add it normally
+    if (start.isSame(end, "day")) {
+      const date = start.toDate().toDateString();
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(blockout);
+    } else {
+      // For multi-day blockouts, add an entry for each day it spans
+      // But only from today onwards (don't show past days)
+      let currentDay = start.startOf("day");
+      const endDay = end.startOf("day");
+
+      // Start from today if the blockout started in the past
+      if (currentDay.isBefore(today, "day")) {
+        currentDay = today;
+      }
+
+      while (
+        currentDay.isSame(endDay, "day") ||
+        currentDay.isBefore(endDay, "day")
+      ) {
+        const date = currentDay.toDate().toDateString();
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(blockout);
+        currentDay = currentDay.add(1, "day");
+      }
     }
-    acc[date].push(blockout);
+
     return acc;
   }, {} as Record<string, TalentExpandedBlockout[]>);
 
@@ -231,9 +290,33 @@ export default function ScheduleScreen() {
                         <Text size="lg" bold className="text-typography-900">
                           {blockout.title}
                         </Text>
+                        {/* Multi-day badge */}
+                        {(() => {
+                          const start = dayjs(blockout.start_time).tz(
+                            getTimezone()
+                          );
+                          const end = dayjs(blockout.end_time).tz(
+                            getTimezone()
+                          );
+                          const isMultiDay = !start.isSame(end, "day");
+
+                          if (isMultiDay) {
+                            return (
+                              <VStack className="bg-primary-100 px-2 py-1 rounded-full">
+                                <Text
+                                  size="xs"
+                                  className="text-primary-700 font-medium"
+                                >
+                                  Multi-day
+                                </Text>
+                              </VStack>
+                            );
+                          }
+                          return null;
+                        })()}
                       </HStack>
 
-                      <HStack space="sm">
+                      <HStack space="sm" className="flex-wrap">
                         <Text size="sm" className="text-typography-500">
                           {formatBlockoutTime(blockout)}
                         </Text>
