@@ -7,7 +7,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentExpandedBlockout } from "@/types/blockouts";
 import { getBlockoutStatus } from "@/utils/blockout-permissions";
-import { getDayjsFromUtcDate } from "@/utils/date";
+import { getDayjsFromUtcDateString } from "@/utils/date";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -29,7 +29,7 @@ dayjs.extend(timezone);
 const DEFAULT_DAYS = 365;
 
 const formatTime = (dateString: string) => {
-  const date = getDayjsFromUtcDate(dateString);
+  const date = getDayjsFromUtcDateString(dateString);
 
   return date.format("h:mm A");
 };
@@ -53,8 +53,8 @@ export default function ScheduleScreen() {
   const blockouts = scheduleData?.data || [];
 
   const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {
-    const start = getDayjsFromUtcDate(blockout.start_time);
-    const end = getDayjsFromUtcDate(blockout.end_time);
+    const start = getDayjsFromUtcDateString(blockout.start_time);
+    const end = getDayjsFromUtcDateString(blockout.end_time);
 
     if (blockout.is_all_day) {
       if (!start.isSame(end, "day")) {
@@ -77,8 +77,8 @@ export default function ScheduleScreen() {
 
   const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
     if (blockout.is_all_day) {
-      const start = getDayjsFromUtcDate(blockout.start_time);
-      const end = getDayjsFromUtcDate(blockout.end_time);
+      const start = getDayjsFromUtcDateString(blockout.start_time);
+      const end = getDayjsFromUtcDateString(blockout.end_time);
       const days = end.diff(start, "day") + 1;
 
       if (days > 1) {
@@ -87,8 +87,8 @@ export default function ScheduleScreen() {
       return "All Day Event";
     }
 
-    const start = getDayjsFromUtcDate(blockout.start_time);
-    const end = getDayjsFromUtcDate(blockout.end_time);
+    const start = getDayjsFromUtcDateString(blockout.start_time);
+    const end = getDayjsFromUtcDateString(blockout.end_time);
 
     // Check if it spans multiple days
     if (!start.isSame(end, "day")) {
@@ -112,8 +112,8 @@ export default function ScheduleScreen() {
   // Group blockouts by date and format for SectionList
   // For multi-day blockouts, create entries for each day they span (from today onwards)
   const groupedBlockouts = blockouts.reduce((acc, blockout) => {
-    const start = getDayjsFromUtcDate(blockout.start_time);
-    const end = getDayjsFromUtcDate(blockout.end_time);
+    const start = getDayjsFromUtcDateString(blockout.start_time);
+    const end = getDayjsFromUtcDateString(blockout.end_time);
     const today = dayjs().startOf("day");
 
     // If it's a single day blockout, add it normally
@@ -278,10 +278,12 @@ export default function ScheduleScreen() {
                         </Text>
                         {/* Multi-day badge */}
                         {(() => {
-                          const start = getDayjsFromUtcDate(
+                          const start = getDayjsFromUtcDateString(
                             blockout.start_time
                           );
-                          const end = getDayjsFromUtcDate(blockout.end_time);
+                          const end = getDayjsFromUtcDateString(
+                            blockout.end_time
+                          );
                           const isMultiDay = !start.isSame(end, "day");
 
                           if (isMultiDay) {

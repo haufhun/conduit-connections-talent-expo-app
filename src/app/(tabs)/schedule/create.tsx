@@ -21,6 +21,7 @@ import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
+import { getDayjsFromUtcDateString } from "@/utils/date";
 import {
   CreateBlockoutInput,
   createBlockoutSchema,
@@ -39,23 +40,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 // Enable timezone plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-// Get user's timezone, with fallback for development
-const getTimezone = () => {
-  if (__DEV__) {
-    return "America/Chicago"; // Central Time for local simulator
-  }
-  return dayjs.tz.guess();
-};
-
 // Format date using dayjs in user's timezone
 const formatDate = (dateString: string) => {
-  return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
+  return getDayjsFromUtcDateString(dateString).format("ddd, MMM D, YYYY");
 };
 
 // Format time using dayjs in user's timezone
 const formatTime = (dateString: string) => {
-  return dayjs(dateString).tz(getTimezone()).format("h:mm A");
+  return getDayjsFromUtcDateString(dateString).format("h:mm A");
 };
 
 export default function CreateBlockoutScreen() {
@@ -81,8 +73,8 @@ export default function CreateBlockoutScreen() {
     defaultValues: {
       title: "",
       description: "",
-      start_time: dayjs().tz(getTimezone()).toISOString(),
-      end_time: dayjs().tz(getTimezone()).add(1, "hour").toISOString(),
+      start_time: dayjs.utc().startOf("hour").add(1, "hour").toISOString(),
+      end_time: dayjs.utc().startOf("hour").add(2, "hour").toISOString(),
       is_all_day: false,
       is_recurring: false,
       rrule: "",
@@ -103,7 +95,7 @@ export default function CreateBlockoutScreen() {
 
   // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
   const memoizedStartDate = useMemo(
-    () => dayjs(startTime).tz(getTimezone()).toDate(),
+    () => getDayjsFromUtcDateString(startTime).toDate(),
     [startTime]
   );
 
@@ -137,61 +129,66 @@ export default function CreateBlockoutScreen() {
     }
   };
 
-  const handleDateTimeChange = (
-    type: "start" | "end",
-    mode: "date" | "time",
-    selectedDate?: Date
-  ) => {
+  const handleDateTimeChange = (type: "start" | "end", selectedDate?: Date) => {
     if (!selectedDate) return;
 
-    // Get current datetime using dayjs and update only the date or time portion
-    // This preserves the user's timezone while updating the selected component
-    const currentTimeValue = type === "start" ? startTime : endTime;
-    const currentDateTime = dayjs(currentTimeValue).tz(getTimezone());
-
-    let updatedDateTime;
-    if (mode === "date") {
-      // Update only the date part
-      const selected = dayjs(selectedDate); // TODO: Look at this for potential timezone issues
-      updatedDateTime = currentDateTime
-        .year(selected.year())
-        .month(selected.month())
-        .date(selected.date());
-    } else {
-      // Update only the time part
-      const selected = dayjs(selectedDate); // TODO: Look at this for potential timezone issues
-      updatedDateTime = currentDateTime
-        .hour(selected.hour())
-        .minute(selected.minute());
-    }
+    console.log("selectedDate", selectedDate);
 
     setValue(
       type === "start" ? "start_time" : "end_time",
-      updatedDateTime.toISOString()
+      selectedDate.toISOString()
     );
 
-    // Auto-adjust times to maintain valid start < end relationship
-    if (type === "start") {
-      const currentEndTime = dayjs(endTime);
-      if (
-        updatedDateTime.isAfter(currentEndTime) ||
-        updatedDateTime.isSame(currentEndTime)
-      ) {
-        // Set end time to 1 hour after the new start time
-        const newEndTime = updatedDateTime.add(1, "hour");
-        setValue("end_time", newEndTime.toISOString());
-      }
-    } else if (type === "end") {
-      const currentStartTime = dayjs(startTime);
-      if (
-        updatedDateTime.isBefore(currentStartTime) ||
-        updatedDateTime.isSame(currentStartTime)
-      ) {
-        // Set start time to 1 hour before the new end time
-        const newStartTime = updatedDateTime.subtract(1, "hour");
-        setValue("start_time", newStartTime.toISOString());
-      }
-    }
+    // // Get current datetime using dayjs and update only the date or time portion
+    // // This preserves the user's timezone while updating the selected component
+    // const currentTimeValue = type === "start" ? startTime : endTime;
+    // const currentDateTime = getDayjsFromUtcDateString(currentTimeValue).tz(
+    //   getTimezone()
+    // );
+
+    // let updatedDateTime;
+    // if (mode === "date") {
+    //   // Update only the date part
+    //   const selected = getDayjsFromUtcDate(selectedDate);
+    //   updatedDateTime = currentDateTime
+    //     .year(selected.year())
+    //     .month(selected.month())
+    //     .date(selected.date());
+    // } else {
+    //   // Update only the time part
+    //   const selected = getDayjsFromUtcDate(selectedDate);
+    //   updatedDateTime = currentDateTime
+    //     .hour(selected.hour())
+    //     .minute(selected.minute());
+    // }
+
+    // setValue(
+    //   type === "start" ? "start_time" : "end_time",
+    //   updatedDateTime.toISOString()
+    // );
+
+    // // Auto-adjust times to maintain valid start < end relationship
+    // if (type === "start") {
+    //   const currentEndTime = getDayjsFromUtcDateString(endTime);
+    //   if (
+    //     updatedDateTime.isAfter(currentEndTime) ||
+    //     updatedDateTime.isSame(currentEndTime)
+    //   ) {
+    //     // Set end time to 1 hour after the new start time
+    //     const newEndTime = updatedDateTime.add(1, "hour");
+    //     setValue("end_time", newEndTime.toISOString());
+    //   }
+    // } else if (type === "end") {
+    //   const currentStartTime = getDayjsFromUtcDateString(startTime);
+    //   if (
+    //     updatedDateTime.isBefore(currentStartTime) ||
+    //     updatedDateTime.isSame(currentStartTime)
+    //   ) {
+    //     // Set start time to 1 hour before the new end time
+    //     const newStartTime = updatedDateTime.subtract(1, "hour");
+    //     setValue("start_time", newStartTime.toISOString());
+    //   }
+    // }
 
     // Don't clear selected field - let user manually deselect
   };
@@ -290,10 +287,6 @@ export default function CreateBlockoutScreen() {
           />
 
           <VStack space="md">
-            <Text size="sm" className="text-typography-500 px-1">
-              All times are displayed in your local timezone ({getTimezone()})
-            </Text>
-
             <Controller
               control={control}
               name="start_time"
@@ -333,11 +326,11 @@ export default function CreateBlockoutScreen() {
                   {selectedField === "start-date" && showStartDatePicker && (
                     <VStack className="items-center mt-4">
                       <DateTimePicker
-                        value={dayjs(startTime).tz(getTimezone()).toDate()}
+                        value={new Date(startTime)}
                         mode="date"
                         display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={(event, selectedDate) =>
-                          handleDateTimeChange("start", "date", selectedDate)
+                        onChange={(_event, selectedDate) =>
+                          handleDateTimeChange("start", selectedDate)
                         }
                       />
                     </VStack>
@@ -348,13 +341,13 @@ export default function CreateBlockoutScreen() {
                     !isAllDay && (
                       <VStack className="items-center mt-4">
                         <DateTimePicker
-                          value={dayjs(startTime).tz(getTimezone()).toDate()}
+                          value={new Date(startTime)}
                           mode="time"
                           display={
                             Platform.OS === "ios" ? "spinner" : "default"
                           }
-                          onChange={(event, selectedDate) =>
-                            handleDateTimeChange("start", "time", selectedDate)
+                          onChange={(_event, selectedDate) =>
+                            handleDateTimeChange("start", selectedDate)
                           }
                         />
                       </VStack>
@@ -409,11 +402,11 @@ export default function CreateBlockoutScreen() {
                   {selectedField === "end-date" && showEndDatePicker && (
                     <VStack className="items-center mt-4">
                       <DateTimePicker
-                        value={dayjs(endTime).tz(getTimezone()).toDate()}
+                        value={getDayjsFromUtcDateString(endTime).toDate()}
                         mode="date"
                         display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={(event, selectedDate) =>
-                          handleDateTimeChange("end", "date", selectedDate)
+                        onChange={(_event, selectedDate) =>
+                          handleDateTimeChange("end", selectedDate)
                         }
                       />
                     </VStack>
@@ -424,13 +417,13 @@ export default function CreateBlockoutScreen() {
                     !isAllDay && (
                       <VStack className="items-center mt-4">
                         <DateTimePicker
-                          value={dayjs(endTime).tz(getTimezone()).toDate()}
+                          value={getDayjsFromUtcDateString(endTime).toDate()}
                           mode="time"
                           display={
                             Platform.OS === "ios" ? "spinner" : "default"
                           }
-                          onChange={(event, selectedDate) =>
-                            handleDateTimeChange("end", "time", selectedDate)
+                          onChange={(_event, selectedDate) =>
+                            handleDateTimeChange("end", selectedDate)
                           }
                         />
                       </VStack>
