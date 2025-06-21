@@ -49,7 +49,10 @@ export const useUserSchedule = (
 ) => {
   return useQuery({
     queryKey: ["user-schedule", userId, startDate, endDate],
-    queryFn: () => getUserSchedule(userId, startDate, endDate),
+    queryFn: () => {
+      console.log("calling useUserSchedule");
+      return getUserSchedule(userId, startDate, endDate);
+    },
     enabled: enabled && !!userId && !!startDate && !!endDate,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -85,6 +88,7 @@ export const useGetTalentBlockoutById = (
       if (!blockoutId) {
         throw new Error("Blockout ID is required");
       }
+      console.log("calling useGetTalentBlockoutById with ID:", blockoutId);
       return getTalentBlockoutsById(blockoutId);
     },
     enabled: enabled && !!blockoutId,
@@ -119,9 +123,12 @@ export const useUpdateTalentBlockout = () => {
     mutationFn: async ({ blockoutId, updates }) => {
       return updateTalentBlockout(blockoutId, updates);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["user-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["talent-blockouts"] });
+      queryClient.invalidateQueries({
+        queryKey: ["talent-blockout", variables.blockoutId],
+      });
     },
   });
 };
@@ -133,9 +140,12 @@ export const useDeleteTalentBlockout = () => {
     mutationFn: async (blockoutId) => {
       return deleteTalentBlockout(blockoutId);
     },
-    onSuccess: () => {
+    onSuccess: (_data, blockoutId) => {
       queryClient.invalidateQueries({ queryKey: ["user-schedule"] });
       queryClient.invalidateQueries({ queryKey: ["talent-blockouts"] });
+      queryClient.invalidateQueries({
+        queryKey: ["talent-blockout", blockoutId],
+      });
     },
   });
 };

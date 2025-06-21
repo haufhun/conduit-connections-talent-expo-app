@@ -16,6 +16,7 @@ import {
   CheckboxIndicator,
   CheckboxLabel,
 } from "@/components/ui/checkbox";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   FormControl,
   FormControlError,
@@ -24,7 +25,6 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
-import { HStack } from "@/components/ui/hstack";
 import { AlertCircleIcon, CheckIcon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
@@ -32,17 +32,17 @@ import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { UpdateTalentBlockout } from "@/types/blockouts";
 import { canEditBlockout } from "@/utils/blockout-permissions";
+import { getDayjsFromUtcDateString } from "@/utils/date";
 import { updateBlockoutSchema } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Trash2 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, Platform, ScrollView } from "react-native";
+import { Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Enable timezone plugins
@@ -65,33 +65,6 @@ export default function EditBlockoutScreen() {
   const { mutateAsync: updateBlockout } = useUpdateTalentBlockout();
   const { mutateAsync: deleteBlockout, isPending } = useDeleteTalentBlockout();
 
-  // Get user's timezone, with fallback for development
-  const getTimezone = useCallback(() => {
-    if (__DEV__) {
-      return "America/Chicago"; // Central Time for local simulator
-    }
-    return dayjs.tz.guess();
-  }, []);
-
-  // Format date using dayjs in user's timezone
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "Select Date";
-    return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
-  };
-
-  // Format time using dayjs in user's timezone
-  const formatTime = (dateString: string) => {
-    return dayjs(dateString).tz(getTimezone()).format("h:mm A");
-  };
-
-  const [selectedField, setSelectedField] = useState<string | null>(null);
-
-  // Computed values based on selectedField
-  const showStartDatePicker = selectedField === "start-date";
-  const showStartTimePicker = selectedField === "start-time";
-  const showEndDatePicker = selectedField === "end-date";
-  const showEndTimePicker = selectedField === "end-time";
-
   const {
     control,
     handleSubmit,
@@ -104,8 +77,8 @@ export default function EditBlockoutScreen() {
     defaultValues: {
       title: "",
       description: "",
-      start_time: new Date().toISOString(),
-      end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      start_time: dayjs.utc().startOf("hour").add(1, "hour").toISOString(),
+      end_time: dayjs.utc().startOf("hour").add(2, "hour").toISOString(),
       is_all_day: false,
       is_recurring: false,
       rrule: "",
@@ -118,8 +91,10 @@ export default function EditBlockoutScreen() {
       reset({
         title: blockout.title,
         description: blockout.description || "",
-        start_time: blockout.start_time,
-        end_time: blockout.end_time,
+        start_time: getDayjsFromUtcDateString(
+          blockout.start_time
+        ).toISOString(),
+        end_time: getDayjsFromUtcDateString(blockout.end_time).toISOString(),
         is_all_day: blockout.is_all_day,
         is_recurring: blockout.is_recurring,
         rrule: blockout.rrule || "",
@@ -164,7 +139,6 @@ export default function EditBlockoutScreen() {
   const isAllDay = watch("is_all_day");
   const isRecurring = watch("is_recurring");
   const startTime = watch("start_time");
-  const endTime = watch("end_time");
 
   // Memoized callback to prevent infinite re-renders
   const handleRRuleChange = useCallback(
@@ -175,21 +149,9 @@ export default function EditBlockoutScreen() {
   // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
   const memoizedStartDate = useMemo(
     () =>
-      dayjs(startTime || new Date().toISOString())
-        .tz(getTimezone())
-        .toDate(),
-    [startTime, getTimezone]
+      getDayjsFromUtcDateString(startTime || new Date().toISOString()).toDate(),
+    [startTime]
   );
-
-  // Clear time field selections when all-day is toggled
-  useEffect(() => {
-    if (
-      isAllDay &&
-      (selectedField === "start-time" || selectedField === "end-time")
-    ) {
-      setSelectedField(null);
-    }
-  }, [isAllDay, selectedField]);
 
   // Handle loading and error states
   if (isLoading) {
@@ -268,76 +230,6 @@ export default function EditBlockoutScreen() {
     } catch (error) {
       console.error("Error updating blockout:", error);
       Alert.alert("Error", "Failed to update blockout");
-    }
-  };
-
-  const handleDateTimeChange = (
-    type: "start" | "end",
-    mode: "date" | "time",
-    selectedDate?: Date
-  ) => {
-    if (!selectedDate) return;
-
-    // Get current datetime using dayjs and update only the date or time portion
-    // This preserves the user's timezone while updating the selected component
-    const currentTimeValue = type === "start" ? startTime : endTime;
-    if (!currentTimeValue) return;
-
-    const currentDateTime = dayjs(currentTimeValue).tz(getTimezone());
-
-    let updatedDateTime;
-    if (mode === "date") {
-      // Update only the date part
-      const selected = dayjs(selectedDate);
-      updatedDateTime = currentDateTime
-        .year(selected.year())
-        .month(selected.month())
-        .date(selected.date());
-    } else {
-      // Update only the time part
-      const selected = dayjs(selectedDate);
-      updatedDateTime = currentDateTime
-        .hour(selected.hour())
-        .minute(selected.minute());
-    }
-
-    setValue(
-      type === "start" ? "start_time" : "end_time",
-      updatedDateTime.toISOString()
-    );
-
-    // Auto-adjust times to maintain valid start < end relationship
-    if (type === "start" && endTime) {
-      const currentEndTime = dayjs(endTime);
-      if (
-        updatedDateTime.isAfter(currentEndTime) ||
-        updatedDateTime.isSame(currentEndTime)
-      ) {
-        // Set end time to 1 hour after the new start time
-        const newEndTime = updatedDateTime.add(1, "hour");
-        setValue("end_time", newEndTime.toISOString());
-      }
-    } else if (type === "end" && startTime) {
-      const currentStartTime = dayjs(startTime);
-      if (
-        updatedDateTime.isBefore(currentStartTime) ||
-        updatedDateTime.isSame(currentStartTime)
-      ) {
-        // Set start time to 1 hour before the new end time
-        const newStartTime = updatedDateTime.subtract(1, "hour");
-        setValue("start_time", newStartTime.toISOString());
-      }
-    }
-
-    // Don't clear selected field - let user manually deselect
-  };
-
-  const handleFieldPress = (fieldType: string) => {
-    // Toggle selection or select new field
-    if (selectedField === fieldType) {
-      setSelectedField(null);
-    } else {
-      setSelectedField(fieldType);
     }
   };
 
@@ -438,185 +330,13 @@ export default function EditBlockoutScreen() {
               )}
             />
 
-            <VStack space="md">
-              <Text size="sm" className="text-typography-500 px-1">
-                All times are displayed in your local timezone ({getTimezone()})
-              </Text>
-
-              <Controller
-                control={control}
-                name="start_time"
-                render={({ field: { value }, fieldState: { error } }) => (
-                  <FormControl isInvalid={Boolean(error)}>
-                    <FormControlLabel>
-                      <FormControlLabelText>
-                        Start {isAllDay ? "Date" : "Date & Time"}
-                      </FormControlLabelText>
-                    </FormControlLabel>
-                    <HStack space="sm">
-                      <Button
-                        size="lg"
-                        variant={
-                          selectedField === "start-date" ? "solid" : "outline"
-                        }
-                        className="flex-1"
-                        onPress={() => handleFieldPress("start-date")}
-                      >
-                        <ButtonText>{formatDate(value)}</ButtonText>
-                      </Button>
-                      {!isAllDay && (
-                        <Button
-                          size="lg"
-                          variant={
-                            selectedField === "start-time" ? "solid" : "outline"
-                          }
-                          className="flex-1"
-                          onPress={() => handleFieldPress("start-time")}
-                        >
-                          <ButtonText>
-                            {value ? formatTime(value) : "Select Time"}
-                          </ButtonText>
-                        </Button>
-                      )}
-                    </HStack>
-
-                    {/* Date/Time Picker positioned directly below start time fields */}
-                    {selectedField === "start-date" &&
-                      showStartDatePicker &&
-                      value && (
-                        <VStack className="items-center mt-4">
-                          <DateTimePicker
-                            value={dayjs(value).tz(getTimezone()).toDate()}
-                            mode="date"
-                            display={
-                              Platform.OS === "ios" ? "spinner" : "default"
-                            }
-                            onChange={(event, selectedDate) =>
-                              handleDateTimeChange(
-                                "start",
-                                "date",
-                                selectedDate
-                              )
-                            }
-                          />
-                        </VStack>
-                      )}
-
-                    {selectedField === "start-time" &&
-                      showStartTimePicker &&
-                      !isAllDay &&
-                      value && (
-                        <VStack className="items-center mt-4">
-                          <DateTimePicker
-                            value={dayjs(value).tz(getTimezone()).toDate()}
-                            mode="time"
-                            display={
-                              Platform.OS === "ios" ? "spinner" : "default"
-                            }
-                            onChange={(event, selectedDate) =>
-                              handleDateTimeChange(
-                                "start",
-                                "time",
-                                selectedDate
-                              )
-                            }
-                          />
-                        </VStack>
-                      )}
-
-                    <FormControlError>
-                      <FormControlErrorIcon as={AlertCircleIcon} />
-                      <FormControlErrorText size="sm">
-                        {error?.message}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  </FormControl>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="end_time"
-                render={({ field: { value }, fieldState: { error } }) => (
-                  <FormControl isInvalid={Boolean(error)}>
-                    <FormControlLabel>
-                      <FormControlLabelText>
-                        End {isAllDay ? "Date" : "Date & Time"}
-                      </FormControlLabelText>
-                    </FormControlLabel>
-                    <HStack space="sm">
-                      <Button
-                        size="lg"
-                        variant={
-                          selectedField === "end-date" ? "solid" : "outline"
-                        }
-                        className="flex-1"
-                        onPress={() => handleFieldPress("end-date")}
-                      >
-                        <ButtonText>{formatDate(value)}</ButtonText>
-                      </Button>
-                      {!isAllDay && (
-                        <Button
-                          size="lg"
-                          variant={
-                            selectedField === "end-time" ? "solid" : "outline"
-                          }
-                          className="flex-1"
-                          onPress={() => handleFieldPress("end-time")}
-                        >
-                          <ButtonText>
-                            {value ? formatTime(value) : "Select Time"}
-                          </ButtonText>
-                        </Button>
-                      )}
-                    </HStack>
-
-                    {/* Date/Time Picker positioned directly below end time fields */}
-                    {selectedField === "end-date" &&
-                      showEndDatePicker &&
-                      value && (
-                        <VStack className="items-center mt-4">
-                          <DateTimePicker
-                            value={dayjs(value).tz(getTimezone()).toDate()}
-                            mode="date"
-                            display={
-                              Platform.OS === "ios" ? "spinner" : "default"
-                            }
-                            onChange={(event, selectedDate) =>
-                              handleDateTimeChange("end", "date", selectedDate)
-                            }
-                          />
-                        </VStack>
-                      )}
-
-                    {selectedField === "end-time" &&
-                      showEndTimePicker &&
-                      !isAllDay &&
-                      value && (
-                        <VStack className="items-center mt-4">
-                          <DateTimePicker
-                            value={dayjs(value).tz(getTimezone()).toDate()}
-                            mode="time"
-                            display={
-                              Platform.OS === "ios" ? "spinner" : "default"
-                            }
-                            onChange={(event, selectedDate) =>
-                              handleDateTimeChange("end", "time", selectedDate)
-                            }
-                          />
-                        </VStack>
-                      )}
-
-                    <FormControlError>
-                      <FormControlErrorIcon as={AlertCircleIcon} />
-                      <FormControlErrorText size="sm">
-                        {error?.message}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  </FormControl>
-                )}
-              />
-            </VStack>
+            <DateRangePicker
+              control={control}
+              setValue={setValue}
+              startTimeFieldName="start_time"
+              endTimeFieldName="end_time"
+              isAllDay={isAllDay}
+            />
 
             <Controller
               control={control}
