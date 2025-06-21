@@ -7,6 +7,7 @@ import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentExpandedBlockout } from "@/types/blockouts";
 import { getBlockoutStatus } from "@/utils/blockout-permissions";
+import { getDayjsFromUtcDate } from "@/utils/date";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -22,22 +23,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Enable timezone plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const DEFAULT_DAYS = 365;
 
+const formatTime = (dateString: string) => {
+  const date = getDayjsFromUtcDate(dateString);
+
+  return date.format("h:mm A");
+};
+
 export default function ScheduleScreen() {
   const { session } = useAuth();
   const router = useRouter();
 
-  // Get current date and DEFAULT_DAYS days from now for schedule range
-  const startDate = new Date().toISOString().split("T")[0];
-  const endDate = new Date(Date.now() + DEFAULT_DAYS * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-
+  const startDate = dayjs().utc().format("YYYY-MM-DD");
+  const endDate = dayjs().utc().add(DEFAULT_DAYS, "day").format("YYYY-MM-DD");
   const {
     data: scheduleData,
     isLoading,
@@ -50,25 +52,9 @@ export default function ScheduleScreen() {
 
   const blockouts = scheduleData?.data || [];
 
-  // Format date and time helper functions
-  const getTimezone = () => {
-    if (__DEV__) {
-      return "America/Chicago"; // Central Time for local simulator
-    }
-    return dayjs.tz.guess();
-  };
-
-  const formatDate = (dateString: string) => {
-    return dayjs(dateString).tz(getTimezone()).format("ddd, MMM D, YYYY");
-  };
-
-  const formatTime = (dateString: string) => {
-    return dayjs(dateString).tz(getTimezone()).format("h:mm A");
-  };
-
   const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {
-    const start = dayjs(blockout.start_time).tz(getTimezone());
-    const end = dayjs(blockout.end_time).tz(getTimezone());
+    const start = getDayjsFromUtcDate(blockout.start_time);
+    const end = getDayjsFromUtcDate(blockout.end_time);
 
     if (blockout.is_all_day) {
       if (!start.isSame(end, "day")) {
@@ -91,8 +77,8 @@ export default function ScheduleScreen() {
 
   const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
     if (blockout.is_all_day) {
-      const start = dayjs(blockout.start_time).tz(getTimezone());
-      const end = dayjs(blockout.end_time).tz(getTimezone());
+      const start = getDayjsFromUtcDate(blockout.start_time);
+      const end = getDayjsFromUtcDate(blockout.end_time);
       const days = end.diff(start, "day") + 1;
 
       if (days > 1) {
@@ -101,8 +87,8 @@ export default function ScheduleScreen() {
       return "All Day Event";
     }
 
-    const start = dayjs(blockout.start_time).tz(getTimezone());
-    const end = dayjs(blockout.end_time).tz(getTimezone());
+    const start = getDayjsFromUtcDate(blockout.start_time);
+    const end = getDayjsFromUtcDate(blockout.end_time);
 
     // Check if it spans multiple days
     if (!start.isSame(end, "day")) {
@@ -126,13 +112,13 @@ export default function ScheduleScreen() {
   // Group blockouts by date and format for SectionList
   // For multi-day blockouts, create entries for each day they span (from today onwards)
   const groupedBlockouts = blockouts.reduce((acc, blockout) => {
-    const start = dayjs(blockout.start_time).tz(getTimezone());
-    const end = dayjs(blockout.end_time).tz(getTimezone());
-    const today = dayjs().tz(getTimezone()).startOf("day");
+    const start = getDayjsFromUtcDate(blockout.start_time);
+    const end = getDayjsFromUtcDate(blockout.end_time);
+    const today = dayjs().startOf("day");
 
     // If it's a single day blockout, add it normally
     if (start.isSame(end, "day")) {
-      const date = start.toDate().toDateString();
+      const date = start.format("ddd, MMM DD YYYY");
       if (!acc[date]) {
         acc[date] = [];
       }
@@ -152,7 +138,7 @@ export default function ScheduleScreen() {
         currentDay.isSame(endDay, "day") ||
         currentDay.isBefore(endDay, "day")
       ) {
-        const date = currentDay.toDate().toDateString();
+        const date = currentDay.format("ddd, MMM DD YYYY");
         if (!acc[date]) {
           acc[date] = [];
         }
@@ -292,12 +278,10 @@ export default function ScheduleScreen() {
                         </Text>
                         {/* Multi-day badge */}
                         {(() => {
-                          const start = dayjs(blockout.start_time).tz(
-                            getTimezone()
+                          const start = getDayjsFromUtcDate(
+                            blockout.start_time
                           );
-                          const end = dayjs(blockout.end_time).tz(
-                            getTimezone()
-                          );
+                          const end = getDayjsFromUtcDate(blockout.end_time);
                           const isMultiDay = !start.isSame(end, "day");
 
                           if (isMultiDay) {
@@ -362,7 +346,7 @@ export default function ScheduleScreen() {
                 bold
                 className="text-primary-700 pt-2 pb-1 px-5 bg-white"
               >
-                {formatDate(title)}
+                {title}
               </Text>
             )}
             contentContainerStyle={styles.sectionListContent}

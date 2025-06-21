@@ -12,7 +12,6 @@ export type TalentBlockoutDatabase = {
   end_time: string;
   is_all_day: boolean;
   start_time: string;
-  timezone: string;
   title: string;
   description: string | null;
   is_recurring: boolean;
@@ -28,7 +27,6 @@ export type TalentExpandedBlockout = {
   end_time: string;
   is_all_day: boolean;
   start_time: string;
-  timezone: string;
   title: string;
   original_blockout: TalentBlockoutDatabase;
 };

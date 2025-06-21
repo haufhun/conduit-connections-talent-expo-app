@@ -108,7 +108,6 @@ export default function EditBlockoutScreen() {
       end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       is_all_day: false,
       is_recurring: false,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       rrule: "",
     },
   });
@@ -123,7 +122,6 @@ export default function EditBlockoutScreen() {
         end_time: blockout.end_time,
         is_all_day: blockout.is_all_day,
         is_recurring: blockout.is_recurring,
-        timezone: blockout.timezone,
         rrule: blockout.rrule || "",
       });
     }
@@ -261,8 +259,6 @@ export default function EditBlockoutScreen() {
           start_time: data.start_time,
           end_time: data.end_time,
           is_all_day: data.is_all_day || false,
-          timezone:
-            data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
           is_recurring: data.is_recurring || false,
           rrule: data.is_recurring ? data.rrule : undefined,
         },

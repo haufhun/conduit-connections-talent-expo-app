@@ -139,15 +139,11 @@ export const getUserSchedule = async (
       return { data: null, error };
     }
 
-    console.log("User Blockouts:", user?.talent_blockouts);
-
     const expandedBlockouts = expandRecurringBlockouts(
       user?.talent_blockouts || [],
       new Date(startDate),
       new Date(endDate)
     );
-
-    console.log("Expanded Blockouts:", expandedBlockouts);
 
     return { data: expandedBlockouts, error: null };
   } catch (error) {

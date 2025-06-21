@@ -85,8 +85,6 @@ export default function CreateBlockoutScreen() {
       end_time: dayjs().tz(getTimezone()).add(1, "hour").toISOString(),
       is_all_day: false,
       is_recurring: false,
-      // timezone: getTimezone(),
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       rrule: "",
       metadata: {},
     },
@@ -127,9 +125,6 @@ export default function CreateBlockoutScreen() {
         start_time: data.start_time,
         end_time: data.end_time,
         is_all_day: data.is_all_day || false,
-        // timezone: getTimezone(),
-        timezone:
-          data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         is_recurring: data.is_recurring || false,
         rrule: data.is_recurring ? data.rrule : undefined,
         metadata: data.metadata || {},

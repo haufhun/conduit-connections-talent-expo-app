@@ -10,7 +10,6 @@ const baseBlockoutSchema = z.object({
     .string()
     .max(500, "Description must be less than 500 characters")
     .optional(),
-  timezone: z.string().optional().default("UTC"),
   metadata: z.record(z.any()).optional().default({}),
 });
 
@@ -152,7 +151,6 @@ export const getDefaultBlockoutValues = (): Partial<CreateBlockoutInput> => ({
   description: "",
   is_all_day: false,
   is_recurring: false,
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   metadata: {},
 });
 

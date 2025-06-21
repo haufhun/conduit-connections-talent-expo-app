@@ -6,7 +6,6 @@ export interface ExpandedBlockout {
   start_time: string;
   end_time: string;
   is_all_day: boolean;
-  timezone: string;
   original_blockout: any;
 }
 
@@ -33,7 +32,6 @@ export const expandRecurringBlockouts = (
           start_time: blockout.start_time,
           end_time: blockout.end_time,
           is_all_day: blockout.is_all_day,
-          timezone: blockout.timezone,
           original_blockout: blockout,
         });
       }
@@ -63,7 +61,6 @@ export const expandRecurringBlockouts = (
               start_time: occurrence.toISOString(),
               end_time: occurrenceEnd.toISOString(),
               is_all_day: blockout.is_all_day,
-              timezone: blockout.timezone,
               original_blockout: blockout,
             });
           }
