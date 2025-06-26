@@ -1,4 +1,8 @@
+import { getDayjsFromUtcDateString } from "@/utils/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { useAuth } from "../providers/auth-provider";
 import type {
   CreateTalentBlockout,
@@ -17,6 +21,9 @@ import {
   getAvailableUsers,
   getUserSchedule,
 } from "./talent_blockout_schedule_spb";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const useAvailableUsers = (filter: AvailabilityFilter) => {
   return useQuery({
@@ -50,7 +57,6 @@ export const useUserSchedule = (
   return useQuery({
     queryKey: ["user-schedule", userId, startDate, endDate],
     queryFn: () => {
-      console.log("calling useUserSchedule");
       return getUserSchedule(userId, startDate, endDate);
     },
     enabled: enabled && !!userId && !!startDate && !!endDate,
@@ -69,6 +75,18 @@ export const useCreateTalentBlockout = () => {
 
   return useMutation<TalentBlockoutDatabase, Error, CreateTalentBlockout>({
     mutationFn: async (blockoutData) => {
+      if (blockoutData.is_all_day) {
+        const startTime = getDayjsFromUtcDateString(blockoutData.start_time)
+          .startOf("day")
+          .toISOString();
+        const endTime = getDayjsFromUtcDateString(blockoutData.end_time)
+          .endOf("day")
+          .toISOString();
+
+        blockoutData.start_time = startTime;
+        blockoutData.end_time = endTime;
+      }
+
       return createTalentBlockout(talentId, blockoutData);
     },
     onSuccess: () => {
@@ -88,7 +106,6 @@ export const useGetTalentBlockoutById = (
       if (!blockoutId) {
         throw new Error("Blockout ID is required");
       }
-      console.log("calling useGetTalentBlockoutById with ID:", blockoutId);
       return getTalentBlockoutsById(blockoutId);
     },
     enabled: enabled && !!blockoutId,
@@ -121,6 +138,27 @@ export const useUpdateTalentBlockout = () => {
     { blockoutId: number; updates: Partial<CreateTalentBlockout> }
   >({
     mutationFn: async ({ blockoutId, updates }) => {
+      if (!blockoutId) {
+        throw new Error("Blockout ID is required");
+      }
+
+      const blockout = await getTalentBlockoutsById(blockoutId);
+
+      if (updates.is_all_day || blockout.is_all_day) {
+        const start = updates.start_time || blockout.start_time;
+        const end = updates.end_time || blockout.end_time;
+
+        const startTime = getDayjsFromUtcDateString(start)
+          .startOf("day")
+          .toISOString();
+        const endTime = getDayjsFromUtcDateString(end)
+          .endOf("day")
+          .toISOString();
+
+        updates.start_time = startTime;
+        updates.end_time = endTime;
+      }
+
       return updateTalentBlockout(blockoutId, updates);
     },
     onSuccess: (_data, variables) => {

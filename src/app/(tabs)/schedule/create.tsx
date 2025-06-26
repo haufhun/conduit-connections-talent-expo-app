@@ -31,7 +31,7 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -67,6 +67,19 @@ export default function CreateBlockoutScreen() {
   const isAllDay = watch("is_all_day");
   const isRecurring = watch("is_recurring");
   const startTime = watch("start_time");
+  const endTime = watch("end_time");
+
+  useEffect(() => {
+    if (isAllDay) {
+      const currentStartTime = getDayjsFromUtcDateString(startTime);
+      const currentEndTime = getDayjsFromUtcDateString(endTime);
+
+      const startOfDay = currentStartTime.startOf("day");
+      const endOfDay = currentEndTime.endOf("day");
+      setValue("start_time", startOfDay.utc().toISOString());
+      setValue("end_time", endOfDay.utc().toISOString());
+    }
+  }, [isAllDay, startTime, endTime, setValue]);
 
   // Memoized callback to prevent infinite re-renders
   const handleRRuleChange = useCallback(

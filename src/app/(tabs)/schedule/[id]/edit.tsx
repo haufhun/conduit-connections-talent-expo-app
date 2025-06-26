@@ -139,6 +139,23 @@ export default function EditBlockoutScreen() {
   const isAllDay = watch("is_all_day");
   const isRecurring = watch("is_recurring");
   const startTime = watch("start_time");
+  const endTime = watch("end_time");
+
+  useEffect(() => {
+    if (isAllDay) {
+      const currentStartTime = getDayjsFromUtcDateString(
+        startTime ?? new Date().toISOString()
+      );
+      const currentEndTime = getDayjsFromUtcDateString(
+        endTime ?? new Date().toISOString()
+      );
+
+      const startOfDay = currentStartTime.startOf("day");
+      const endOfDay = currentEndTime.endOf("day");
+      setValue("start_time", startOfDay.utc().toISOString());
+      setValue("end_time", endOfDay.utc().toISOString());
+    }
+  }, [isAllDay, startTime, endTime, setValue]);
 
   // Memoized callback to prevent infinite re-renders
   const handleRRuleChange = useCallback(
