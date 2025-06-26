@@ -23,6 +23,7 @@ import {
   ProfileContactSchemaType,
   profileContactSchema,
 } from "../../validators/profiles.validators";
+import { PhoneNumberInput } from "../PhoneNumberInput";
 
 interface ProfileContactSectionProps {
   isOpen: boolean;
@@ -99,15 +100,11 @@ const ProfileContactSection: React.FC<ProfileContactSectionProps> = ({
                 control={control}
                 name="phone"
                 render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="Phone Number"
-                      maxLength={20}
-                      value={value}
-                      onChangeText={onChange}
-                      keyboardType="phone-pad"
-                    />
-                  </Input>
+                  <PhoneNumberInput
+                    placeholder="Phone Number"
+                    value={value}
+                    onChangeText={onChange}
+                  />
                 )}
               />
               <FormControlError>

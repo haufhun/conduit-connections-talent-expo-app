@@ -201,12 +201,12 @@ with user_skills_agg as (
           'skill_image_urls', ts.image_urls,
           'created_at', ts.created_at,
           'updated_at', ts.updated_at
-        )
+        ) order by ts.years_of_experience desc
       ) filter (where ts.id is not null),
       '[]'::jsonb
     ) as talent_skills,
-    array_agg(ts.skill_id) filter (where ts.skill_id is not null) as skill_ids,
-    array_agg(lower(replace(s.name, ' ', ''))) filter (where s.name is not null) as skill_names
+    array_agg(ts.skill_id order by ts.years_of_experience desc) filter (where ts.skill_id is not null) as skill_ids,
+    array_agg(lower(replace(s.name, ' ', '')) order by ts.years_of_experience desc) filter (where s.name is not null) as skill_names
   from users u
   left join talent_skills ts on u.id = ts.user_id
   left join skills s on ts.skill_id = s.id

@@ -71,7 +71,8 @@ export const useGetUserTalentSkills = () => {
       const { data, error } = await supabase
         .from("talent_skills")
         .select("*, skill:skills(*)")
-        .eq("user_id", id);
+        .eq("user_id", id)
+        .order("years_of_experience", { ascending: false });
 
       if (error) {
         throw new Error(

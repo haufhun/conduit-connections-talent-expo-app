@@ -20,6 +20,7 @@ import { VStack } from "@/components/ui/vstack";
 import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
+import { formatPhoneNumber } from "@/utils/common";
 import { uploadFileToSupabase } from "@/utils/storage";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -60,20 +61,68 @@ export default function ProfileScreen() {
 
   const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
 
+  const ErrorScreen = ({ errorMessage }: { errorMessage?: string }) => (
+    <SafeAreaView style={styles.safeArea} className="bg-primary flex-1">
+      <VStack
+        className="flex-1 justify-center items-center p-5 pb-20"
+        space="lg"
+      >
+        <VStack className="items-center" space="md">
+          <Center className="w-16 h-16 rounded-full bg-error-100">
+            <IconSymbol
+              name="exclamationmark.triangle.fill"
+              size={32}
+              color="#dc2626"
+            />
+          </Center>
+          <VStack className="items-center" space="xs">
+            <Text size="lg" bold className="text-typography-900 text-center">
+              Something went wrong
+            </Text>
+            <Text
+              size="sm"
+              className="text-typography-600 text-center max-w-xs"
+            >
+              {errorMessage ||
+                "We couldn't load your profile. Please try again."}
+            </Text>
+          </VStack>
+        </VStack>
+        <LogoutButton />
+      </VStack>
+    </SafeAreaView>
+  );
+
+  const LogoutButton = () => (
+    <Button
+      size="lg"
+      variant="outline"
+      onPress={() => {
+        supabase.auth.signOut();
+      }}
+      style={styles.logoutButton}
+    >
+      <ButtonText>Logout</ButtonText>
+    </Button>
+  );
+
   if (isLoading) {
-    return <ActivityIndicator />;
+    return (
+      <SafeAreaView
+        style={styles.safeArea}
+        className="bg-primary flex-1 justify-center items-center"
+      >
+        <ActivityIndicator />
+      </SafeAreaView>
+    );
   }
 
   if (userProfileError || !userProfile) {
-    return (
-      <Text>Error {userProfileError?.message || "An error occurred"}</Text>
-    );
+    return <ErrorScreen errorMessage={userProfileError?.message} />;
   }
 
   if (talentSkillsError || !talentSkills) {
-    return (
-      <Text>Error {talentSkillsError?.message || "An error occurred"}</Text>
-    );
+    return <ErrorScreen errorMessage={talentSkillsError?.message} />;
   }
 
   async function handleProfileUpdate(
@@ -312,7 +361,9 @@ export default function ProfileScreen() {
                     Phone
                   </Text>
                   <Text className="text-typography-600">
-                    {userProfile.phone || "Not provided"}
+                    {userProfile.phone
+                      ? formatPhoneNumber(userProfile.phone)
+                      : "Not provided"}
                   </Text>
                 </VStack>
                 <TouchableOpacity onPress={() => setContactModalVisible(true)}>
@@ -376,16 +427,7 @@ export default function ProfileScreen() {
           </VStack>
 
           <VStack space="md" style={styles.actions}>
-            <Button
-              size="lg"
-              variant="outline"
-              onPress={() => {
-                supabase.auth.signOut();
-              }}
-              style={styles.logoutButton}
-            >
-              <ButtonText>Logout</ButtonText>
-            </Button>
+            <LogoutButton />
           </VStack>
         </ScrollView>
       </SafeAreaView>

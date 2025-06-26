@@ -1,7 +1,9 @@
 import FilePickerActionSheet from "@/components/FilePickerActionSheet";
+import SkillImagesInfoModal from "@/components/skills/SkillImagesInfoModal";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon, EditIcon, Icon } from "@/components/ui/icon";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
@@ -12,7 +14,13 @@ import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import { MinusCircleIcon } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -43,6 +51,7 @@ export default function SkillImagesSection({
 }: SkillImagesSectionProps) {
   const [showActionsheet, setShowActionsheet] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   // Convert image URLs to items with keys for DraggableFlatList
   const imageItems = skill.image_urls.map((url) => ({
@@ -194,9 +203,21 @@ export default function SkillImagesSection({
   return (
     <VStack space="xs" style={styles.section}>
       <HStack className="justify-between items-center">
-        <Text bold className="text-typography-700">
-          Images
-        </Text>
+        <HStack space="xs" className="items-center">
+          <Text bold className="text-typography-700">
+            Images
+          </Text>
+          <TouchableOpacity
+            onPress={() => setInfoModalVisible(true)}
+            className="w-6 h-6 rounded-full bg-typography-100 items-center justify-center"
+          >
+            <IconSymbol
+              name="questionmark.circle.fill"
+              size={16}
+              color="#666"
+            />
+          </TouchableOpacity>
+        </HStack>
         <Button
           variant="link"
           onPress={() => setIsEditing(!isEditing)}
@@ -250,6 +271,11 @@ export default function SkillImagesSection({
         showActionsheet={showActionsheet}
         setShowActionsheet={setShowActionsheet}
         handleFileUpload={handleImageFileUpload}
+      />
+
+      <SkillImagesInfoModal
+        isOpen={infoModalVisible}
+        onClose={() => setInfoModalVisible(false)}
       />
     </VStack>
   );
@@ -315,5 +341,21 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginLeft: 8,
+  },
+  infoButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    padding: 8,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });
