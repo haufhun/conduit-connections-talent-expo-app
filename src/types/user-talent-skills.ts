@@ -25,7 +25,7 @@ export type TalentWithSkills = {
   last_name: string | null;
   city: string | null;
   state: string | null;
-  metadata: Record<string, any>;
+  metadata: { bio?: string };
   avatar_url: string | null;
 
   // Array of talent skills
