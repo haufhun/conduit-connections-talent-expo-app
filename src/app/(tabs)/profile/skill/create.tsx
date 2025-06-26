@@ -168,9 +168,6 @@ export default function CreateSkillScreen() {
       skill.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  console.log("Skills", skills);
-  console.log("userSkills", userSkills);
-
   return (
     <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
       <ScrollView className="flex-1">
