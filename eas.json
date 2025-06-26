@@ -1,0 +1,55 @@
+{
+  "cli": {
+    "version": ">= 0.50.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {},
+    "simulatorDevelopment": {
+      "extends": "base",
+      "developmentClient": true,
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "APP_VARIANT": "development"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "development"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "channel": "preview",
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "preview"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "channel": "production",
+      "distribution": "store",
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "appleId": "haufhun@gmail.com",
+        "ascAppId": "123456789",
+        "appleTeamId": "6LTNSW38CC",
+        "appName": "Conduit Connections"
+      }
+    }
+  }
+}
