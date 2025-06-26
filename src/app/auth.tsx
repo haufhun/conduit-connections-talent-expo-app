@@ -6,6 +6,7 @@ import { Center } from "@/components/ui/center";
 import { useAuth } from "@/providers/auth-provider";
 import { Redirect } from "expo-router";
 import React from "react";
+import { Text } from "react-native";
 
 type AuthScreen = "signin" | "signup" | "forgot-password" | "reset-password";
 
@@ -42,6 +43,18 @@ export default function Auth() {
           onTokenResetPress={() => setScreen("forgot-password")}
         />
       )}
+
+      <Center className="mt-8 p-4 bg-gray-100 rounded-lg">
+        <Text className="text-sm text-gray-600 mb-2 font-medium">
+          Environment Configuration
+        </Text>
+        <Text className="text-xs text-gray-500 mb-1">
+          URL: {process.env.EXPO_PUBLIC_SUPABASE_URL}
+        </Text>
+        <Text className="text-xs text-gray-500">
+          Anon Key: {process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}
+        </Text>
+      </Center>
     </Center>
   );
 }
