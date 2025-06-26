@@ -5,6 +5,7 @@ import SignUp from "@/components/auth/SignUp";
 import { Center } from "@/components/ui/center";
 import { useAuth } from "@/providers/auth-provider";
 import { Redirect } from "expo-router";
+import * as Updates from "expo-updates";
 import React from "react";
 import { Text } from "react-native";
 
@@ -53,6 +54,19 @@ export default function Auth() {
         </Text>
         <Text className="text-xs text-gray-500">
           Anon Key: {process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}
+        </Text>
+
+        <Text className="text-xs text-gray-500">
+          Update ID: {Updates.updateId || "Not available"}
+        </Text>
+        <Text className="text-xs text-gray-500">
+          Channel: {Updates.channel || "Not available"}
+        </Text>
+        <Text className="text-xs text-gray-500">
+          RuntimeVersion: {Updates.runtimeVersion || "Not available"}
+        </Text>
+        <Text className="text-xs text-gray-500">
+          Created At: {Updates.createdAt?.toLocaleString()}
         </Text>
       </Center>
     </Center>
