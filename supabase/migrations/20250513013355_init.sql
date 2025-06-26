@@ -232,7 +232,29 @@ user_blockouts_agg as (
           'created_at', tb.created_at,
           'updated_at', tb.updated_at
         )
-      ) filter (where tb.id is not null and tb.is_active = true),
+      ) filter (where tb.id is not null
+        and tb.is_active = true 
+        and (
+          tb.end_time >= now() 
+          or (
+            tb.is_recurring = true 
+            and (
+              tb.rrule is null 
+              or tb.rrule !~ 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)' 
+              or (
+                tb.rrule ~ 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)' 
+                and to_timestamp(
+                  regexp_replace(
+                    substring(tb.rrule from 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)'),
+                    '^([0-9]{4})([0-9]{2})([0-9]{2})(T([0-9]{2})([0-9]{2})([0-9]{2})Z?)?$',
+                    '\1-\2-\3 \5:\6:\7'
+                  ),
+                  'YYYY-MM-DD HH24:MI:SS'
+                ) >= now()
+              )
+            )
+          )
+        )),
       '[]'::jsonb
     ) as talent_blockouts
   from users u
