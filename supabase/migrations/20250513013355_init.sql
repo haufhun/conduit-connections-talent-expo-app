@@ -25,14 +25,16 @@ returns trigger
 set search_path = ''
 as $$
 begin
-  insert into public.users (id, email, user_type)
+  insert into public.users (id, email, user_type, first_name, last_name)
   values (
     new.id, 
     new.email,
     coalesce(
       (new.raw_user_meta_data->>'user_type')::public.user_type,
       'TALENT'
-    )
+    ),
+    coalesce(new.raw_user_meta_data->>'first_name', ''),
+    coalesce(new.raw_user_meta_data->>'last_name', '')
   );
   
   -- Update the auth.users table to sync raw_app_meta_data with raw_user_meta_data user_type
