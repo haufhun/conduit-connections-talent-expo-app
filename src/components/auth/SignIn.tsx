@@ -57,6 +57,8 @@ export default function SignIn({
     });
 
     if (error) {
+      console.log("Error signing in:", JSON.stringify(error));
+
       console.error("Error signing in:", error);
       Alert.alert(error.message);
     } else {
@@ -174,6 +176,25 @@ export default function SignIn({
         onPress={onSignUpPress}
       >
         <ButtonText>Sign Up Instead</ButtonText>
+      </Button>
+
+      <Button
+        className="w-full mt-4"
+        size="sm"
+        variant="link"
+        onPress={() => {
+          // make a network call to a test api endpoint
+          fetch("https://jsonplaceholder.typicode.com/posts")
+            .then((response) => response.json())
+            .then((data) => {
+              Alert.alert("Test API Success", `Fetched ${data.length} posts`);
+            })
+            .catch((error) => {
+              Alert.alert("Error calling test API:", error);
+            });
+        }}
+      >
+        <ButtonText>Test Button</ButtonText>
       </Button>
     </VStack>
   );

@@ -57,6 +57,7 @@
     "expo-status-bar": "~2.2.3",
     "expo-symbols": "~0.4.4",
     "expo-system-ui": "~5.0.7",
+    "expo-updates": "~0.28.15",
     "expo-web-browser": "~14.1.6",
     "lucide-react-native": "0.510.0",
     "nativewind": "4.1.23",
@@ -78,8 +79,7 @@
     "react-native-youtube-iframe": "2.3.0",
     "rrule": "2.8.1",
     "tailwindcss": "3.4.17",
-    "zod": "3.24.4",
-    "expo-updates": "~0.28.15"
+    "zod": "3.24.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -89,7 +89,7 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "jscodeshift": "0.15.2",
-    "supabase": "2.24.3",
+    "supabase": "2.30.4",
     "typescript": "~5.8.3"
   },
   "private": true
