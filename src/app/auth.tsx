@@ -2,6 +2,7 @@ import ForgotPassword from "@/components/auth/ForgotPassword";
 import ResetPassword from "@/components/auth/ResetPassword";
 import SignIn from "@/components/auth/SignIn";
 import SignUp from "@/components/auth/SignUp";
+import VerifyCode from "@/components/auth/VerifyCode";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { useAuth } from "@/providers/auth-provider";
@@ -10,12 +11,18 @@ import * as Updates from "expo-updates";
 import React from "react";
 import { Alert, ScrollView, Text } from "react-native";
 
-type AuthScreen = "signin" | "signup" | "forgot-password" | "reset-password";
+type AuthScreen =
+  | "signin"
+  | "signup"
+  | "forgot-password"
+  | "reset-password"
+  | "verify-code";
 
 export default function Auth() {
   const { session } = useAuth();
   const [screen, setScreen] = React.useState<AuthScreen>("signin");
   const [resetEmail, setResetEmail] = React.useState("");
+  const [verifyEmail, setVerifyEmail] = React.useState("");
   const [tapCount, setTapCount] = React.useState(0);
   const [showDeveloperSettings, setShowDeveloperSettings] =
     React.useState(false);
@@ -27,7 +34,21 @@ export default function Auth() {
   return (
     <Center className="flex-1 p-6">
       {screen === "signup" ? (
-        <SignUp onSignInPress={() => setScreen("signin")} />
+        <SignUp
+          onSignInPress={() => setScreen("signin")}
+          onVerificationSent={(email) => {
+            setVerifyEmail(email);
+            setScreen("verify-code");
+          }}
+        />
+      ) : screen === "verify-code" ? (
+        <VerifyCode
+          email={verifyEmail}
+          onBackToSignIn={() => setScreen("signin")}
+          onResendCode={() => {
+            // Could add additional resend logic here if needed
+          }}
+        />
       ) : screen === "forgot-password" ? (
         <ForgotPassword
           onBackToSignIn={() => setScreen("signin")}

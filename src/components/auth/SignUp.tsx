@@ -66,8 +66,10 @@ const signUpSchema = zod
 
 export default function SignUp({
   onSignInPress,
+  onVerificationSent,
 }: {
   onSignInPress: () => void;
+  onVerificationSent?: (email: string) => void;
 }) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
@@ -105,6 +107,8 @@ export default function SignUp({
         placement: "top",
         duration: 1500,
       });
+      // Trigger verification flow
+      onVerificationSent?.(data.email);
     }
   };
 
