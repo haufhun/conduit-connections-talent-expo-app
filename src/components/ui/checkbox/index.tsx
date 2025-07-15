@@ -1,16 +1,17 @@
-'use client';
-import React from 'react';
-import { createCheckbox } from '@gluestack-ui/checkbox';
-import { View, Pressable, Text, Platform } from 'react-native';
-import type { TextProps, ViewProps } from 'react-native';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { PrimitiveIcon, IPrimitiveIcon, UIIcon } from '@gluestack-ui/icon';
+"use client";
+import { createCheckbox } from "@gluestack-ui/checkbox";
+import { IPrimitiveIcon, PrimitiveIcon, UIIcon } from "@gluestack-ui/icon";
+import type { VariantProps } from "@gluestack-ui/nativewind-utils";
+import { tva } from "@gluestack-ui/nativewind-utils/tva";
 import {
-  withStyleContext,
   useStyleContext,
-} from '@gluestack-ui/nativewind-utils/withStyleContext';
-import { cssInterop } from 'nativewind';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+  withStyleContext,
+} from "@gluestack-ui/nativewind-utils/withStyleContext";
+import * as Haptics from "expo-haptics";
+import { cssInterop } from "nativewind";
+import React from "react";
+import type { TextProps, ViewProps } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
 
 const IndicatorWrapper = React.forwardRef<
   React.ComponentRef<typeof View>,
@@ -33,13 +34,27 @@ const IconWrapper = React.forwardRef<
   return <UIIcon {...props} ref={ref} />;
 });
 
-const SCOPE = 'CHECKBOX';
+const PressableWithHaptic = React.forwardRef<
+  React.ComponentRef<typeof Pressable>,
+  React.ComponentPropsWithoutRef<typeof Pressable>
+>(function PressableWithHaptic({ onPressIn, ...props }, ref) {
+  const handlePressIn = (event: any) => {
+    if (process.env.EXPO_OS === "ios") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPressIn?.(event);
+  };
+
+  return <Pressable {...props} onPressIn={handlePressIn} ref={ref} />;
+});
+
+const SCOPE = "CHECKBOX";
 const UICheckbox = createCheckbox({
   // @ts-expect-error : internal implementation for r-19/react-native-web
   Root:
-    Platform.OS === 'web'
+    Platform.OS === "web"
       ? withStyleContext(View, SCOPE)
-      : withStyleContext(Pressable, SCOPE),
+      : withStyleContext(PressableWithHaptic, SCOPE),
   Group: View,
   Icon: IconWrapper,
   Label: LabelWrapper,
@@ -48,58 +63,58 @@ const UICheckbox = createCheckbox({
 
 cssInterop(PrimitiveIcon, {
   className: {
-    target: 'style',
+    target: "style",
     nativeStyleToProp: {
       height: true,
       width: true,
       fill: true,
-      color: 'classNameColor',
+      color: "classNameColor",
       stroke: true,
     },
   },
 });
 
 const checkboxStyle = tva({
-  base: 'group/checkbox flex-row items-center justify-start web:cursor-pointer data-[disabled=true]:cursor-not-allowed',
+  base: "group/checkbox flex-row items-center justify-start web:cursor-pointer data-[disabled=true]:cursor-not-allowed",
   variants: {
     size: {
-      lg: 'gap-2',
-      md: 'gap-2',
-      sm: 'gap-1.5',
+      lg: "gap-2",
+      md: "gap-2",
+      sm: "gap-1.5",
     },
   },
 });
 
 const checkboxIndicatorStyle = tva({
-  base: 'justify-center items-center border-outline-400 bg-transparent rounded web:data-[focus-visible=true]:outline-none web:data-[focus-visible=true]:ring-2 web:data-[focus-visible=true]:ring-indicator-primary data-[checked=true]:bg-primary-600 data-[checked=true]:border-primary-600 data-[hover=true]:data-[checked=false]:border-outline-500 data-[hover=true]:bg-transparent data-[hover=true]:data-[invalid=true]:border-error-700 data-[hover=true]:data-[checked=true]:bg-primary-700 data-[hover=true]:data-[checked=true]:border-primary-700 data-[hover=true]:data-[checked=true]:data-[disabled=true]:border-primary-600 data-[hover=true]:data-[checked=true]:data-[disabled=true]:bg-primary-600 data-[hover=true]:data-[checked=true]:data-[disabled=true]:opacity-40 data-[hover=true]:data-[checked=true]:data-[disabled=true]:data-[invalid=true]:border-error-700 data-[hover=true]:data-[disabled=true]:border-outline-400 data-[hover=true]:data-[disabled=true]:data-[invalid=true]:border-error-700 data-[active=true]:data-[checked=true]:bg-primary-800 data-[active=true]:data-[checked=true]:border-primary-800 data-[invalid=true]:border-error-700 data-[disabled=true]:opacity-40',
+  base: "justify-center items-center border-outline-400 bg-transparent rounded web:data-[focus-visible=true]:outline-none web:data-[focus-visible=true]:ring-2 web:data-[focus-visible=true]:ring-indicator-primary data-[checked=true]:bg-primary-600 data-[checked=true]:border-primary-600 data-[hover=true]:data-[checked=false]:border-outline-500 data-[hover=true]:bg-transparent data-[hover=true]:data-[invalid=true]:border-error-700 data-[hover=true]:data-[checked=true]:bg-primary-700 data-[hover=true]:data-[checked=true]:border-primary-700 data-[hover=true]:data-[checked=true]:data-[disabled=true]:border-primary-600 data-[hover=true]:data-[checked=true]:data-[disabled=true]:bg-primary-600 data-[hover=true]:data-[checked=true]:data-[disabled=true]:opacity-40 data-[hover=true]:data-[checked=true]:data-[disabled=true]:data-[invalid=true]:border-error-700 data-[hover=true]:data-[disabled=true]:border-outline-400 data-[hover=true]:data-[disabled=true]:data-[invalid=true]:border-error-700 data-[active=true]:data-[checked=true]:bg-primary-800 data-[active=true]:data-[checked=true]:border-primary-800 data-[invalid=true]:border-error-700 data-[disabled=true]:opacity-40",
   parentVariants: {
     size: {
-      lg: 'w-6 h-6 border-[3px]',
-      md: 'w-5 h-5 border-2',
-      sm: 'w-4 h-4 border-2',
+      lg: "w-6 h-6 border-[3px]",
+      md: "w-5 h-5 border-2",
+      sm: "w-4 h-4 border-2",
     },
   },
 });
 
 const checkboxLabelStyle = tva({
-  base: 'text-typography-600 data-[checked=true]:text-typography-900 data-[hover=true]:text-typography-900 data-[hover=true]:data-[checked=true]:text-typography-900 data-[hover=true]:data-[checked=true]:data-[disabled=true]:text-typography-900 data-[hover=true]:data-[disabled=true]:text-typography-400 data-[active=true]:text-typography-900 data-[active=true]:data-[checked=true]:text-typography-900 data-[disabled=true]:opacity-40 web:select-none',
+  base: "text-typography-600 data-[checked=true]:text-typography-900 data-[hover=true]:text-typography-900 data-[hover=true]:data-[checked=true]:text-typography-900 data-[hover=true]:data-[checked=true]:data-[disabled=true]:text-typography-900 data-[hover=true]:data-[disabled=true]:text-typography-400 data-[active=true]:text-typography-900 data-[active=true]:data-[checked=true]:text-typography-900 data-[disabled=true]:opacity-40 web:select-none",
   parentVariants: {
     size: {
-      lg: 'text-lg',
-      md: 'text-base',
-      sm: 'text-sm',
+      lg: "text-lg",
+      md: "text-base",
+      sm: "text-sm",
     },
   },
 });
 
 const checkboxIconStyle = tva({
-  base: 'text-typography-50 fill-none',
+  base: "text-typography-50 fill-none",
 
   parentVariants: {
     size: {
-      sm: 'h-3 w-3',
-      md: 'h-4 w-4',
-      lg: 'h-5 w-5',
+      sm: "h-3 w-3",
+      md: "h-4 w-4",
+      lg: "h-5 w-5",
     },
   },
 });
@@ -112,7 +127,7 @@ type ICheckboxProps = React.ComponentPropsWithoutRef<typeof UICheckbox> &
 const Checkbox = React.forwardRef<
   React.ComponentRef<typeof UICheckbox>,
   ICheckboxProps
->(function Checkbox({ className, size = 'md', ...props }, ref) {
+>(function Checkbox({ className, size = "md", ...props }, ref) {
   return (
     <UICheckbox
       className={checkboxStyle({
@@ -187,7 +202,7 @@ const CheckboxIcon = React.forwardRef<
 >(function CheckboxIcon({ className, size, ...props }, ref) {
   const { size: parentSize } = useStyleContext(SCOPE);
 
-  if (typeof size === 'number') {
+  if (typeof size === "number") {
     return (
       <UICheckbox.Icon
         ref={ref}
@@ -224,15 +239,15 @@ const CheckboxIcon = React.forwardRef<
   );
 });
 
-Checkbox.displayName = 'Checkbox';
-CheckboxIndicator.displayName = 'CheckboxIndicator';
-CheckboxLabel.displayName = 'CheckboxLabel';
-CheckboxIcon.displayName = 'CheckboxIcon';
+Checkbox.displayName = "Checkbox";
+CheckboxIndicator.displayName = "CheckboxIndicator";
+CheckboxLabel.displayName = "CheckboxLabel";
+CheckboxIcon.displayName = "CheckboxIcon";
 
 export {
   Checkbox,
+  CheckboxGroup,
+  CheckboxIcon,
   CheckboxIndicator,
   CheckboxLabel,
-  CheckboxIcon,
-  CheckboxGroup,
 };

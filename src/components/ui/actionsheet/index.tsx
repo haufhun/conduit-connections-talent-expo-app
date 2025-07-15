@@ -10,6 +10,7 @@ import {
   Motion,
   MotionComponentProps,
 } from "@legendapp/motion";
+import * as Haptics from "expo-haptics";
 import { cssInterop } from "nativewind";
 import React from "react";
 import {
@@ -27,8 +28,15 @@ import {
 const ItemWrapper = React.forwardRef<
   React.ComponentRef<typeof Pressable>,
   PressableProps
->(function ItemWrapper({ ...props }, ref) {
-  return <Pressable {...props} ref={ref} />;
+>(function ItemWrapper({ onPressIn, ...props }, ref) {
+  const handlePressIn = (event: any) => {
+    if (process.env.EXPO_OS === "ios") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPressIn?.(event);
+  };
+
+  return <Pressable {...props} onPressIn={handlePressIn} ref={ref} />;
 });
 
 type IMotionViewProps = React.ComponentProps<typeof View> &
