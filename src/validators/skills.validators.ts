@@ -31,12 +31,16 @@ export type SkillHourlyRateSchemaType = z.infer<typeof skillHourlyRateSchema>;
 export const skillYoutubeUrlSchema = z.object({
   youtube_url: z
     .string()
-    .url("Please enter a valid YouTube URL")
     .optional()
     .refine((url) => {
       if (!url) return true;
-      const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-      return regex.test(url);
+      try {
+        new URL(url);
+        const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+        return regex.test(url);
+      } catch {
+        return false;
+      }
     }, "Please enter a valid YouTube URL"),
 });
 export type SkillYoutubeUrlSchemaType = z.infer<typeof skillYoutubeUrlSchema>;
