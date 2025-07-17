@@ -8,9 +8,12 @@ import SkillHourlyRateSection from "@/components/skills/SkillHourlyRateSection";
 import SkillImagesSection from "@/components/skills/SkillImagesSection";
 import SkillSummarySection from "@/components/skills/SkillSummarySection";
 import SkillYoutubeVideoSection from "@/components/skills/SkillYoutubeVideoSection";
+import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { BrandColors } from "@/constants/BrandColors";
 import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
 import { Image } from "expo-image";
@@ -47,18 +50,65 @@ export default function SkillDetailScreen() {
   }, [navigation, userProfile?.first_name, userProfile?.last_name]);
 
   if (isLoading) {
-    return <ActivityIndicator />;
+    return (
+      <SafeAreaView className="flex-1 bg-background-0 justify-center items-center">
+        <VStack className="items-center" space="lg">
+          <ActivityIndicator size="large" color={BrandColors.PRIMARY} />
+          <Text className="text-typography-600 text-center">
+            Loading skill details...
+          </Text>
+        </VStack>
+      </SafeAreaView>
+    );
   }
 
   if (userProfileError || !userProfile) {
     return (
-      <Text>Error {userProfileError?.message || "An error occurred"}</Text>
+      <SafeAreaView className="flex-1 bg-background-0 justify-center items-center">
+        <VStack className="items-center p-5" space="lg">
+          <Center className="w-20 h-20 rounded-full bg-error-50 border-2 border-error-200">
+            <IconSymbol
+              name="exclamationmark.triangle.fill"
+              size={36}
+              color={BrandColors.ERROR}
+            />
+          </Center>
+          <VStack className="items-center" space="xs">
+            <Text size="xl" bold className="text-typography-900 text-center">
+              Profile Error
+            </Text>
+            <Text className="text-typography-600 text-center">
+              {userProfileError?.message ||
+                "An error occurred loading your profile"}
+            </Text>
+          </VStack>
+        </VStack>
+      </SafeAreaView>
     );
   }
 
   if (talentSkillsError || !talentSkills) {
     return (
-      <Text>Error {talentSkillsError?.message || "An error occurred"}</Text>
+      <SafeAreaView className="flex-1 bg-background-0 justify-center items-center">
+        <VStack className="items-center p-5" space="lg">
+          <Center className="w-20 h-20 rounded-full bg-error-50 border-2 border-error-200">
+            <IconSymbol
+              name="exclamationmark.triangle.fill"
+              size={36}
+              color={BrandColors.ERROR}
+            />
+          </Center>
+          <VStack className="items-center" space="xs">
+            <Text size="xl" bold className="text-typography-900 text-center">
+              Skills Error
+            </Text>
+            <Text className="text-typography-600 text-center">
+              {talentSkillsError?.message ||
+                "An error occurred loading your skills"}
+            </Text>
+          </VStack>
+        </VStack>
+      </SafeAreaView>
     );
   }
 
@@ -72,8 +122,28 @@ export default function SkillDetailScreen() {
 
   if (!skill) {
     return (
-      <SafeAreaView className="flex-1 bg-primary" edges={["bottom"]}>
-        <Text>Loading...</Text>
+      <SafeAreaView
+        className="flex-1 bg-background-0 justify-center items-center"
+        edges={["bottom"]}
+      >
+        <VStack className="items-center p-5" space="lg">
+          <Center className="w-20 h-20 rounded-full bg-warning-50 border-2 border-warning-200">
+            <IconSymbol
+              name="questionmark.circle.fill"
+              size={36}
+              color={BrandColors.WARNING}
+            />
+          </Center>
+          <VStack className="items-center" space="xs">
+            <Text size="xl" bold className="text-typography-900 text-center">
+              Skill Not Found
+            </Text>
+            <Text className="text-typography-600 text-center">
+              The skill you&apos;re looking for doesn&apos;t exist or has been
+              removed.
+            </Text>
+          </VStack>
+        </VStack>
       </SafeAreaView>
     );
   }
@@ -94,24 +164,35 @@ export default function SkillDetailScreen() {
   };
 
   return (
-    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
-      <ScrollView className="flex-1 pb-[100px]">
-        <VStack space="lg" className="p-[20px]">
-          <HStack space="md" className="items-center py-4">
-            <Image
-              source={
-                skill.skill?.image_url
-                  ? { uri: skill.skill.image_url }
-                  : require("@/assets/images/icon.png")
-              }
-              style={styles.skillImage}
-              contentFit="cover"
-            />
-            <Text size="3xl" bold className="text-typography-900 text-center">
-              {skill.skill?.name}
-            </Text>
-          </HStack>
+    <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <VStack space="lg" className="p-6">
+          {/* Skill Header */}
+          <VStack className="bg-white rounded-2xl p-6 border border-primary-200 shadow-sm">
+            <HStack space="lg" className="items-center">
+              <Center className="w-24 h-24 rounded-full bg-primary-50 border-3 border-primary-200 shadow-md">
+                <Image
+                  source={
+                    skill.skill?.image_url
+                      ? { uri: skill.skill.image_url }
+                      : require("@/assets/images/icon.png")
+                  }
+                  style={styles.skillImage}
+                  contentFit="cover"
+                />
+              </Center>
+              <VStack className="flex-1" space="xs">
+                <Text size="2xl" bold className="text-typography-900">
+                  {skill.skill?.name}
+                </Text>
+                <Text size="md" className="text-typography-600">
+                  Professional Skills Profile
+                </Text>
+              </VStack>
+            </HStack>
+          </VStack>
 
+          {/* Skill Sections */}
           <VStack space="lg">
             <SkillExperienceSection
               skill={skill}
@@ -141,7 +222,8 @@ export default function SkillDetailScreen() {
           </VStack>
         </VStack>
 
-        <VStack className="h-24" />
+        {/* Bottom padding */}
+        <VStack className="h-8" />
       </ScrollView>
     </SafeAreaView>
   );
@@ -149,8 +231,8 @@ export default function SkillDetailScreen() {
 
 const styles = StyleSheet.create({
   skillImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
 });

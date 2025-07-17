@@ -1,6 +1,7 @@
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { FormControl } from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import {
   Modal,
   ModalBackdrop,
@@ -13,16 +14,16 @@ import {
 import { Text } from "@/components/ui/text";
 import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
+import { BrandColors } from "@/constants/BrandColors";
 import { TalentSkill } from "@/types/skills";
 import {
   skillSumarySchema,
   type SkillSummarySchemaType,
 } from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EditIcon } from "lucide-react-native";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, StyleSheet, TouchableOpacity } from "react-native";
+import { Alert, TouchableOpacity } from "react-native";
 
 interface SkillSummarySectionProps {
   skill: TalentSkill;
@@ -79,25 +80,37 @@ export default function SkillSummarySection({
   };
 
   return (
-    <VStack space="xs" style={styles.section}>
-      <HStack className="justify-between items-center">
-        <Text bold className="text-typography-700">
-          Summary
-        </Text>
-        <Button variant="link" onPress={handleModalOpen} className="p-0">
-          <HStack space="xs" className="items-center">
-            <ButtonIcon as={EditIcon} />
-            <ButtonText>Edit</ButtonText>
-          </HStack>
-        </Button>
+    <VStack className="bg-white rounded-xl p-6 border border-outline-200 shadow-sm">
+      <HStack className="justify-between items-center mb-4">
+        <HStack className="items-center" space="sm">
+          <IconSymbol
+            name="doc.text.fill"
+            size={20}
+            color={BrandColors.SECONDARY}
+          />
+          <Text size="lg" bold className="text-typography-900">
+            Summary
+          </Text>
+        </HStack>
+        <TouchableOpacity
+          onPress={handleModalOpen}
+          className="p-2 rounded-full bg-primary-50"
+        >
+          <IconSymbol
+            name="square.and.pencil"
+            size={16}
+            color={BrandColors.PRIMARY}
+          />
+        </TouchableOpacity>
       </HStack>
       {skill.summary ? (
-        <VStack space="sm">
+        <VStack space="md">
           <TouchableOpacity
             onPress={() => setSummaryExpanded(!summaryExpanded)}
             activeOpacity={0.7}
+            className="bg-background-50 p-4 rounded-lg"
           >
-            <Text className="text-typography-600">
+            <Text className="text-typography-700 text-base leading-6">
               {summaryExpanded
                 ? skill.summary
                 : getSummaryPreview(skill.summary)}
@@ -107,16 +120,22 @@ export default function SkillSummarySection({
             <Button
               variant="link"
               size="sm"
+              action="primary"
               onPress={() => setSummaryExpanded(!summaryExpanded)}
+              className="justify-start px-0"
             >
-              <ButtonText>
+              <ButtonText className="text-primary-600">
                 {summaryExpanded ? "Show Less" : "Show More"}
               </ButtonText>
             </Button>
           )}
         </VStack>
       ) : (
-        <Text className="text-typography-500 italic">No summary added</Text>
+        <VStack className="bg-background-50 p-6 rounded-lg border border-outline-200">
+          <Text className="text-typography-500 text-center">
+            No summary added yet
+          </Text>
+        </VStack>
       )}
 
       {/* Summary Edit Modal */}
@@ -139,17 +158,13 @@ export default function SkillSummarySection({
               name="summary"
               render={({ field: { value, onChange } }) => (
                 <FormControl isInvalid={Boolean(errors.summary)}>
-                  <Textarea
-                    size="lg"
-                    variant="default"
-                    style={styles.summaryInputContainer}
-                  >
+                  <Textarea size="lg" variant="default" className="min-h-40">
                     <TextareaInput
                       placeholder="Write a summary of your experience with this skill..."
                       value={value}
                       onChangeText={onChange}
                       numberOfLines={6}
-                      style={styles.summaryInput}
+                      className="min-h-40"
                     />
                   </Textarea>
                   {errors.summary?.message && (
@@ -185,18 +200,3 @@ export default function SkillSummarySection({
     </VStack>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
-  },
-  summaryInputContainer: {
-    minHeight: 160,
-    height: 160,
-  },
-  summaryInput: {
-    height: 160,
-  },
-});

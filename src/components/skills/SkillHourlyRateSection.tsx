@@ -1,6 +1,7 @@
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { FormControl } from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
@@ -13,16 +14,16 @@ import {
 } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { BrandColors } from "@/constants/BrandColors";
 import { TalentSkill } from "@/types/skills";
 import {
   skillHourlyRateSchema,
   type SkillHourlyRateSchemaType,
 } from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EditIcon } from "lucide-react-native";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, StyleSheet } from "react-native";
+import { Alert, TouchableOpacity } from "react-native";
 
 interface SkillHourlyRateSectionProps {
   skill: TalentSkill;
@@ -65,23 +66,38 @@ export default function SkillHourlyRateSection({
   };
 
   return (
-    <VStack space="xs" style={styles.section}>
-      <HStack className="justify-between items-center">
-        <Text bold className="text-typography-700">
-          Hourly Rate
-        </Text>
-        <Button variant="link" onPress={handleModalOpen} className="p-0">
-          <HStack space="xs" className="items-center">
-            <ButtonIcon as={EditIcon} />
-            <ButtonText>Edit</ButtonText>
-          </HStack>
-        </Button>
+    <VStack className="bg-white rounded-xl p-6 border border-outline-200 shadow-sm">
+      <HStack className="justify-between items-center mb-4">
+        <HStack className="items-center" space="sm">
+          <IconSymbol
+            name="dollarsign.circle.fill"
+            size={20}
+            color={BrandColors.TERTIARY}
+          />
+          <Text size="lg" bold className="text-typography-900">
+            Hourly Rate
+          </Text>
+        </HStack>
+        <TouchableOpacity
+          onPress={handleModalOpen}
+          className="p-2 rounded-full bg-primary-50"
+        >
+          <IconSymbol
+            name="square.and.pencil"
+            size={16}
+            color={BrandColors.PRIMARY}
+          />
+        </TouchableOpacity>
       </HStack>
-      {skill.hourly_rate ? (
-        <Text className="text-typography-600">${skill.hourly_rate}/hr</Text>
-      ) : (
-        <Text className="text-typography-500 italic">No rate specified</Text>
-      )}
+      <VStack className="bg-background-50 p-4 rounded-lg">
+        {skill.hourly_rate ? (
+          <Text size="lg" className="text-typography-700">
+            ${skill.hourly_rate}/hr
+          </Text>
+        ) : (
+          <Text className="text-typography-500 italic">No rate specified</Text>
+        )}
+      </VStack>
 
       {/* Hourly Rate Edit Modal */}
       <Modal
@@ -147,11 +163,3 @@ export default function SkillHourlyRateSection({
     </VStack>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
-  },
-});

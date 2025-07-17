@@ -1,18 +1,20 @@
 import FilePickerActionSheet from "@/components/FilePickerActionSheet";
 import SkillImagesInfoModal from "@/components/skills/SkillImagesInfoModal";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon, EditIcon, Icon } from "@/components/ui/icon";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { BrandColors } from "@/constants/BrandColors";
 import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import type { TalentSkill } from "@/types/skills";
 import { uploadFileToSupabase } from "@/utils/storage";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
-import { MinusCircleIcon } from "lucide-react-native";
+import { ImageIcon, MinusCircleIcon } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -201,70 +203,95 @@ export default function SkillImagesSection({
   };
 
   return (
-    <VStack space="xs" style={styles.section}>
-      <HStack className="justify-between items-center">
-        <HStack space="xs" className="items-center">
-          <Text bold className="text-typography-700">
-            Images
-          </Text>
-          <TouchableOpacity
-            onPress={() => setInfoModalVisible(true)}
-            className="w-6 h-6 rounded-full bg-typography-100 items-center justify-center"
-          >
-            <IconSymbol
-              name="questionmark.circle.fill"
-              size={16}
-              color="#666"
-            />
-          </TouchableOpacity>
-        </HStack>
-        <Button
-          variant="link"
-          onPress={() => setIsEditing(!isEditing)}
-          className="p-0"
-        >
-          <HStack space="xs" className="items-center">
-            <ButtonIcon as={EditIcon} />
-            <ButtonText>{isEditing ? "Done" : "Edit"}</ButtonText>
+    <Card className="p-4 bg-background-0 border-outline-100 rounded-lg">
+      <VStack space="md">
+        <HStack className="justify-between items-center">
+          <HStack space="sm" className="items-center">
+            <Icon as={ImageIcon} size="md" className="text-tertiary-500" />
+            <Text size="lg" className="font-semibold text-typography-900">
+              Portfolio Images
+            </Text>
+            <TouchableOpacity
+              onPress={() => setInfoModalVisible(true)}
+              className="w-7 h-7 rounded-full bg-info-50 items-center justify-center border border-info-200"
+            >
+              <IconSymbol
+                name="questionmark.circle.fill"
+                size={16}
+                color={BrandColors.INFO}
+              />
+            </TouchableOpacity>
           </HStack>
-        </Button>
-      </HStack>
-
-      <View style={styles.listContainer}>
-        <DraggableFlatList
-          data={imageItems}
-          onDragEnd={({ data }) => {
-            const newUrls = data.map((item) => item.url);
-            onUpdateSkill({ image_urls: newUrls });
-          }}
-          keyExtractor={(item) => item.key}
-          renderItem={renderImage}
-          horizontal
-          contentContainerStyle={styles.listContent}
-        />
-
-        {!isEditing && skill.image_urls.length < 5 && (
           <Button
             variant="outline"
-            onPress={handleAdd}
-            style={styles.addImageButton}
-            className="items-center justify-center border-2 border-dashed border-opacity-75 border-typography-500 bg-white"
+            size="sm"
+            onPress={() => setIsEditing(!isEditing)}
+            className="border-primary-300 bg-primary-50"
           >
-            <VStack space="xs" className="items-center">
-              <ButtonIcon
-                as={AddIcon}
-                size="xl"
-                className="text-typography-300"
-              />
-              <ButtonText className="text-typography-300">Add Item</ButtonText>
-            </VStack>
+            <ButtonIcon as={EditIcon} size="sm" className="text-primary-600" />
+            <ButtonText className="text-primary-600 ml-1">
+              {isEditing ? "Done" : "Edit"}
+            </ButtonText>
           </Button>
-        )}
-      </View>
+        </HStack>
 
-      {skill.image_urls.length === 0 && (
-        <Text className="text-typography-500 italic">No images added</Text>
-      )}
+        {skill.image_urls.length === 0 ? (
+          <View className="py-8 px-4 bg-background-50 rounded-lg border-2 border-dashed border-outline-200">
+            <VStack space="sm" className="items-center">
+              <Icon as={ImageIcon} size="xl" className="text-outline-400" />
+              <Text className="text-typography-500 text-center">
+                No portfolio images added yet
+              </Text>
+              <Text size="sm" className="text-typography-400 text-center">
+                Add up to 5 images to showcase your work
+              </Text>
+              <Button
+                variant="solid"
+                action="primary"
+                onPress={handleAdd}
+                className="mt-2 bg-primary-600"
+              >
+                <ButtonIcon as={AddIcon} size="sm" className="text-white" />
+                <ButtonText className="text-white ml-1">Add Images</ButtonText>
+              </Button>
+            </VStack>
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            <DraggableFlatList
+              data={imageItems}
+              onDragEnd={({ data }) => {
+                const newUrls = data.map((item) => item.url);
+                onUpdateSkill({ image_urls: newUrls });
+              }}
+              keyExtractor={(item) => item.key}
+              renderItem={renderImage}
+              horizontal
+              contentContainerStyle={styles.listContent}
+            />
+
+            {!isEditing && skill.image_urls.length < 5 && (
+              <Button
+                variant="outline"
+                onPress={handleAdd}
+                style={styles.addImageButton}
+                className="items-center justify-center border-2 border-dashed border-primary-300 bg-primary-50"
+              >
+                <VStack space="xs" className="items-center">
+                  <ButtonIcon
+                    as={AddIcon}
+                    size="xl"
+                    className="text-primary-600"
+                  />
+                  <ButtonText className="text-primary-600 text-xs">
+                    Add Item
+                  </ButtonText>
+                </VStack>
+              </Button>
+            )}
+          </View>
+        )}
+      </VStack>
 
       <FilePickerActionSheet
         supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
@@ -277,16 +304,11 @@ export default function SkillImagesSection({
         isOpen={infoModalVisible}
         onClose={() => setInfoModalVisible(false)}
       />
-    </VStack>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
-  },
   listContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -341,21 +363,5 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 8,
     marginLeft: 8,
-  },
-  infoButton: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    padding: 8,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
 });

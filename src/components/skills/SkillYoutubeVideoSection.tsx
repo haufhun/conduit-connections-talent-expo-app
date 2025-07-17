@@ -1,6 +1,8 @@
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { FormControl } from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
+import { Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
@@ -19,10 +21,10 @@ import {
   type SkillYoutubeUrlSchemaType,
 } from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EditIcon } from "lucide-react-native";
+import { EditIcon, PlayIcon } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, View } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 
 interface SkillYoutubeVideoSectionProps {
@@ -86,30 +88,49 @@ export default function SkillYoutubeVideoSection({
   };
 
   return (
-    <VStack space="xs" style={styles.section}>
-      <HStack className="justify-between items-center">
-        <Text bold className="text-typography-700">
-          YouTube Video
-        </Text>
-        <Button variant="link" onPress={handleModalOpen} className="p-0">
-          <HStack space="xs" className="items-center">
-            <ButtonIcon as={EditIcon} />
-            <ButtonText>Edit</ButtonText>
+    <Card className="p-4 bg-background-0 border-outline-100 rounded-lg">
+      <VStack space="md">
+        <HStack className="justify-between items-center">
+          <HStack space="sm" className="items-center">
+            <Icon as={PlayIcon} size="md" className="text-tertiary-500" />
+            <Text size="lg" className="font-semibold text-typography-900">
+              YouTube Video
+            </Text>
           </HStack>
-        </Button>
-      </HStack>
-      {skill.youtube_url ? (
-        <View style={{ height: 200 }}>
-          <YoutubePlayer
-            height={200}
-            play={playing}
-            videoId={getYoutubeVideoId(skill.youtube_url) || ""}
-            onChangeState={onStateChange}
-          />
-        </View>
-      ) : (
-        <Text className="text-typography-500 italic">No video added</Text>
-      )}
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={handleModalOpen}
+            className="border-primary-300 bg-primary-50"
+          >
+            <ButtonIcon as={EditIcon} size="sm" className="text-primary-600" />
+            <ButtonText className="text-primary-600 ml-1">Edit</ButtonText>
+          </Button>
+        </HStack>
+
+        {skill.youtube_url ? (
+          <View className="rounded-lg overflow-hidden">
+            <YoutubePlayer
+              height={200}
+              play={playing}
+              videoId={getYoutubeVideoId(skill.youtube_url) || ""}
+              onChangeState={onStateChange}
+            />
+          </View>
+        ) : (
+          <View className="py-8 px-4 bg-background-50 rounded-lg border-2 border-dashed border-outline-200">
+            <VStack space="sm" className="items-center">
+              <Icon as={PlayIcon} size="xl" className="text-outline-400" />
+              <Text className="text-typography-500 text-center">
+                No YouTube video added yet
+              </Text>
+              <Text size="sm" className="text-typography-400 text-center">
+                Add a video to showcase your work
+              </Text>
+            </VStack>
+          </View>
+        )}
+      </VStack>
 
       {/* YouTube URL Edit Modal */}
       <Modal
@@ -118,28 +139,38 @@ export default function SkillYoutubeVideoSection({
         size="lg"
       >
         <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text size="lg" bold>
-              Edit YouTube URL
-            </Text>
+        <ModalContent className="bg-background-0">
+          <ModalHeader className="border-b border-outline-100">
+            <VStack space="xs">
+              <Text size="lg" className="font-semibold text-typography-900">
+                Edit YouTube Video
+              </Text>
+              <Text size="sm" className="text-typography-500">
+                Add a YouTube URL to showcase your work
+              </Text>
+            </VStack>
             <ModalCloseButton />
           </ModalHeader>
-          <ModalBody>
+          <ModalBody className="py-6">
             <Controller
               control={control}
               name="youtube_url"
               render={({ field: { value, onChange } }) => (
                 <FormControl isInvalid={Boolean(errors.youtube_url)}>
-                  <Input size="lg" variant="outline">
+                  <Input
+                    size="lg"
+                    variant="outline"
+                    className="border-outline-200 focus:border-primary-500"
+                  >
                     <InputField
-                      placeholder="Enter YouTube video URL"
+                      placeholder="https://www.youtube.com/watch?v=..."
                       value={value}
                       onChangeText={onChange}
+                      className="text-typography-900"
                     />
                   </Input>
                   {errors.youtube_url?.message && (
-                    <Text size="xs" className="text-error-600">
+                    <Text size="sm" className="text-error-600 mt-1">
                       {errors.youtube_url.message}
                     </Text>
                   )}
@@ -147,35 +178,32 @@ export default function SkillYoutubeVideoSection({
               )}
             />
           </ModalBody>
-          <ModalFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onPress={() => setYoutubeModalVisible(false)}
-              className="mr-2"
-            >
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button
-              size="sm"
-              variant="solid"
-              action="primary"
-              onPress={onSubmit}
-              isDisabled={isLoading}
-            >
-              <ButtonText>{isLoading ? "Saving..." : "Save"}</ButtonText>
-            </Button>
+          <ModalFooter className="border-t border-outline-100">
+            <HStack space="sm" className="justify-end">
+              <Button
+                size="md"
+                variant="outline"
+                onPress={() => setYoutubeModalVisible(false)}
+                className="border-outline-300"
+              >
+                <ButtonText className="text-typography-600">Cancel</ButtonText>
+              </Button>
+              <Button
+                size="md"
+                variant="solid"
+                action="primary"
+                onPress={onSubmit}
+                isDisabled={isLoading}
+                className="bg-primary-600"
+              >
+                <ButtonText className="text-white">
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </ButtonText>
+              </Button>
+            </HStack>
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </VStack>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  section: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
-  },
-});

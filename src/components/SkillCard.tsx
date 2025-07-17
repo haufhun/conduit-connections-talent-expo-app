@@ -5,6 +5,7 @@ import { HStack } from "@/components/ui/hstack";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { BrandColors } from "@/constants/BrandColors";
 import type { TalentSkill } from "@/types/skills";
 
 interface SkillCardProps {
@@ -15,12 +16,12 @@ interface SkillCardProps {
 export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
   return (
     <TouchableOpacity
-      className="p-4 bg-white rounded-xl border-[#5DE0E6] border shadow-sm"
+      className="p-5 bg-white rounded-xl border-primary-200 border-2 shadow-sm"
       onPress={onPress}
       disabled={!onPress}
     >
       <HStack space="md" className="items-center">
-        <View className="w-14 h-14 rounded-full overflow-hidden bg-secondary-100">
+        <View className="w-16 h-16 rounded-full overflow-hidden bg-primary-50 border-2 border-primary-200">
           <Image
             source={
               talentSkill.skill?.image_url
@@ -41,7 +42,11 @@ export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
               {talentSkill.skill?.name}
             </Text>
             {onPress && (
-              <IconSymbol name="chevron.right" size={20} color="#666" />
+              <IconSymbol
+                name="chevron.right"
+                size={20}
+                color={BrandColors.PRIMARY}
+              />
             )}
           </HStack>
 

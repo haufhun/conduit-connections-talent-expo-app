@@ -17,6 +17,7 @@ import { AddIcon } from "@/components/ui/icon";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
+import { BrandColors } from "@/constants/BrandColors";
 import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
 import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
@@ -67,29 +68,29 @@ export default function ProfileScreen() {
   const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
 
   const ErrorScreen = ({ errorMessage }: { errorMessage?: string }) => (
-    <SafeAreaView style={styles.safeArea} className="bg-primary flex-1">
+    <SafeAreaView style={styles.safeArea} className="bg-background-0 flex-1">
       <VStack
         className="flex-1 justify-center items-center p-5 pb-20"
         space="lg"
       >
         <VStack className="items-center" space="md">
-          <Center className="w-16 h-16 rounded-full bg-error-100">
+          <Center className="w-20 h-20 rounded-full bg-error-50 border-2 border-error-200">
             <IconSymbol
               name="exclamationmark.triangle.fill"
-              size={32}
+              size={36}
               color="#dc2626"
             />
           </Center>
           <VStack className="items-center" space="xs">
-            <Text size="lg" bold className="text-typography-900 text-center">
-              Something went wrong
+            <Text size="xl" bold className="text-typography-900 text-center">
+              Oops! Something went wrong
             </Text>
             <Text
-              size="sm"
-              className="text-typography-600 text-center max-w-xs"
+              size="md"
+              className="text-typography-600 text-center max-w-sm px-4"
             >
               {errorMessage ||
-                "We couldn't load your profile. Please try again."}
+                "We couldn't load your profile. Please try again in a moment."}
             </Text>
           </VStack>
         </VStack>
@@ -102,12 +103,13 @@ export default function ProfileScreen() {
     <Button
       size="lg"
       variant="outline"
+      action="negative"
       onPress={() => {
         supabase.auth.signOut();
       }}
-      style={styles.logoutButton}
+      className="border-error-300 bg-background-0"
     >
-      <ButtonText>Logout</ButtonText>
+      <ButtonText className="text-error-600">Logout</ButtonText>
     </Button>
   );
 
@@ -115,9 +117,14 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView
         style={styles.safeArea}
-        className="bg-primary flex-1 justify-center items-center"
+        className="bg-background-0 flex-1 justify-center items-center"
       >
-        <ActivityIndicator />
+        <VStack className="items-center" space="lg">
+          <ActivityIndicator size="large" color={BrandColors.PRIMARY} />
+          <Text className="text-typography-600 text-center">
+            Loading your profile...
+          </Text>
+        </VStack>
       </SafeAreaView>
     );
   }
@@ -196,7 +203,7 @@ export default function ProfileScreen() {
     <>
       <SafeAreaView
         style={styles.safeArea}
-        className="bg-primary"
+        className="bg-background-0"
         edges={["bottom", "left", "right"]}
       >
         <ScrollView
@@ -218,41 +225,44 @@ export default function ProfileScreen() {
                   contentFit="cover"
                 />
                 <LinearGradient
-                  colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)"]}
+                  colors={["rgba(93, 224, 230, 0)", "rgba(0, 74, 173, 0.4)"]}
                   style={styles.avatarGradient}
                 />
                 <Center style={styles.editAvatarButton}>
-                  <IconSymbol name="camera.fill" size={20} color="#fff" />
+                  <IconSymbol name="camera.fill" size={24} color="#fff" />
                 </Center>
               </Center>
             </Pressable>
 
-            <VStack space="sm">
+            <VStack space="md">
               <VStack>
                 {fullName ? (
                   <HStack className="items-center">
-                    <Text size="xl" bold className="text-typography-900">
+                    <Text size="2xl" bold className="text-typography-900">
                       {fullName}
                     </Text>
                     <TouchableOpacity onPress={() => setNameModalVisible(true)}>
                       <IconSymbol
                         name="square.and.pencil"
-                        size={16}
-                        color="#666"
-                        style={{ marginLeft: 8, marginBottom: 2 }}
+                        size={18}
+                        color={BrandColors.PRIMARY}
+                        style={{ marginLeft: 12, marginBottom: 2 }}
                       />
                     </TouchableOpacity>
                   </HStack>
                 ) : (
                   <Button
-                    size="xl"
+                    size="lg"
                     variant="link"
+                    action="primary"
                     onPress={() => setNameModalVisible(true)}
-                    className="mt-2"
+                    className="justify-start px-0"
                   >
-                    <HStack space="xs" className="items-center">
-                      <ButtonIcon as={AddIcon} color="#666" />
-                      <ButtonText>Add name</ButtonText>
+                    <HStack space="sm" className="items-center">
+                      <ButtonIcon as={AddIcon} color={BrandColors.PRIMARY} />
+                      <ButtonText className="text-primary-600">
+                        Add name
+                      </ButtonText>
                     </HStack>
                   </Button>
                 )}
@@ -261,7 +271,13 @@ export default function ProfileScreen() {
               <VStack>
                 {location ? (
                   <HStack className="items-center">
-                    <Text size="sm" bold className="text-typography-900">
+                    <IconSymbol
+                      name="location.fill"
+                      size={16}
+                      color={BrandColors.SECONDARY}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text size="md" className="text-typography-700">
                       {location}
                     </Text>
                     <TouchableOpacity
@@ -270,21 +286,24 @@ export default function ProfileScreen() {
                       <IconSymbol
                         name="square.and.pencil"
                         size={16}
-                        color="#666"
-                        style={{ marginLeft: 8, marginBottom: 2 }}
+                        color={BrandColors.PRIMARY}
+                        style={{ marginLeft: 12, marginBottom: 2 }}
                       />
                     </TouchableOpacity>
                   </HStack>
                 ) : (
                   <Button
-                    size="sm"
+                    size="md"
                     variant="link"
+                    action="primary"
                     onPress={() => setLocationModalVisible(true)}
-                    className="mt-2"
+                    className="justify-start px-0"
                   >
-                    <HStack space="xs" className="items-center">
-                      <ButtonIcon as={AddIcon} color="#666" />
-                      <ButtonText>Add location</ButtonText>
+                    <HStack space="sm" className="items-center">
+                      <ButtonIcon as={AddIcon} color={BrandColors.PRIMARY} />
+                      <ButtonText className="text-primary-600">
+                        Add location
+                      </ButtonText>
                     </HStack>
                   </Button>
                 )}
@@ -292,20 +311,28 @@ export default function ProfileScreen() {
             </VStack>
           </VStack>
 
-          <VStack style={styles.section}>
-            <HStack className="justify-between items-center mb-3">
-              <Text size="lg" bold className="text-typography-900">
+          <VStack style={styles.section} className="bg-background-0">
+            <HStack className="justify-between items-center mb-4">
+              <Text size="xl" bold className="text-typography-900">
                 About Me
               </Text>
-              <TouchableOpacity onPress={() => setBioModalVisible(true)}>
-                <IconSymbol name="square.and.pencil" size={16} color="#666" />
+              <TouchableOpacity
+                onPress={() => setBioModalVisible(true)}
+                className="p-2 rounded-full bg-primary-50"
+              >
+                <IconSymbol
+                  name="square.and.pencil"
+                  size={18}
+                  color={BrandColors.PRIMARY}
+                />
               </TouchableOpacity>
             </HStack>
             {userProfile.metadata?.bio ? (
-              <VStack space="sm">
+              <VStack space="md">
                 <TouchableOpacity
                   onPress={() => setBioExpanded(!bioExpanded)}
                   activeOpacity={0.7}
+                  className="bg-background-50 p-4 rounded-xl"
                 >
                   <Text className="text-typography-700 text-base leading-6">
                     {bioExpanded
@@ -317,7 +344,9 @@ export default function ProfileScreen() {
                   <Button
                     variant="link"
                     size="sm"
+                    action="primary"
                     onPress={() => setBioExpanded(!bioExpanded)}
+                    className="justify-start px-0"
                   >
                     <ButtonText className="text-primary-600">
                       {bioExpanded ? "Show less" : "Show more"}
@@ -326,117 +355,175 @@ export default function ProfileScreen() {
                 )}
               </VStack>
             ) : (
-              <Button variant="link" onPress={() => setBioModalVisible(true)}>
-                <HStack space="xs" className="items-center">
-                  <ButtonIcon as={AddIcon} color="#666" />
-                  <ButtonText>Add bio</ButtonText>
-                </HStack>
-              </Button>
+              <VStack className="bg-background-50 p-6 rounded-xl border border-outline-200">
+                <Text className="text-typography-500 text-center mb-4">
+                  Tell others about yourself, your experience, and what makes
+                  you unique.
+                </Text>
+                <Button
+                  variant="link"
+                  action="primary"
+                  onPress={() => setBioModalVisible(true)}
+                  className="justify-center"
+                >
+                  <HStack space="sm" className="items-center">
+                    <ButtonIcon as={AddIcon} color={BrandColors.PRIMARY} />
+                    <ButtonText className="text-primary-600">
+                      Add bio
+                    </ButtonText>
+                  </HStack>
+                </Button>
+              </VStack>
             )}
           </VStack>
 
-          <VStack style={styles.section}>
-            <HStack className="justify-between items-center">
-              <Text size="lg" bold className="text-typography-900 mb-3">
-                Contact Info
-              </Text>
+          <VStack style={styles.section} className="bg-background-0">
+            <HStack className="justify-between items-center mb-4">
+              <HStack className="items-center" space="sm">
+                <Text size="xl" bold className="text-typography-900">
+                  Contact Info
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setInfoModalVisible(true)}
+                  className="w-7 h-7 rounded-full bg-info-50 items-center justify-center border border-info-200"
+                >
+                  <IconSymbol
+                    name="questionmark.circle.fill"
+                    size={16}
+                    color={BrandColors.INFO}
+                  />
+                </TouchableOpacity>
+              </HStack>
               <TouchableOpacity
-                onPress={() => setInfoModalVisible(true)}
-                className="w-6 h-6 rounded-full bg-typography-100 items-center justify-center"
+                onPress={() => setContactModalVisible(true)}
+                className="p-2 rounded-full bg-primary-50"
               >
                 <IconSymbol
-                  name="questionmark.circle.fill"
-                  size={16}
-                  color="#666"
+                  name="square.and.pencil"
+                  size={18}
+                  color={BrandColors.PRIMARY}
                 />
               </TouchableOpacity>
             </HStack>
-            <VStack space="sm">
-              <HStack space="sm" className="items-start">
-                <VStack style={{ flex: 1 }}>
-                  <Text bold className="text-typography-700">
-                    Email
-                  </Text>
-                  <Text className="text-typography-600">
-                    {userProfile.email}
-                  </Text>
-                </VStack>
-                <TouchableOpacity onPress={() => setContactModalVisible(true)}>
-                  <IconSymbol name="square.and.pencil" size={16} color="#666" />
-                </TouchableOpacity>
-              </HStack>
-              <HStack space="sm" className="items-start">
-                <VStack style={{ flex: 1 }}>
-                  <Text bold className="text-typography-700">
-                    Phone
-                  </Text>
-                  <Text className="text-typography-600">
-                    {userProfile.phone
-                      ? formatPhoneNumber(userProfile.phone)
-                      : "Not provided"}
-                  </Text>
-                </VStack>
-                <TouchableOpacity onPress={() => setContactModalVisible(true)}>
-                  <IconSymbol name="square.and.pencil" size={16} color="#666" />
-                </TouchableOpacity>
-              </HStack>
+            <VStack space="md">
+              <VStack className="bg-background-50 p-4 rounded-xl border border-outline-200">
+                <HStack space="sm" className="items-start">
+                  <IconSymbol
+                    name="envelope.fill"
+                    size={20}
+                    color={BrandColors.SECONDARY}
+                    style={{ marginTop: 2 }}
+                  />
+                  <VStack style={{ flex: 1 }}>
+                    <Text size="sm" bold className="text-typography-700 mb-1">
+                      Email
+                    </Text>
+                    <Text className="text-typography-600">
+                      {userProfile.email}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </VStack>
+              <VStack className="bg-background-50 p-4 rounded-xl border border-outline-200">
+                <HStack space="sm" className="items-start">
+                  <IconSymbol
+                    name="phone.fill"
+                    size={20}
+                    color={BrandColors.SECONDARY}
+                    style={{ marginTop: 2 }}
+                  />
+                  <VStack style={{ flex: 1 }}>
+                    <Text size="sm" bold className="text-typography-700 mb-1">
+                      Phone
+                    </Text>
+                    <Text className="text-typography-600">
+                      {userProfile.phone
+                        ? formatPhoneNumber(userProfile.phone)
+                        : "Not provided"}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </VStack>
             </VStack>
           </VStack>
 
-          <VStack style={styles.section} space="md">
-            <HStack className="justify-between items-center mb-3">
+          <VStack style={styles.section} space="md" className="bg-background-0">
+            <HStack className="justify-between items-center mb-2">
               <HStack space="sm" className="items-center">
-                <Text size="lg" bold className="text-typography-900">
+                <Text size="xl" bold className="text-typography-900">
                   Skills
                 </Text>
-                <Text size="sm" className="text-typography-500">
-                  ({`${talentSkills.length}/${MAX_TALENT_SKILLS}`})
-                </Text>
+                <VStack className="px-2 py-1 bg-tertiary-100 rounded-full">
+                  <Text size="xs" bold className="text-tertiary-700">
+                    {`${talentSkills.length}/${MAX_TALENT_SKILLS}`}
+                  </Text>
+                </VStack>
               </HStack>
               <Button
                 size="sm"
-                variant="link"
+                variant="solid"
                 action="primary"
                 onPress={() => router.push("/profile/skill/create")}
                 disabled={talentSkills.length >= MAX_TALENT_SKILLS}
-                style={{
-                  opacity: talentSkills.length >= MAX_TALENT_SKILLS ? 0.5 : 1,
-                }}
+                className={`rounded-full ${
+                  talentSkills.length >= MAX_TALENT_SKILLS ? "opacity-50" : ""
+                }`}
               >
-                <ButtonIcon
-                  as={AddIcon}
-                  color={
-                    talentSkills.length >= MAX_TALENT_SKILLS ? "#999" : "#666"
-                  }
-                />
-                <ButtonText
-                  style={{
-                    color:
-                      talentSkills.length >= MAX_TALENT_SKILLS
-                        ? "#999"
-                        : "#666",
-                  }}
-                >
-                  Add Skill
-                </ButtonText>
+                <ButtonIcon as={AddIcon} color="white" />
+                <ButtonText className="text-white ml-1">Add Skill</ButtonText>
               </Button>
             </HStack>
             {talentSkills.length > 0 ? (
-              talentSkills.map((talentSkill) => (
-                <SkillCard
-                  key={talentSkill.id}
-                  talentSkill={talentSkill}
-                  onPress={() => {
-                    router.push(`/profile/skill/${talentSkill.id}`);
-                  }}
-                />
-              ))
+              <VStack space="md">
+                {talentSkills.map((talentSkill) => (
+                  <SkillCard
+                    key={talentSkill.id}
+                    talentSkill={talentSkill}
+                    onPress={() => {
+                      router.push(`/profile/skill/${talentSkill.id}`);
+                    }}
+                  />
+                ))}
+              </VStack>
             ) : (
-              <Text className="text-typography-500">No skills added yet</Text>
+              <VStack className="bg-background-50 p-8 rounded-xl border border-outline-200 items-center">
+                <VStack className="items-center" space="md">
+                  <Center className="w-16 h-16 rounded-full bg-primary-100">
+                    <IconSymbol
+                      name="star.fill"
+                      size={32}
+                      color={BrandColors.PRIMARY}
+                    />
+                  </Center>
+                  <VStack className="items-center" space="xs">
+                    <Text
+                      size="lg"
+                      bold
+                      className="text-typography-900 text-center"
+                    >
+                      No skills added yet
+                    </Text>
+                    <Text className="text-typography-500 text-center text-sm">
+                      Showcase your talents and expertise to stand out
+                    </Text>
+                  </VStack>
+                  <Button
+                    variant="solid"
+                    action="primary"
+                    onPress={() => router.push("/profile/skill/create")}
+                    className="rounded-full mt-2"
+                  >
+                    <ButtonIcon as={AddIcon} color="white" />
+                    <ButtonText className="text-white ml-1">
+                      Add Your First Skill
+                    </ButtonText>
+                  </Button>
+                </VStack>
+              </VStack>
             )}
           </VStack>
 
-          <VStack space="md" style={styles.actions}>
+          <VStack space="md" style={styles.actions} className="bg-background-0">
             <LogoutButton />
           </VStack>
         </ScrollView>
@@ -530,29 +617,25 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingBottom: 32, // Add padding at the bottom of the content
+    backgroundColor: BrandColors.WHITE,
   },
   contentContainer: {
     flexGrow: 1,
-    paddingBottom: 32, // Add padding at the bottom of the content
+    paddingBottom: 32,
   },
   header: {
     alignItems: "center",
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)",
-    backgroundColor: "#fff",
-    // backgroundColor: "#0a7ea4",
-    // backgroundColor: "#1169b9",
-    // backgroundColor: "#5de0e6",
-    // backgroundColor: "#004aad",
+    borderBottomColor: "rgba(93, 224, 230, 0.1)", // primary-300 with opacity
+    backgroundColor: BrandColors.WHITE,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
+        shadowColor: BrandColors.PRIMARY,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: 8,
       },
       android: {
         elevation: 4,
@@ -560,66 +643,78 @@ const styles = StyleSheet.create({
     }),
   },
   avatarContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     overflow: "hidden",
-    marginBottom: 16,
-    backgroundColor: "#f0f0f0",
+    marginBottom: 20,
+    backgroundColor: BrandColors.GRAY_100,
     position: "relative",
+    borderWidth: 3,
+    borderColor: BrandColors.PRIMARY,
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
+        shadowColor: BrandColors.SECONDARY,
+        shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.2,
-        shadowRadius: 8,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 8,
+        elevation: 12,
       },
     }),
   },
   avatar: {
     width: "100%",
     height: "100%",
-    borderRadius: 70,
-    borderWidth: 4,
-    borderColor: "#004AAD",
+    borderRadius: 80,
   },
   avatarGradient: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: "50%",
+    height: "40%",
   },
   editAvatarButton: {
     position: "absolute",
-    bottom: 8,
-    left: "50%",
-    transform: [{ translateX: -16 }],
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    bottom: 12,
+    right: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: BrandColors.SECONDARY,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: BrandColors.WHITE,
+    ...Platform.select({
+      ios: {
+        shadowColor: BrandColors.SECONDARY,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   nameText: {
-    color: "#1a1a1a",
+    color: BrandColors.SECONDARY,
   },
   section: {
-    padding: 20,
+    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
+    borderBottomColor: "rgba(0,0,0,0.03)",
   },
   sectionTitle: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   editContainer: {
-    padding: 20,
+    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
+    borderBottomColor: "rgba(0,0,0,0.03)",
   },
   bioInputContainer: {
     minHeight: 160,
@@ -635,15 +730,15 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: 16,
     lineHeight: 24,
-    color: "#4a4a4a",
+    color: BrandColors.GRAY_700,
   },
   placeholderText: {
     fontSize: 16,
-    color: "#999",
+    color: BrandColors.GRAY_400,
   },
   actions: {
-    padding: 20,
-    gap: 12,
+    padding: 24,
+    gap: 16,
   },
   mainButton: {
     borderRadius: 12,
