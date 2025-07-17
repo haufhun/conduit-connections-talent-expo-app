@@ -15,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "lucide-react-native";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, Text } from "react-native";
+import { Alert, Image, ScrollView, Text } from "react-native";
 import { Toast } from "react-native-toast-notifications";
 import * as zod from "zod";
 
@@ -90,132 +90,152 @@ export default function TokenResetPassword({
   };
 
   return (
-    <VStack className="rounded-xl border border-outline-200 bg-background-0 p-6 w-full max-w-[336px]">
-      <Heading>Reset Password</Heading>
-      <Text className="mt-2">Enter the OTP code sent to {email}</Text>
-
-      <Controller
-        control={control}
-        name="token"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="w-full mt-4">
-            <FormControlLabel>
-              <FormControlLabelText>OTP Code</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type="text"
-                placeholder="Enter OTP Code"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </Input>
-
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 24,
+        paddingBottom: 120, // Extra bottom padding for developer settings
+      }}
+      showsVerticalScrollIndicator={false}
+    >
+      <Image
+        source={require("@/assets/images/conduit-logo-white-1563rect.png")}
+        style={{
+          width: 280,
+          height: 84,
+          marginBottom: 24,
+          resizeMode: "contain",
+        }}
       />
+      <VStack className="rounded-xl border border-outline-200 bg-background-0 p-6 w-full max-w-[336px]">
+        <Heading>Reset Password</Heading>
+        <Text className="mt-2">Enter the OTP code sent to {email}</Text>
 
-      <Controller
-        control={control}
-        name="password"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="mt-6 w-full">
-            <FormControlLabel>
-              <FormControlLabelText>New Password</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your new password"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                autoComplete="password"
-                autoCorrect={false}
-                textContentType="password"
-                secureTextEntry={!showPassword}
-              />
-              <InputSlot
-                onPress={() => setShowPassword(!showPassword)}
-                className="mr-3"
-              >
-                <InputIcon as={showPassword ? EyeIcon : EyeOffIcon} />
-              </InputSlot>
-            </Input>
+        <Controller
+          control={control}
+          name="token"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="w-full mt-4">
+              <FormControlLabel>
+                <FormControlLabelText>OTP Code</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type="text"
+                  placeholder="Enter OTP Code"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </Input>
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
 
-      <Controller
-        control={control}
-        name="confirmPassword"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="mt-6 w-full">
-            <FormControlLabel>
-              <FormControlLabelText>Confirm Password</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your new password"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                autoComplete="password"
-                autoCorrect={false}
-                textContentType="password"
-                secureTextEntry={!showConfirmPassword}
-              />
-              <InputSlot
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="mr-3"
-              >
-                <InputIcon as={showConfirmPassword ? EyeIcon : EyeOffIcon} />
-              </InputSlot>
-            </Input>
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="mt-6 w-full">
+              <FormControlLabel>
+                <FormControlLabelText>New Password</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your new password"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                  textContentType="password"
+                  secureTextEntry={!showPassword}
+                />
+                <InputSlot
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="mr-3"
+                >
+                  <InputIcon as={showPassword ? EyeIcon : EyeOffIcon} />
+                </InputSlot>
+              </Input>
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
 
-      <Button
-        className="w-full mt-6"
-        size="sm"
-        onPress={handleSubmit(verifyTokenAndReset)}
-        disabled={formState.isSubmitting}
-      >
-        <ButtonText>Reset Password</ButtonText>
-      </Button>
+        <Controller
+          control={control}
+          name="confirmPassword"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="mt-6 w-full">
+              <FormControlLabel>
+                <FormControlLabelText>Confirm Password</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your new password"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                  textContentType="password"
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <InputSlot
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="mr-3"
+                >
+                  <InputIcon as={showConfirmPassword ? EyeIcon : EyeOffIcon} />
+                </InputSlot>
+              </Input>
 
-      <Button
-        className="w-full mt-4"
-        size="sm"
-        variant="link"
-        onPress={onBackToForgot}
-      >
-        <ButtonText>Back</ButtonText>
-      </Button>
-    </VStack>
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+
+        <Button
+          className="w-full mt-6"
+          size="sm"
+          onPress={handleSubmit(verifyTokenAndReset)}
+          disabled={formState.isSubmitting}
+        >
+          <ButtonText>Reset Password</ButtonText>
+        </Button>
+
+        <Button
+          className="w-full mt-4"
+          size="sm"
+          variant="link"
+          onPress={onBackToForgot}
+        >
+          <ButtonText>Back</ButtonText>
+        </Button>
+      </VStack>
+    </ScrollView>
   );
 }

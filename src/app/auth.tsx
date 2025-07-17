@@ -6,6 +6,7 @@ import VerifyCode from "@/components/auth/VerifyCode";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { useAuth } from "@/providers/auth-provider";
+import { LinearGradient } from "expo-linear-gradient";
 import { Redirect } from "expo-router";
 import * as Updates from "expo-updates";
 import React from "react";
@@ -20,7 +21,7 @@ type AuthScreen =
 
 export default function Auth() {
   const { session } = useAuth();
-  const [screen, setScreen] = React.useState<AuthScreen>("signin");
+  const [screen, setScreen] = React.useState<AuthScreen>("signup");
   const [resetEmail, setResetEmail] = React.useState("");
   const [verifyEmail, setVerifyEmail] = React.useState("");
   const [tapCount, setTapCount] = React.useState(0);
@@ -32,7 +33,12 @@ export default function Auth() {
   }
 
   return (
-    <Center className="flex-1 p-6">
+    <LinearGradient
+      colors={["#5de0e6", "#004aad"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{ flex: 1 }}
+    >
       {screen === "signup" ? (
         <SignUp
           onSignInPress={() => setScreen("signin")}
@@ -70,8 +76,17 @@ export default function Auth() {
         />
       )}
 
-      {/* Developer Settings Section */}
-      <Center className="mt-8 w-full">
+      {/* Developer Settings Section - positioned absolutely at bottom */}
+      <Center
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          backgroundColor: "transparent",
+        }}
+      >
         <Button
           className="w-full bg-transparent"
           style={{ height: 100 }}
@@ -142,6 +157,6 @@ export default function Auth() {
           </ScrollView>
         )}
       </Center>
-    </Center>
+    </LinearGradient>
   );
 }

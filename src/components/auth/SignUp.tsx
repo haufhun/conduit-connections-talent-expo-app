@@ -24,7 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from "lucide-react-native";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert } from "react-native";
+import { Alert, Image, ScrollView } from "react-native";
 import { Toast } from "react-native-toast-notifications";
 import * as zod from "zod";
 
@@ -133,282 +133,303 @@ export default function SignUp({
   };
 
   return (
-    <VStack className="rounded-xl border border-outline-200 bg-background-0 p-6 w-full max-w-[336px]">
-      <Heading>Sign up</Heading>
-      <Text className="mt-2">Create a new account</Text>
-
-      <Controller
-        control={control}
-        name="firstName"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="w-full mt-4">
-            <FormControlLabel>
-              <FormControlLabelText>First Name</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type="text"
-                placeholder="Enter your first name"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="words"
-                autoComplete="given-name"
-                autoCorrect={false}
-                textContentType="givenName"
-              />
-            </Input>
-
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: "flex-start",
+        alignItems: "center",
+        padding: 24,
+        paddingTop: 60,
+        paddingBottom: 120, // Extra bottom padding for developer settings
+      }}
+      showsVerticalScrollIndicator={false}
+    >
+      <Image
+        source={require("@/assets/images/conduit-logo-white-1563rect.png")}
+        style={{
+          width: 280,
+          height: 84,
+          marginBottom: 24,
+          resizeMode: "contain",
+        }}
       />
+      <VStack className="rounded-xl border border-outline-200 bg-background-0 p-6 w-full max-w-[336px]">
+        <Heading>Sign up</Heading>
+        <Text className="mt-2">Create a new account</Text>
 
-      <Controller
-        control={control}
-        name="lastName"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="w-full mt-4">
-            <FormControlLabel>
-              <FormControlLabelText>Last Name</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type="text"
-                placeholder="Enter your last name"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="words"
-                autoComplete="family-name"
-                autoCorrect={false}
-                textContentType="familyName"
-              />
-            </Input>
+        <Controller
+          control={control}
+          name="firstName"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="w-full mt-4">
+              <FormControlLabel>
+                <FormControlLabelText>First Name</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type="text"
+                  placeholder="Enter your first name"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="words"
+                  autoComplete="given-name"
+                  autoCorrect={false}
+                  textContentType="givenName"
+                />
+              </Input>
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
 
-      <Controller
-        control={control}
-        name="email"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="w-full mt-4">
-            <FormControlLabel>
-              <FormControlLabelText>Email</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type="text"
-                placeholder="Enter your email"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect={false}
-                textContentType="emailAddress"
-                keyboardType="email-address"
-              />
-            </Input>
+        <Controller
+          control={control}
+          name="lastName"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="w-full mt-4">
+              <FormControlLabel>
+                <FormControlLabelText>Last Name</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type="text"
+                  placeholder="Enter your last name"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="words"
+                  autoComplete="family-name"
+                  autoCorrect={false}
+                  textContentType="familyName"
+                />
+              </Input>
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
 
-      <Controller
-        control={control}
-        name="password"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="mt-6 w-full">
-            <FormControlLabel>
-              <FormControlLabelText>Password</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                autoComplete="password"
-                autoCorrect={false}
-                textContentType="password"
-                secureTextEntry={!showPassword}
-              />
-              <InputSlot
-                onPress={() => setShowPassword(!showPassword)}
-                className="mr-3"
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="w-full mt-4">
+              <FormControlLabel>
+                <FormControlLabelText>Email</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type="text"
+                  placeholder="Enter your email"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                  keyboardType="email-address"
+                />
+              </Input>
+
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="mt-6 w-full">
+              <FormControlLabel>
+                <FormControlLabelText>Password</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                  textContentType="password"
+                  secureTextEntry={!showPassword}
+                />
+                <InputSlot
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="mr-3"
+                >
+                  <InputIcon as={showPassword ? EyeIcon : EyeOffIcon} />
+                </InputSlot>
+              </Input>
+
+              <Text size="xs" className="text-typography-500 mt-1">
+                Password must be at least 8 characters and contain: uppercase,
+                lowercase, number, and special character
+              </Text>
+
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="repeatPassword"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="mt-6 w-full">
+              <FormControlLabel>
+                <FormControlLabelText>Confirm Password</FormControlLabelText>
+              </FormControlLabel>
+              <Input>
+                <InputField
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  autoCorrect={false}
+                  textContentType="password"
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <InputSlot
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="mr-3"
+                >
+                  <InputIcon as={showConfirmPassword ? EyeIcon : EyeOffIcon} />
+                </InputSlot>
+              </Input>
+
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="agreeToTerms"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="mt-6 w-full">
+              <Checkbox
+                size="sm"
+                value="agreeToTerms"
+                isChecked={value}
+                onChange={onChange}
+                isInvalid={!!error}
               >
-                <InputIcon as={showPassword ? EyeIcon : EyeOffIcon} />
-              </InputSlot>
-            </Input>
+                <CheckboxIndicator>
+                  <CheckboxIcon as={CheckIcon} />
+                </CheckboxIndicator>
+                <CheckboxLabel className="flex-1">
+                  <Text size="sm" className="text-typography-600">
+                    I agree to the{" "}
+                    <ExternalLink href="https://app.conduitconnections.com/terms">
+                      <Text size="sm" className="text-primary-600 underline">
+                        Terms of Service
+                      </Text>
+                    </ExternalLink>{" "}
+                    and{" "}
+                    <ExternalLink href="https://app.conduitconnections.com/eula">
+                      <Text size="sm" className="text-primary-600 underline">
+                        EULA
+                      </Text>
+                    </ExternalLink>
+                  </Text>
+                </CheckboxLabel>
+              </Checkbox>
 
-            <Text size="xs" className="text-typography-500 mt-1">
-              Password must be at least 8 characters and contain: uppercase,
-              lowercase, number, and special character
-            </Text>
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="repeatPassword"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="mt-6 w-full">
-            <FormControlLabel>
-              <FormControlLabelText>Confirm Password</FormControlLabelText>
-            </FormControlLabel>
-            <Input>
-              <InputField
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
-                value={value}
-                onChangeText={onChange}
-                autoCapitalize="none"
-                autoComplete="password"
-                autoCorrect={false}
-                textContentType="password"
-                secureTextEntry={!showConfirmPassword}
-              />
-              <InputSlot
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="mr-3"
+        <Controller
+          control={control}
+          name="agreeToAlphaNDA"
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <FormControl isInvalid={!!error} className="mt-4 w-full">
+              <Checkbox
+                size="sm"
+                value="agreeToAlphaNDA"
+                isChecked={value}
+                onChange={onChange}
+                isInvalid={!!error}
               >
-                <InputIcon as={showConfirmPassword ? EyeIcon : EyeOffIcon} />
-              </InputSlot>
-            </Input>
+                <CheckboxIndicator>
+                  <CheckboxIcon as={CheckIcon} />
+                </CheckboxIndicator>
+                <CheckboxLabel className="flex-1">
+                  <Text size="sm" className="text-typography-600">
+                    I agree to the{" "}
+                    <ExternalLink href="https://app.conduitconnections.com/alpha-nda">
+                      <Text size="sm" className="text-primary-600 underline">
+                        Alpha NDA
+                      </Text>
+                    </ExternalLink>
+                  </Text>
+                </CheckboxLabel>
+              </Checkbox>
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">
+                  {error?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+          )}
+        />
 
-      <Controller
-        control={control}
-        name="agreeToTerms"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="mt-6 w-full">
-            <Checkbox
-              size="sm"
-              value="agreeToTerms"
-              isChecked={value}
-              onChange={onChange}
-              isInvalid={!!error}
-            >
-              <CheckboxIndicator>
-                <CheckboxIcon as={CheckIcon} />
-              </CheckboxIndicator>
-              <CheckboxLabel className="flex-1">
-                <Text size="sm" className="text-typography-600">
-                  I agree to the{" "}
-                  <ExternalLink href="https://app.conduitconnections.com/terms">
-                    <Text size="sm" className="text-primary-600 underline">
-                      Terms of Service
-                    </Text>
-                  </ExternalLink>{" "}
-                  and{" "}
-                  <ExternalLink href="https://app.conduitconnections.com/eula">
-                    <Text size="sm" className="text-primary-600 underline">
-                      EULA
-                    </Text>
-                  </ExternalLink>
-                </Text>
-              </CheckboxLabel>
-            </Checkbox>
+        <Button
+          className="w-full mt-6"
+          size="sm"
+          onPress={handleSubmit(signUp)}
+          disabled={formState.isSubmitting}
+        >
+          <ButtonText>Sign Up</ButtonText>
+        </Button>
 
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="agreeToAlphaNDA"
-        render={({ field: { value, onChange }, fieldState: { error } }) => (
-          <FormControl isInvalid={!!error} className="mt-4 w-full">
-            <Checkbox
-              size="sm"
-              value="agreeToAlphaNDA"
-              isChecked={value}
-              onChange={onChange}
-              isInvalid={!!error}
-            >
-              <CheckboxIndicator>
-                <CheckboxIcon as={CheckIcon} />
-              </CheckboxIndicator>
-              <CheckboxLabel className="flex-1">
-                <Text size="sm" className="text-typography-600">
-                  I agree to the{" "}
-                  <ExternalLink href="https://app.conduitconnections.com/alpha-nda">
-                    <Text size="sm" className="text-primary-600 underline">
-                      Alpha NDA
-                    </Text>
-                  </ExternalLink>
-                </Text>
-              </CheckboxLabel>
-            </Checkbox>
-
-            <FormControlError>
-              <FormControlErrorIcon as={AlertCircleIcon} />
-              <FormControlErrorText size="sm">
-                {error?.message}
-              </FormControlErrorText>
-            </FormControlError>
-          </FormControl>
-        )}
-      />
-
-      <Button
-        className="w-full mt-6"
-        size="sm"
-        onPress={handleSubmit(signUp)}
-        disabled={formState.isSubmitting}
-      >
-        <ButtonText>Sign Up</ButtonText>
-      </Button>
-
-      <Button
-        className="w-full mt-4"
-        size="sm"
-        variant="link"
-        onPress={onSignInPress}
-      >
-        <ButtonText>Sign In Instead</ButtonText>
-      </Button>
-    </VStack>
+        <Button
+          className="w-full mt-4"
+          size="sm"
+          variant="link"
+          onPress={onSignInPress}
+        >
+          <ButtonText>Sign In Instead</ButtonText>
+        </Button>
+      </VStack>
+    </ScrollView>
   );
 }
