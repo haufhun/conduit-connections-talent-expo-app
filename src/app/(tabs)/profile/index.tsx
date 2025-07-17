@@ -35,11 +35,16 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { top } = useSafeAreaInsets();
   const { mutateAsync: updateUserProfile } = useUpdateUserProfile();
   const {
     data: userProfile,
@@ -189,13 +194,18 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <SafeAreaView style={styles.safeArea} className="bg-primary">
+      <SafeAreaView
+        style={styles.safeArea}
+        className="bg-primary"
+        edges={["bottom", "left", "right"]}
+      >
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={true}
         >
           <VStack style={styles.header}>
+            <View style={{ height: top }} />
             <Pressable onPress={() => setShowAvatarPicker(true)}>
               <Center style={styles.avatarContainer}>
                 <Image
@@ -533,6 +543,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.1)",
     backgroundColor: "#fff",
+    // backgroundColor: "#0a7ea4",
+    // backgroundColor: "#1169b9",
+    // backgroundColor: "#5de0e6",
+    // backgroundColor: "#004aad",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -568,6 +582,9 @@ const styles = StyleSheet.create({
   avatar: {
     width: "100%",
     height: "100%",
+    borderRadius: 70,
+    borderWidth: 4,
+    borderColor: "#004AAD",
   },
   avatarGradient: {
     position: "absolute",

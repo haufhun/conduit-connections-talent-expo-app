@@ -15,7 +15,7 @@ interface SkillCardProps {
 export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
   return (
     <TouchableOpacity
-      className="p-4 bg-white rounded-xl border border-black/10"
+      className="p-4 bg-white rounded-xl border-[#5DE0E6] border shadow-sm"
       onPress={onPress}
       disabled={!onPress}
     >

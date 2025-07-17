@@ -3,11 +3,12 @@ import React from "react";
 import { ActivityIndicator, Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
-import { IconSymbol } from "@/components/ui/IconSymbol";
+import { CalendarDaysIcon, Icon } from "@/components/ui/icon";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useAuth } from "@/providers/auth-provider";
+import { CircleUserRound } from "lucide-react-native";
 
 export default function TabLayout() {
   const { session, mounting } = useAuth();
@@ -42,7 +43,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
+            <Icon as={CircleUserRound} className="h-8 w-8" color={color} />
           ),
         }}
       />
@@ -51,7 +52,7 @@ export default function TabLayout() {
         options={{
           title: "Schedule",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={color} />
+            <Icon as={CalendarDaysIcon} className="h-8 w-8" color={color} />
           ),
         }}
       />

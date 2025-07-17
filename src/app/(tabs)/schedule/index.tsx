@@ -1,4 +1,5 @@
 import { useUserSchedule } from "@/api/blockouts_api";
+import { BlockoutCard } from "@/components/BlockoutCard";
 import { Fab, FabIcon } from "@/components/ui/fab";
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon, CalendarDaysIcon, Icon } from "@/components/ui/icon";
@@ -6,33 +7,19 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentExpandedBlockout } from "@/types/blockouts";
-import { getBlockoutStatus } from "@/utils/blockout-permissions";
 import { getDayjsFromUtcDateString } from "@/utils/date";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { Redirect, useRouter } from "expo-router";
-import { RefreshCw } from "lucide-react-native";
 import React from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  SectionList,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { ActivityIndicator, SectionList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const DEFAULT_DAYS = 365;
-
-const formatTime = (dateString: string) => {
-  const date = getDayjsFromUtcDateString(dateString);
-
-  return date.format("h:mm A");
-};
 
 export default function ScheduleScreen() {
   const { session } = useAuth();
@@ -51,63 +38,6 @@ export default function ScheduleScreen() {
   }
 
   const blockouts = scheduleData?.data || [];
-
-  const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {
-    const start = getDayjsFromUtcDateString(blockout.start_time);
-    const end = getDayjsFromUtcDateString(blockout.end_time);
-
-    if (blockout.is_all_day) {
-      if (!start.isSame(end, "day")) {
-        return `${start.format("MMM D")} - ${end.format("MMM D")}`;
-      }
-      return "All Day";
-    }
-
-    // If spans multiple days, show dates + times
-    if (!start.isSame(end, "day")) {
-      return `${start.format("MMM D, h:mm A")} - ${end.format(
-        "MMM D, h:mm A"
-      )}`;
-    }
-
-    return `${formatTime(blockout.start_time)} - ${formatTime(
-      blockout.end_time
-    )}`;
-  };
-
-  const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
-    if (blockout.is_all_day) {
-      const start = getDayjsFromUtcDateString(blockout.start_time);
-      const end = getDayjsFromUtcDateString(blockout.end_time);
-      const days = end.diff(start, "day") + 1;
-
-      if (days > 1) {
-        return `${days} days`;
-      }
-      return "All Day Event";
-    }
-
-    const start = getDayjsFromUtcDateString(blockout.start_time);
-    const end = getDayjsFromUtcDateString(blockout.end_time);
-
-    // Check if it spans multiple days
-    if (!start.isSame(end, "day")) {
-      const days = end.diff(start, "day") + 1;
-      return `${days} days`;
-    }
-
-    const durationMs = end.diff(start);
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (hours === 0) {
-      return `${minutes}m`;
-    } else if (minutes === 0) {
-      return `${hours}h`;
-    } else {
-      return `${hours}h ${minutes}m`;
-    }
-  };
 
   // Group blockouts by date and format for SectionList
   // For multi-day blockouts, create entries for each day they span (from today onwards)
@@ -202,7 +132,11 @@ export default function ScheduleScreen() {
           <HStack className="justify-between items-center">
             <VStack>
               <HStack space="sm">
-                <Icon as={CalendarDaysIcon} className="h-7 w-7" />
+                <Icon
+                  as={CalendarDaysIcon}
+                  className="h-7 w-7"
+                  color="#004AAD"
+                />
                 <Text size="2xl" className="font-bold text-typography-900">
                   My Schedule
                 </Text>
@@ -240,108 +174,9 @@ export default function ScheduleScreen() {
           <SectionList
             sections={sectionData}
             keyExtractor={(item) => item.blockout_id.toString()}
-            renderItem={({ item: blockout }) => {
-              const status = getBlockoutStatus(blockout);
-
-              return (
-                <TouchableOpacity
-                  className={`mx-4 mb-2 p-4 bg-white rounded-xl border border-black/10 ${
-                    !status.canEdit ? "opacity-60" : ""
-                  }`}
-                  activeOpacity={status.canEdit ? 0.7 : 1}
-                  onPress={() => {
-                    if (status.canEdit) {
-                      router.push({
-                        pathname: "/(tabs)/schedule/[id]/edit",
-                        params: {
-                          id: blockout.blockout_id.toString(),
-                        },
-                      });
-                    } else {
-                      Alert.alert(
-                        "Cannot Edit",
-                        "This blockout cannot be edited because it has already ended. Blockouts can only be edited if their end time is in the future.",
-                        [{ text: "OK" }]
-                      );
-                    }
-                  }}
-                >
-                  <HStack space="md" className="items-center relative">
-                    <VStack className="w-14 h-14 justify-center items-center">
-                      <Icon as={CalendarDaysIcon} className="h-full w-10" />
-                    </VStack>
-
-                    <VStack space="xs" className="flex-1">
-                      <HStack className="items-center justify-between">
-                        <Text size="lg" bold className="text-typography-900">
-                          {blockout.title}
-                        </Text>
-                        {/* Multi-day badge */}
-                        {(() => {
-                          const start = getDayjsFromUtcDateString(
-                            blockout.start_time
-                          );
-                          const end = getDayjsFromUtcDateString(
-                            blockout.end_time
-                          );
-                          const isMultiDay = !start.isSame(end, "day");
-
-                          if (isMultiDay) {
-                            return (
-                              <VStack className="bg-primary-100 px-2 py-1 rounded-full">
-                                <Text
-                                  size="xs"
-                                  className="text-primary-700 font-medium"
-                                >
-                                  Multi-day
-                                </Text>
-                              </VStack>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </HStack>
-
-                      <HStack space="sm" className="flex-wrap">
-                        <Text size="sm" className="text-typography-500">
-                          {formatBlockoutTime(blockout)}
-                        </Text>
-                        <Text size="sm" className="text-typography-500">
-                          • {getBlockoutDuration(blockout)}
-                        </Text>
-                      </HStack>
-
-                      {blockout.original_blockout.description && (
-                        <Text
-                          size="sm"
-                          className="text-typography-700"
-                          numberOfLines={2}
-                          ellipsizeMode="tail"
-                        >
-                          {blockout.original_blockout.description}
-                        </Text>
-                      )}
-
-                      {/* Show status indicator only for ended blockouts */}
-                      {!status.canEdit && (
-                        <HStack className="items-center justify-between mt-2">
-                          <Text className="text-xs text-gray-500">
-                            Ended - View Only
-                          </Text>
-                        </HStack>
-                      )}
-                    </VStack>
-
-                    {/* Recurring icon in bottom right */}
-                    {blockout.original_blockout.is_recurring && (
-                      <VStack className="absolute bottom-0 right-0">
-                        <Icon as={RefreshCw} size="sm" />
-                      </VStack>
-                    )}
-                  </HStack>
-                </TouchableOpacity>
-              );
-            }}
+            renderItem={({ item: blockout }) => (
+              <BlockoutCard blockout={blockout} />
+            )}
             renderSectionHeader={({ section: { title } }) => (
               <Text
                 size="lg"
@@ -361,6 +196,7 @@ export default function ScheduleScreen() {
         <Fab
           placement="bottom right"
           size="lg"
+          className="bg-[#5DE0E6] shadow-sm"
           onPress={() => {
             router.push("/(tabs)/schedule/create");
           }}
@@ -376,15 +212,5 @@ const styles = StyleSheet.create({
   sectionListContent: {
     flexGrow: 1,
     paddingBottom: 100, // Extra padding for FAB
-  },
-  blockoutCard: {
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
 });
