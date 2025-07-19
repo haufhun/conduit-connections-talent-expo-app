@@ -160,6 +160,32 @@ export const useUpdateTalentSkill = () => {
   });
 };
 
+export const useDeleteTalentSkill = () => {
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
+  if (!session?.user.id) {
+    throw new Error("User ID is not available");
+  }
+
+  return useMutation<void, Error, number>({
+    mutationFn: async (talentSkillId) => {
+      const { error } = await supabase
+        .from("talent_skills")
+        .delete()
+        .eq("id", talentSkillId);
+
+      if (error) {
+        throw new Error(
+          "An error occurred while deleting the skill: " + error.message
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["talent_skills"] });
+    },
+  });
+};
+
 export const useGetSkills = () => {
   return useQuery<Skill[]>({
     queryKey: ["skills"],

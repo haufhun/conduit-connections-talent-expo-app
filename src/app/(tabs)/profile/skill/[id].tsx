@@ -1,4 +1,5 @@
 import {
+  useDeleteTalentSkill,
   useGetUserProfile,
   useGetUserTalentSkills,
   useUpdateTalentSkill,
@@ -8,17 +9,32 @@ import SkillHourlyRateSection from "@/components/skills/SkillHourlyRateSection";
 import SkillImagesSection from "@/components/skills/SkillImagesSection";
 import SkillSummarySection from "@/components/skills/SkillSummarySection";
 import SkillYoutubeVideoSection from "@/components/skills/SkillYoutubeVideoSection";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
+import { TrashIcon } from "@/components/ui/icon";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
 import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
 import { Image } from "expo-image";
-import { Redirect, useLocalSearchParams, useNavigation } from "expo-router";
-import { useLayoutEffect } from "react";
+import {
+  Redirect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
+import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -26,7 +42,11 @@ export default function SkillDetailScreen() {
   const { id } = useLocalSearchParams();
   const { session } = useAuth();
   const navigation = useNavigation();
+  const router = useRouter();
   const { mutateAsync: updateTalentSkill } = useUpdateTalentSkill();
+  const { mutateAsync: deleteTalentSkill, isPending: isDeleting } =
+    useDeleteTalentSkill();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const {
     data: userProfile,
     error: userProfileError,
@@ -41,11 +61,35 @@ export default function SkillDetailScreen() {
   const skill = talentSkills?.find((s) => s?.id === parseInt(id as string));
   const isLoading = isLoadingUser || isLoadingTalentSkills;
 
-  // Set the header title to user's name
+  const deleteSkill = async () => {
+    try {
+      if (!session?.user.id || !id)
+        throw new Error("User ID or Skill ID is not available");
+
+      await deleteTalentSkill(parseInt(id as string));
+      setDeleteModalVisible(false);
+      router.back();
+    } catch (error) {
+      console.error("Error deleting skill:", error);
+      Alert.alert("Error", "An error occurred while deleting the skill");
+    }
+  };
+
+  // Set the header title to user's name and add delete button
   useLayoutEffect(() => {
     navigation.setOptions({
       title:
         userProfile?.first_name + " " + userProfile?.last_name || "Profile",
+      headerRight: () => (
+        <Button
+          variant="outline"
+          size="sm"
+          onPress={() => setDeleteModalVisible(true)}
+          className="border-error-300 bg-error-50"
+        >
+          <ButtonIcon as={TrashIcon} size="sm" className="text-error-600" />
+        </Button>
+      ),
     });
   }, [navigation, userProfile?.first_name, userProfile?.last_name]);
 
@@ -220,11 +264,82 @@ export default function SkillDetailScreen() {
               onUpdateSkill={updateSkill}
             />
           </VStack>
+
+          {/* Delete Skill Button */}
+          <VStack className="pt-4">
+            <Button
+              size="lg"
+              variant="outline"
+              action="negative"
+              onPress={() => setDeleteModalVisible(true)}
+              className="border-error-300 bg-background-0"
+            >
+              <ButtonIcon as={TrashIcon} />
+              <ButtonText className="text-error-600">Delete Skill</ButtonText>
+            </Button>
+          </VStack>
         </VStack>
 
         {/* Bottom padding */}
         <VStack className="h-8" />
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+      >
+        <ModalBackdrop />
+        <ModalContent className="w-11/12 max-w-md">
+          <ModalHeader className="border-b border-outline-200 pb-4">
+            <VStack className="items-center" space="md">
+              <Center className="w-16 h-16 rounded-full bg-error-50 border-2 border-error-200">
+                <TrashIcon className="w-6 h-6 text-error-600" />
+              </Center>
+              <Text size="xl" bold className="text-typography-900 text-center">
+                Delete Skill
+              </Text>
+            </VStack>
+          </ModalHeader>
+
+          <ModalBody className="py-6">
+            <VStack space="sm">
+              <Text className="text-typography-700 text-center">
+                Are you sure you want to delete your{" "}
+                <Text bold className="text-typography-900">
+                  {skill?.skill?.name}
+                </Text>{" "}
+                skill?
+              </Text>
+              <Text size="sm" className="text-typography-600 text-center">
+                This action cannot be undone. All your experience, portfolio
+                images, and other data for this skill will be permanently
+                removed.
+              </Text>
+            </VStack>
+          </ModalBody>
+
+          <ModalFooter className="border-t border-outline-200 pt-4">
+            <HStack space="md" className="w-full">
+              <Button
+                variant="outline"
+                className="flex-1 border-outline-300"
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <ButtonText className="text-typography-700">Cancel</ButtonText>
+              </Button>
+              <Button
+                action="negative"
+                className="flex-1"
+                disabled={isDeleting}
+                onPress={deleteSkill}
+              >
+                <ButtonText>Delete Skill</ButtonText>
+              </Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </SafeAreaView>
   );
 }

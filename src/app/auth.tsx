@@ -3,14 +3,10 @@ import ResetPassword from "@/components/auth/ResetPassword";
 import SignIn from "@/components/auth/SignIn";
 import SignUp from "@/components/auth/SignUp";
 import VerifyCode from "@/components/auth/VerifyCode";
-import { Button, ButtonText } from "@/components/ui/button";
-import { Center } from "@/components/ui/center";
 import { useAuth } from "@/providers/auth-provider";
 import { LinearGradient } from "expo-linear-gradient";
 import { Redirect } from "expo-router";
-import * as Updates from "expo-updates";
 import React from "react";
-import { Alert, ScrollView, Text } from "react-native";
 
 type AuthScreen =
   | "signin"
@@ -77,7 +73,7 @@ export default function Auth() {
       )}
 
       {/* Developer Settings Section - positioned absolutely at bottom */}
-      <Center
+      {/* <Center
         style={{
           position: "absolute",
           bottom: 0,
@@ -156,7 +152,7 @@ export default function Auth() {
             </Center>
           </ScrollView>
         )}
-      </Center>
+      </Center> */}
     </LinearGradient>
   );
 }
