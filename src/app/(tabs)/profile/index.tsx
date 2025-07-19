@@ -328,7 +328,10 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </HStack>
             {userProfile.metadata?.bio ? (
-              <VStack space="md">
+              <VStack
+                space="md"
+                className="border border-outline-200 rounded-xl"
+              >
                 <TouchableOpacity
                   onPress={() => setBioExpanded(!bioExpanded)}
                   activeOpacity={0.7}
