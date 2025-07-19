@@ -621,6 +621,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BrandColors.WHITE,
+    marginBottom: 35,
   },
   contentContainer: {
     flexGrow: 1,
