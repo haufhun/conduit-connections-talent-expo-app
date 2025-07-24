@@ -172,5 +172,6 @@ INSERT INTO skills (name, image_url)
     ('Cleaning Services', 'https://placehold.co/400?text=Cleaning%20Services'),
     ('Doula', 'https://placehold.co/400?text=Doula'),
     ('Midwifes', 'https://placehold.co/400?text=Midwifes'),
-    ('House Sitter', 'https://placehold.co/400?text=House%20Sitter');
+    ('House Sitter', 'https://placehold.co/400?text=House%20Sitter'),
+    ('Private Chef', 'https://placehold.co/400?text=Private%20Chef');
     -- Add more skills as needed
