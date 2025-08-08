@@ -146,7 +146,7 @@ INSERT INTO skills (name, image_url)
     ('Wedding Decorator', 'https://placehold.co/400?text=Wedding%20Decorator'),
     ('Get-a-way Car/Driver', 'https://placehold.co/400?text=Get-a-way%20Car%2FDriver'),
     ('Wedding Painter', 'https://placehold.co/400?text=Wedding%20Painter'),
-    ('bartender', 'https://placehold.co/400?text=bartender'),
+    ('Bartender', 'https://placehold.co/400?text=Bartender'),
     ('Ushers', 'https://placehold.co/400?text=Ushers'),
     ('Videographer', 'https://placehold.co/400?text=Videographer'),
     ('Valet', 'https://placehold.co/400?text=Valet'),
