@@ -8,15 +8,15 @@ let appName;
 if (IS_DEV) {
   iosBundleId = "com.conduitconnections.talent.ios.dev";
   androidPackageName = "com.conduitconnections.talent.android.dev";
-  appName = "Conduit Connections (Dev)";
+  appName = "Conduit (Dev)";
 } else if (IS_PREVIEW) {
   iosBundleId = "com.conduitconnections.talent.ios.preview";
   androidPackageName = "com.conduitconnections.talent.android.preview";
-  appName = "Conduit Connections (Preview)";
+  appName = "Conduit (Preview)";
 } else {
   iosBundleId = "com.conduitconnections.talent.ios";
   androidPackageName = "com.conduitconnections.talent.android";
-  appName = "Conduit Connections";
+  appName = "Conduit";
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
