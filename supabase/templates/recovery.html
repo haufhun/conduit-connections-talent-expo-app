@@ -1,4 +1,215 @@
-<h2>Reset Password</h2>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(180deg, #5de0e6 0%, #004aad 100%);
+        min-height: 100vh;
+      }
 
-<p>Follow this link to reset the password for your user:</p>
-<p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+
+      .email-card {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(180deg, #5de0e6 0%, #004aad 100%);
+        padding: 40px 30px;
+        text-align: center;
+        color: #ffffff;
+      }
+
+      .logo {
+        font-size: 45px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .subject {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .content {
+        padding: 40px 30px;
+      }
+
+      .greeting {
+        font-size: 18px;
+        font-weight: 600;
+        color: #004aad;
+        margin-bottom: 20px;
+      }
+
+      .paragraph {
+        margin-bottom: 20px;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #555;
+      }
+
+      .token-section {
+        background: linear-gradient(180deg, #5de0e6 0%, #004aad 100%);
+        border-radius: 12px;
+        padding: 25px;
+        margin: 30px 0;
+        text-align: center;
+      }
+
+      .token-label {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      .token {
+        background: #ffffff;
+        color: #004aad;
+        font-size: 24px;
+        font-weight: bold;
+        padding: 15px 25px;
+        border-radius: 8px;
+        display: inline-block;
+        letter-spacing: 2px;
+        font-family: "Courier New", monospace;
+        border: 2px solid #ffde59;
+      }
+
+      .reset-button {
+        background: #ffffff;
+        color: #004aad;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 15px 30px;
+        border-radius: 8px;
+        display: inline-block;
+        text-decoration: none;
+        border: 2px solid #ffde59;
+        transition: all 0.3s ease;
+      }
+
+      .reset-button:hover {
+        background: #ffde59;
+        color: #004aad;
+        text-decoration: none;
+      }
+
+      .warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 20px 0;
+        color: #856404;
+        font-size: 14px;
+      }
+
+      .footer {
+        background: #f8f9fa;
+        padding: 30px;
+        text-align: center;
+        border-top: 1px solid #e9ecef;
+      }
+
+      .signature {
+        font-size: 16px;
+        font-weight: 600;
+        color: #004aad;
+        margin-bottom: 10px;
+      }
+
+      .company-info {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.5;
+      }
+
+      .company-name {
+        font-weight: 600;
+        color: #004aad;
+      }
+
+      .email-link {
+        color: #5de0e6;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .email-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="email-card">
+        <div class="content">
+          <div class="greeting">Password Reset Request</div>
+
+          <div class="paragraph">
+            We received a request to reset the password for your Conduit
+            account. If you made this request, click the button below to
+            <span class="highlight">reset your password</span>.
+          </div>
+
+          <div class="paragraph">
+            This link will expire in <strong>1 hour</strong> for security
+            reasons. If you need to reset your password after this time, please
+            request a new reset link.
+          </div>
+
+          <div class="token-section">
+            <div class="token-label">
+              Enter the following code to confirm your email address:
+            </div>
+            <div class="token">{{ .Token }}</div>
+          </div>
+
+          <div class="warning">
+            <strong>Security Notice:</strong> If you didn't request this
+            password reset, please ignore this email. Your account remains
+            secure and no changes have been made.
+          </div>
+
+          <div class="paragraph">
+            If you're having trouble with the reset process or have any security
+            concerns, please contact our support team at
+            <a href="mailto:info@conduitconnections.com" class="email-link"
+              >info@conduitconnections.com</a
+            >.
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="signature">Best regards,<br />The Conduit Team</div>
+          <div class="company-info">
+            <div class="company-name">Conduit Connections LLC</div>
+            <a href="mailto:info@conduitconnections.com" class="email-link"
+              >info@conduitconnections.com</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
