@@ -1,8 +1,4 @@
-import {
-  useCreateTalentSkill,
-  useGetSkills,
-  useGetUserTalentSkills,
-} from "@/api/api";
+import { useCreateTalentSkill, useGetSkills } from "@/api/api";
 import FilePickerActionSheet from "@/components/FilePickerActionSheet";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
@@ -14,8 +10,8 @@ import {
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
-import { AlertCircleIcon } from "@/components/ui/icon";
-import { Input, InputField } from "@/components/ui/input";
+import { AlertCircleIcon, ChevronRightIcon } from "@/components/ui/icon";
+import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { MAX_SKILL_IMAGES, SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
@@ -26,16 +22,17 @@ import {
   createSkillSchema,
 } from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -44,8 +41,10 @@ import { z } from "zod";
 
 export default function CreateSkillScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { session } = useAuth();
   const [playing, setPlaying] = useState(false);
+  const [isPressed, setIsPressed] = useState(true);
 
   const getYoutubeVideoId = (url: string) => {
     if (!url) return null;
@@ -60,11 +59,10 @@ export default function CreateSkillScreen() {
       setPlaying(false);
     }
   }, []);
+
   const { mutateAsync: createSkill } = useCreateTalentSkill();
   const [showActionsheet, setShowActionsheet] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const { data: skills, error, isLoading } = useGetSkills();
-  const { data: userSkills } = useGetUserTalentSkills();
+  const { data: skills } = useGetSkills();
 
   const {
     control,
@@ -84,15 +82,32 @@ export default function CreateSkillScreen() {
     },
   });
 
-  if (isLoading) {
-    return <ActivityIndicator />;
-  }
-
-  if (error || !skills) {
-    return <Text>Error {error?.message || "Failed to fetch skills"}</Text>;
-  }
-
   const imageUrls = watch("image_urls");
+  const selectedSkillId = watch("skill_id");
+
+  // Find the selected skill name for display
+  const selectedSkillName = skills?.find(
+    (skill) => skill.id === selectedSkillId
+  )?.name;
+
+  // Handle skill selection from the select screen
+  useFocusEffect(
+    useCallback(() => {
+      const maybeSkillId = parseInt(params.selectedSkillId as string);
+      if (!maybeSkillId || isNaN(maybeSkillId)) {
+        return;
+      } else {
+        const skillId = maybeSkillId;
+
+        setValue("skill_id", skillId);
+        // Clear the params
+        router.setParams({
+          selectedSkillId: undefined,
+          selectedSkillName: undefined,
+        });
+      }
+    }, [params.selectedSkillId, setValue, router])
+  );
 
   const onSubmit = async (data: z.infer<typeof createSkillSchema>) => {
     try {
@@ -162,12 +177,6 @@ export default function CreateSkillScreen() {
     setShowActionsheet(true);
   };
 
-  const filteredSkills = skills.filter(
-    (skill) =>
-      !userSkills?.some((userSkill) => userSkill.skill_id === skill.id) &&
-      skill.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
       <ScrollView className="flex-1">
@@ -181,42 +190,46 @@ export default function CreateSkillScreen() {
           <Controller
             control={control}
             name="skill_id"
-            render={({ field: { value, onChange }, fieldState: { error } }) => (
-              <FormControl isInvalid={Boolean(error)}>
-                <FormControlLabel>
-                  <FormControlLabelText>Select Skill</FormControlLabelText>
-                </FormControlLabel>
+            render={({ fieldState: { error } }) => (
+              <>
+                <FormControl isInvalid={Boolean(error)}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push("/profile/skill/select");
+                    }}
+                  >
+                    <FormControlLabel>
+                      <FormControlLabelText>Select Skill</FormControlLabelText>
+                    </FormControlLabel>
 
-                <VStack space="md" className="mb-2">
-                  <Input size="lg" variant="outline">
-                    <InputField
-                      placeholder="Search skills..."
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                    />
-                  </Input>
-                  <View style={styles.skillsList}>
-                    {filteredSkills.map((skill) => (
-                      <Button
-                        key={skill.id}
-                        size="sm"
-                        variant={value === skill.id ? "solid" : "outline"}
-                        action={value === skill.id ? "primary" : undefined}
-                        onPress={() => onChange(skill.id)}
-                        className="min-w-[100px]"
-                      >
-                        <ButtonText>{skill.name}</ButtonText>
-                      </Button>
-                    ))}
-                  </View>
-                </VStack>
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText size="sm">
-                    {error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
+                    <Input
+                      size="lg"
+                      variant="outline"
+                      isReadOnly
+                      isDisabled
+                      pointerEvents="none"
+                    >
+                      <InputField
+                        placeholder="Tap to select a skill..."
+                        value={selectedSkillName || ""}
+                        editable={false}
+                        style={{ color: selectedSkillName ? "#000" : "#999" }}
+                      />
+                      <InputSlot>
+                        <InputIcon as={ChevronRightIcon} />
+                      </InputSlot>
+                    </Input>
+                  </TouchableOpacity>
+
+                  <FormControlError>
+                    <FormControlErrorIcon as={AlertCircleIcon} />
+                    <FormControlErrorText size="sm">
+                      {error?.message}
+                    </FormControlErrorText>
+                  </FormControlError>
+                </FormControl>
+              </>
             )}
           />
 
@@ -442,11 +455,6 @@ export default function CreateSkillScreen() {
 }
 
 const styles = StyleSheet.create({
-  skillsList: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
   summaryInput: {
     height: 160,
     paddingTop: 12,

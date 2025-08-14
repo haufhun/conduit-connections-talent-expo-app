@@ -12,6 +12,13 @@ const ProfileLayout = () => {
         }}
       />
       <Stack.Screen
+        name="skill/select"
+        options={{
+          title: "Select Skill",
+          headerBackTitle: "Back",
+        }}
+      />
+      <Stack.Screen
         name="skill/[id]"
         options={{
           title: "",
