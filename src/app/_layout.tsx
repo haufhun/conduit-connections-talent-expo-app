@@ -6,9 +6,12 @@ import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Updates from "expo-updates";
 import { ToastProvider } from "react-native-toast-notifications";
 
 import "@/global.css";
+import { useEffect } from "react";
+import { Alert } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
@@ -18,6 +21,41 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  useEffect(() => {
+    async function prepare() {
+      try {
+        const updateAvail = await Updates.checkForUpdateAsync();
+        if (updateAvail.isAvailable) {
+          createReloadAppAlert();
+          return;
+        }
+      } catch (e) {
+        console.log("Error finding new update");
+      }
+    }
+
+    prepare();
+  }, []);
+
+  const createReloadAppAlert = () => {
+    Alert.alert(
+      "New Updates Available",
+      "There is a new update available. Would you like to reload and use the latest update?",
+      [
+        // {
+        //   text: 'Not Now',
+        //   onPress: () => console.log('Cancel Pressed'),
+        //   style: 'cancel',
+        // },
+        {
+          text: "Reload",
+          onPress: () => Updates.reloadAsync(),
+          style: "default",
+        },
+      ]
+    );
+  };
 
   if (!loaded) {
     return null;
