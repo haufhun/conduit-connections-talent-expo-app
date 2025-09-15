@@ -194,6 +194,7 @@ export type Database = {
           metadata: Json | null
           phone: string | null
           state: string | null
+          stripe_customer_id: string | null
           updated_at: string | null
           user_type: Database["public"]["Enums"]["user_type"]
         }
@@ -208,6 +209,7 @@ export type Database = {
           metadata?: Json | null
           phone?: string | null
           state?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
           user_type?: Database["public"]["Enums"]["user_type"]
         }
@@ -222,6 +224,7 @@ export type Database = {
           metadata?: Json | null
           phone?: string | null
           state?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
           user_type?: Database["public"]["Enums"]["user_type"]
         }

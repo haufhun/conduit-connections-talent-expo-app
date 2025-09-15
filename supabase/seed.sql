@@ -110,7 +110,8 @@ BEGIN
     last_name = 'Martinez',
     city = 'Austin',
     state = 'TX',
-    metadata = '{"bio": "Event organizer specializing in music festivals and corporate events. Passionate about creating memorable experiences."}'::jsonb
+    metadata = '{"bio": "Event organizer specializing in music festivals and corporate events. Passionate about creating memorable experiences."}'::jsonb,
+    stripe_customer_id = 'cus_T2kSIgKB7TCdOc'
   WHERE email = 'organizer@example.com';
 
   -- Insert talent skills for user1
