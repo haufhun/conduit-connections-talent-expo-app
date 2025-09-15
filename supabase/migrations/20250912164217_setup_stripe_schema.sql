@@ -1,3 +1,5 @@
+
+
 create extension if not exists wrappers with schema extensions;
 
 
@@ -6,29 +8,23 @@ create foreign data wrapper stripe_wrapper
     validator stripe_fdw_validator;
 
 
--- Save your Stripe API key in Vault and retrieve the `key_id`
--- insert into vault.secrets (name, secret)
--- values (
---     'stripe',
---     ''
--- )
--- returning key_id;
+-- First, we need to create the server with a placeholder, then update it with the actual vault ID
+do $$
+declare
+    vault_id uuid;
+begin
+    -- Get the vault secret ID
+    select id into vault_id from vault.secrets where name = 'stripe_secret_key';
+    
+    -- Create the server with the vault ID
+    execute format('
+        create server stripe_server
+            foreign data wrapper stripe_wrapper
+            options (
+                api_key_id %L
+            )', vault_id::text);
+end $$;
 
-
--- create server stripe_server
---     foreign data wrapper stripe_wrapper
---     options (
---         api_key_id key_id -- The Key ID from above.
---     );
-
-
-create server stripe_server
-  foreign data wrapper stripe_wrapper
-  options (
-    api_key ''
-    -- api_url 'https://api.stripe.com/v1/',  -- Stripe API base URL, optional. Default is 'https://api.stripe.com/v1/'
-    -- api_version '2024-06-20'  -- Stripe API version, optional. Default is your Stripe account’s default API version.
-  );
 
 create schema if not exists stripe;
 
