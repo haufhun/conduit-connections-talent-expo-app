@@ -42,8 +42,8 @@ default_pool_size = 20
 # Maximum number of client connections allowed.
 max_client_conn = 100
 
-# [db.vault]
-# secret_key = "env(SECRET_VALUE)"
+[db.vault]
+STRIPE_SECRET_KEY = "env(STRIPE_SECRET_KEY)"
 
 # [db.migrations]
 # # Specifies an ordered list of schema files that describe your database.
