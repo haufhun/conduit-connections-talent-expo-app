@@ -117,7 +117,7 @@ BEGIN
   -- Insert talent skills for user1
   INSERT INTO talent_skills (user_id, skill_id, summary, years_of_experience, image_urls, hourly_rate)
     VALUES
-      (user1_id, (SELECT id FROM skills WHERE name = 'Guitarist - Acoustic'), 'Acoustic guitarist specializing in intimate venues and wedding ceremonies with a diverse repertoire.', 3.5, ARRAY['https://picsum.photos/200/300', 'https://picsum.photos/200/301'], 75.00),
+      (user1_id, (SELECT id FROM skills WHERE name = 'Guitar - Acoustic'), 'Acoustic guitarist specializing in intimate venues and wedding ceremonies with a diverse repertoire.', 3.5, ARRAY['https://picsum.photos/200/300', 'https://picsum.photos/200/301'], 75.00),
       (user1_id, (SELECT id FROM skills WHERE name = 'Sound Engineer'), 'Professional sound engineering with experience in live events, studio recording, and mixing.', 2.0, ARRAY['https://picsum.photos/200/302'], 80.00),
       (user1_id, (SELECT id FROM skills WHERE name = 'Keyboardist'), 'Versatile keyboardist comfortable with classical, jazz, rock, and electronic music styles.', 10.0, ARRAY['https://picsum.photos/200/303', 'https://picsum.photos/200/304', 'https://picsum.photos/200/305'], 95.00);
 
@@ -515,41 +515,41 @@ BEGIN
         -- Add their skills
         INSERT INTO talent_skills (user_id, skill_id, summary, years_of_experience, image_urls, hourly_rate)
         VALUES 
-          (harry_id, (SELECT id FROM skills WHERE name = 'Guitarist - Acoustic'), 'Magical guitarist with enchanting melodies', 2.5, ARRAY['https://picsum.photos/200/310'], 65.00),
-          (harry_id, (SELECT id FROM skills WHERE name = 'Lighting Technicians'), 'Specializes in dramatic stage lighting', 1.5, ARRAY['https://picsum.photos/200/311'], 55.00),
+          (harry_id, (SELECT id FROM skills WHERE name = 'Guitar - Acoustic'), 'Magical guitarist with enchanting melodies', 2.5, ARRAY['https://picsum.photos/200/310'], 65.00),
+          (harry_id, (SELECT id FROM skills WHERE name = 'Lighting Technician'), 'Specializes in dramatic stage lighting', 1.5, ARRAY['https://picsum.photos/200/311'], 55.00),
           (hermione_id, (SELECT id FROM skills WHERE name = 'Sound Engineer'), 'Expert sound engineering with precision', 4.0, ARRAY['https://picsum.photos/200/312'], 85.00),
           (hermione_id, (SELECT id FROM skills WHERE name = 'Stage Manager'), 'Organized numerous magical events', 3.0, ARRAY['https://picsum.photos/200/313'], 75.00),
           (ron_id, (SELECT id FROM skills WHERE name = 'Drummer'), 'Rhythmic wizard on the drums', 2.0, ARRAY['https://picsum.photos/200/314'], 60.00),
           (luna_id, (SELECT id FROM skills WHERE name = 'Keyboardist'), 'Ethereal keyboard performances', 3.5, ARRAY['https://picsum.photos/200/315'], 70.00),
           (luna_id, (SELECT id FROM skills WHERE name = 'DJ'), 'Experimental DJ sets', 2.0, ARRAY['https://picsum.photos/200/316'], 80.00),
-          (neville_id, (SELECT id FROM skills WHERE name = 'Camera Operators'), 'Creative video production', 1.5, ARRAY['https://picsum.photos/200/317'], 65.00),
+          (neville_id, (SELECT id FROM skills WHERE name = 'Camera Operator'), 'Creative video production', 1.5, ARRAY['https://picsum.photos/200/317'], 65.00),
           (ginny_id, (SELECT id FROM skills WHERE name = 'Stage Manager'), 'Dynamic event management', 2.5, ARRAY['https://picsum.photos/200/318'], 70.00),
-          (draco_id, (SELECT id FROM skills WHERE name = 'Lighting Technicians'), 'Sophisticated lighting design', 3.0, ARRAY['https://picsum.photos/200/319'], 90.00),
+          (draco_id, (SELECT id FROM skills WHERE name = 'Lighting Technician'), 'Sophisticated lighting design', 3.0, ARRAY['https://picsum.photos/200/319'], 90.00),
           (cho_id, (SELECT id FROM skills WHERE name = 'Sound Engineer'), 'Detailed sound engineering', 2.0, ARRAY['https://picsum.photos/200/320'], 75.00),
-          (cedric_id, (SELECT id FROM skills WHERE name = 'Camera Operators'), 'Cinematic video production', 4.0, ARRAY['https://picsum.photos/200/321'], 85.00),
+          (cedric_id, (SELECT id FROM skills WHERE name = 'Camera Operator'), 'Cinematic video production', 4.0, ARRAY['https://picsum.photos/200/321'], 85.00),
           (fred_id, (SELECT id FROM skills WHERE name = 'DJ'), 'High-energy DJ performances', 3.5, ARRAY['https://picsum.photos/200/322'], 95.00);
 
-            -- Update their profiles with Midwest cities
-            UPDATE public.users SET first_name = 'Harry', last_name = 'Potter', city = 'Kansas City', state = 'KS', 
-                  metadata = '{"bio": "The boy who lived to make music"}'::jsonb WHERE id = harry_id;
-                UPDATE public.users SET first_name = 'Hermione', last_name = 'Granger', city = 'St. Louis', state = 'MO', 
-                  metadata = '{"bio": "Bringing magic to every event"}'::jsonb WHERE id = hermione_id;
-                UPDATE public.users SET first_name = 'Ron', last_name = 'Weasley', city = 'Omaha', state = 'NE', 
-                  metadata = '{"bio": "Drumming up magical beats"}'::jsonb WHERE id = ron_id;
-                UPDATE public.users SET first_name = 'Luna', last_name = 'Lovegood', city = 'Lincoln', state = 'NE', 
-                  metadata = '{"bio": "Creating ethereal soundscapes"}'::jsonb WHERE id = luna_id;
-                UPDATE public.users SET first_name = 'Neville', last_name = 'Longbottom', city = 'Wichita', state = 'KS', 
-                  metadata = '{"bio": "Capturing magical moments on film"}'::jsonb WHERE id = neville_id;
-                UPDATE public.users SET first_name = 'Ginny', last_name = 'Weasley', city = 'Kansas City', state = 'MO', 
-                  metadata = '{"bio": "Making events extraordinary"}'::jsonb WHERE id = ginny_id;
-                UPDATE public.users SET first_name = 'Draco', last_name = 'Malfoy', city = 'Overland Park', state = 'KS', 
-                  metadata = '{"bio": "Illuminating performances with style"}'::jsonb WHERE id = draco_id;
-                UPDATE public.users SET first_name = 'Cho', last_name = 'Chang', city = 'Springfield', state = 'MO', 
-                  metadata = '{"bio": "Crafting perfect sound experiences"}'::jsonb WHERE id = cho_id;
-                UPDATE public.users SET first_name = 'Cedric', last_name = 'Diggory', city = 'Independence', state = 'MO', 
-                  metadata = '{"bio": "Creating cinematic magic"}'::jsonb WHERE id = cedric_id;
-                UPDATE public.users SET first_name = 'Fred', last_name = 'Weasley', city = 'Grand Island', state = 'NE', 
-                  metadata = '{"bio": "Turning parties into celebrations"}'::jsonb WHERE id = fred_id;
+        -- Update their profiles with Midwest cities
+        UPDATE public.users SET first_name = 'Harry', last_name = 'Potter', city = 'Kansas City', state = 'KS', 
+          metadata = '{"bio": "The boy who lived to make music"}'::jsonb WHERE id = harry_id;
+        UPDATE public.users SET first_name = 'Hermione', last_name = 'Granger', city = 'St. Louis', state = 'MO', 
+          metadata = '{"bio": "Bringing magic to every event"}'::jsonb WHERE id = hermione_id;
+        UPDATE public.users SET first_name = 'Ron', last_name = 'Weasley', city = 'Omaha', state = 'NE', 
+          metadata = '{"bio": "Drumming up magical beats"}'::jsonb WHERE id = ron_id;
+        UPDATE public.users SET first_name = 'Luna', last_name = 'Lovegood', city = 'Lincoln', state = 'NE', 
+          metadata = '{"bio": "Creating ethereal soundscapes"}'::jsonb WHERE id = luna_id;
+        UPDATE public.users SET first_name = 'Neville', last_name = 'Longbottom', city = 'Wichita', state = 'KS', 
+          metadata = '{"bio": "Capturing magical moments on film"}'::jsonb WHERE id = neville_id;
+        UPDATE public.users SET first_name = 'Ginny', last_name = 'Weasley', city = 'Kansas City', state = 'MO', 
+          metadata = '{"bio": "Making events extraordinary"}'::jsonb WHERE id = ginny_id;
+        UPDATE public.users SET first_name = 'Draco', last_name = 'Malfoy', city = 'Overland Park', state = 'KS', 
+          metadata = '{"bio": "Illuminating performances with style"}'::jsonb WHERE id = draco_id;
+        UPDATE public.users SET first_name = 'Cho', last_name = 'Chang', city = 'Springfield', state = 'MO', 
+          metadata = '{"bio": "Crafting perfect sound experiences"}'::jsonb WHERE id = cho_id;
+        UPDATE public.users SET first_name = 'Cedric', last_name = 'Diggory', city = 'Independence', state = 'MO', 
+          metadata = '{"bio": "Creating cinematic magic"}'::jsonb WHERE id = cedric_id;
+        UPDATE public.users SET first_name = 'Fred', last_name = 'Weasley', city = 'Grand Island', state = 'NE', 
+          metadata = '{"bio": "Turning parties into celebrations"}'::jsonb WHERE id = fred_id;
 
   -- Insert sample blockouts for all users (around June 11, 2025)
   INSERT INTO talent_blockouts (talent_id, title, description, start_time, end_time, is_all_day)
