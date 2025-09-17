@@ -119,7 +119,7 @@ INSERT INTO skills (name, image_url)
     ('Production Designer', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0115-production_designer/public'), -- 115
     ('Prop Master', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0116-prop_master/public'), -- 116
     ('Script Supervisor', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0117-script_supervisor/public'), -- 117
-    ('Seemstress - Tailor', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0118-seemstress_-_tailor/public'), -- 118
+    ('Seamstress - Tailor', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0118-seamstress_-_tailor/public'), -- 118
     ('Set Designer', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0119-set_designer/public'), -- 119
     ('Sound Mixer', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0120-sound_mixer/public'), -- 120
     ('Stunt - Coordinator', 'https://imagedelivery.net/gw2EIBGk6n68uMZyFMj36A/0121-stunt_-_coordinator/public'), -- 121
