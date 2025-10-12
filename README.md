@@ -2,6 +2,30 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+## Known Issues
+
+There is a known issue where the dayjs timezone package is not working properly in React Native for some reason. See the Github issue below:
+
+- https://github.com/iamkun/dayjs/issues/1377
+
+For now, I just do some special handling to make sure things work properly. (See src/utils/date.ts)
+
+Basically, we can't do:
+
+```ts
+dayjs.utc(dateString).tz(getTimezone());
+```
+
+So instead, we have to do:
+
+```ts
+const utcDate = new Date(utcDateString);
+const localDate = new Date(utcDate.getTime());
+return dayjs(localDate);
+```
+
+> NOTE: I waste hours on this. If we are still having issues, consider moving to moment and moment-tz
+
 ## Get started
 
 1. Install dependencies

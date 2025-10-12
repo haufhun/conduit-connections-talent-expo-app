@@ -1,5 +1,8 @@
 import { useCreateTalentBlockout } from "@/api/blockouts_api";
 import { RecurringScheduleForm } from "@/components/schedule/RecurringScheduleForm";
+import ScheduleDateTimeCard from "@/components/schedule/ScheduleDateTimeCard";
+import ScheduleDescriptionCard from "@/components/schedule/ScheduleDescriptionCard";
+import ScheduleTitleCard from "@/components/schedule/ScheduleTitleCard";
 import { Button, ButtonText } from "@/components/ui/button";
 import {
   Checkbox,
@@ -7,19 +10,9 @@ import {
   CheckboxIndicator,
   CheckboxLabel,
 } from "@/components/ui/checkbox";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-  FormControlLabel,
-  FormControlLabelText,
-} from "@/components/ui/form-control";
-import { AlertCircleIcon, CheckIcon } from "@/components/ui/icon";
-import { Input, InputField } from "@/components/ui/input";
+import { FormControl } from "@/components/ui/form-control";
+import { CheckIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { Textarea, TextareaInput } from "@/components/ui/textarea";
 import { VStack } from "@/components/ui/vstack";
 import { getDayjsFromUtcDateString } from "@/utils/date";
 import {
@@ -114,138 +107,92 @@ export default function CreateBlockoutScreen() {
   };
 
   return (
-    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary pb-[50px]">
-      <ScrollView className="flex-1">
-        <VStack space="lg" className="p-[20px]">
-          <VStack space="sm">
+    <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <VStack space="lg" className="p-6">
+          {/* Header Card */}
+          <VStack
+            space="sm"
+            className="bg-white rounded-2xl p-6 border border-primary-200 shadow-sm"
+          >
+            <Text size="xl" bold className="text-typography-900 mb-2">
+              Create New Blockout
+            </Text>
             <Text className="text-typography-600">
               Block out time when you&apos;re unavailable for gigs
             </Text>
           </VStack>
 
-          <Controller
-            control={control}
-            name="title"
-            render={({ field: { value, onChange }, fieldState: { error } }) => (
-              <FormControl isInvalid={Boolean(error)}>
-                <FormControlLabel>
-                  <FormControlLabelText>Title</FormControlLabelText>
-                </FormControlLabel>
-                <Input size="lg" variant="outline">
-                  <InputField
-                    placeholder="Enter blockout title..."
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                </Input>
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText size="sm">
-                    {error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            )}
-          />
+          {/* Title Card */}
+          <ScheduleTitleCard control={control} />
 
-          <Controller
-            control={control}
-            name="description"
-            render={({ field: { value, onChange }, fieldState: { error } }) => (
-              <FormControl isInvalid={Boolean(error)}>
-                <FormControlLabel>
-                  <FormControlLabelText>Description</FormControlLabelText>
-                </FormControlLabel>
-                <Textarea size="lg" className="min-h-[100px]">
-                  <TextareaInput
-                    placeholder="Add a description (optional)..."
-                    value={value ?? ""}
-                    onChangeText={onChange}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                  />
-                </Textarea>
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText size="sm">
-                    {error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            )}
-          />
+          {/* Description Card */}
+          <ScheduleDescriptionCard control={control} />
 
-          <Controller
-            control={control}
-            name="is_all_day"
-            render={({ field: { value, onChange } }) => (
-              <FormControl>
-                <Checkbox
-                  size="md"
-                  value="all_day"
-                  isChecked={value}
-                  onChange={onChange}
-                  aria-label="All day event"
-                >
-                  <CheckboxIndicator>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel>All Day</CheckboxLabel>
-                </Checkbox>
-              </FormControl>
-            )}
-          />
-
-          <DateRangePicker
+          {/* All Day & Date/Time Card */}
+          <ScheduleDateTimeCard
             control={control}
             setValue={setValue}
-            startTimeFieldName="start_time"
-            endTimeFieldName="end_time"
-            isAllDay={isAllDay}
+            isAllDay={isAllDay ?? false}
           />
 
-          <Controller
-            control={control}
-            name="is_recurring"
-            render={({ field: { value, onChange } }) => (
-              <FormControl>
-                <Checkbox
-                  size="md"
-                  value="recurring"
-                  isChecked={value}
-                  onChange={onChange}
-                  aria-label="Recurring event"
-                >
-                  <CheckboxIndicator>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel>Recurring</CheckboxLabel>
-                </Checkbox>
-              </FormControl>
-            )}
-          />
-
-          {isRecurring && (
-            <RecurringScheduleForm
-              startDate={memoizedStartDate}
-              onRRuleChange={handleRRuleChange}
-              initialRRule={watch("rrule") || ""}
-            />
-          )}
-
-          <Button
-            size="lg"
-            variant="solid"
-            action="primary"
-            onPress={handleSubmit(onSubmit)}
-            isDisabled={isSubmitting}
+          {/* Recurring Card */}
+          <VStack
+            space="md"
+            className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm"
           >
-            <ButtonText>
-              {isSubmitting ? "Creating..." : "Create Blockout"}
-            </ButtonText>
-          </Button>
+            <Controller
+              control={control}
+              name="is_recurring"
+              render={({ field: { value, onChange } }) => (
+                <FormControl>
+                  <Checkbox
+                    size="md"
+                    value="recurring"
+                    isChecked={value}
+                    onChange={onChange}
+                    aria-label="Recurring event"
+                    className="bg-background-50 p-3 rounded-lg"
+                  >
+                    <CheckboxIndicator>
+                      <CheckboxIcon as={CheckIcon} />
+                    </CheckboxIndicator>
+                    <CheckboxLabel className="text-typography-700 font-medium">
+                      Recurring
+                    </CheckboxLabel>
+                  </Checkbox>
+                </FormControl>
+              )}
+            />
+
+            {isRecurring && (
+              <RecurringScheduleForm
+                startDate={memoizedStartDate}
+                onRRuleChange={handleRRuleChange}
+                initialRRule={watch("rrule") || ""}
+              />
+            )}
+          </VStack>
+
+          {/* Submit Button Card */}
+          <VStack className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm">
+            <Button
+              size="lg"
+              variant="solid"
+              action="primary"
+              onPress={handleSubmit(onSubmit)}
+              isDisabled={isSubmitting}
+              className="rounded-xl"
+            >
+              <ButtonText className="font-semibold">
+                {isSubmitting ? "Creating..." : "Create Blockout"}
+              </ButtonText>
+            </Button>
+          </VStack>
         </VStack>
+
+        {/* Bottom padding */}
+        <VStack className="h-8" />
       </ScrollView>
     </SafeAreaView>
   );
