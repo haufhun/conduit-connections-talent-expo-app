@@ -1,5 +1,6 @@
 import {
   RecurringScheduleOptions,
+  WeekdayType,
   mapFrequencyToRRule,
   mapWeekdayToRRule,
 } from "@/types/recurring-schedule";
@@ -66,10 +67,17 @@ export const parseRRule = (
   startDate: Date
 ): RecurringScheduleOptions => {
   // This is a simplified parser - you might want to make it more robust
+  console.log("Parsing RRULE string:", rruleString);
+
+  // Remove the "RRULE:" prefix if it exists
+  const wholeRRuleString = !rruleString.startsWith("RRULE:")
+    ? `RRULE:${rruleString}`
+    : rruleString;
+
   const rule = RRule.fromString(
     `DTSTART:${
       startDate.toISOString().replace(/[-:]/g, "").split(".")[0]
-    }Z\nRRULE:${rruleString}`
+    }Z\n${wholeRRuleString}`
   );
 
   const options: RecurringScheduleOptions = {
@@ -100,8 +108,8 @@ export const parseRRule = (
   }
 
   // Map weekdays for weekly recurrence
-  if (rule.options.byweekday) {
-    const weekdayMap: { [key: number]: any } = {
+  if (rule.options.byweekday && options.frequency === "WEEKLY") {
+    const weekdayMap: { [key: number]: WeekdayType } = {
       0: "MONDAY",
       1: "TUESDAY",
       2: "WEDNESDAY",
@@ -121,6 +129,46 @@ export const parseRRule = (
         return weekdayMap[weekdayNum];
       })
       .filter(Boolean);
+  }
+
+  // Handle monthly recurrence
+  if (options.frequency === "MONTHLY") {
+    if (rule.options.bymonthday) {
+      // Day of month pattern
+      options.monthlyType = "DAY_OF_MONTH";
+      options.dayOfMonth = Array.isArray(rule.options.bymonthday)
+        ? rule.options.bymonthday[0]
+        : rule.options.bymonthday;
+    } else if (rule.options.byweekday) {
+      // Day of week pattern
+      options.monthlyType = "DAY_OF_WEEK";
+
+      const weekdayMap: { [key: number]: WeekdayType } = {
+        0: "MONDAY",
+        1: "TUESDAY",
+        2: "WEDNESDAY",
+        3: "THURSDAY",
+        4: "FRIDAY",
+        5: "SATURDAY",
+        6: "SUNDAY",
+      };
+
+      const byweekday = Array.isArray(rule.options.byweekday)
+        ? rule.options.byweekday[0]
+        : rule.options.byweekday;
+
+      const weekdayNum =
+        typeof byweekday === "number" ? byweekday : (byweekday as any).weekday;
+      options.dayOfWeek = weekdayMap[weekdayNum];
+
+      // Get the nth occurrence (1-4, or -1 for last)
+      if (typeof byweekday !== "number" && (byweekday as any).n) {
+        options.weekOfMonth = (byweekday as any).n;
+      } else {
+        // Default to first occurrence if no nth specified
+        options.weekOfMonth = 1;
+      }
+    }
   }
 
   // Handle end conditions

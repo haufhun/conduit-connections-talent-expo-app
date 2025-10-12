@@ -39,6 +39,7 @@ import {
 import {
   convertToRRule,
   generateReadableDescription,
+  parseRRule,
 } from "@/utils/recurring-schedule";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useCallback, useEffect, useState } from "react";
@@ -53,17 +54,34 @@ interface RecurringScheduleFormProps {
 export const RecurringScheduleForm: React.FC<RecurringScheduleFormProps> = ({
   startDate,
   onRRuleChange,
-  initialRRule,
+  // initialRRule,
 }) => {
-  const [options, setOptions] = useState<RecurringScheduleOptions>({
-    frequency: "WEEKLY",
-    interval: 1,
-    weekdays: [],
-    monthlyType: "DAY_OF_MONTH",
-    dayOfMonth: startDate.getDate(),
-    weekOfMonth: 1,
-    dayOfWeek: "MONDAY",
-    endType: "NEVER",
+  const initialRRule = "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=WE";
+
+  const [options, setOptions] = useState<RecurringScheduleOptions>(() => {
+    // If an initial RRULE is provided, parse it to get the options
+    if (initialRRule) {
+      try {
+        // console.log("Parsing initial RRULE:", initialRRule);
+
+        return parseRRule(initialRRule, startDate);
+      } catch (error) {
+        console.warn("Failed to parse initial RRULE:", error);
+        // Fall back to defaults if parsing fails
+      }
+    }
+
+    // Default options if no initial RRULE or parsing failed
+    return {
+      frequency: "WEEKLY",
+      interval: 1,
+      weekdays: [],
+      monthlyType: "DAY_OF_MONTH",
+      dayOfMonth: startDate.getDate(),
+      weekOfMonth: 1,
+      dayOfWeek: "MONDAY",
+      endType: "NEVER",
+    };
   });
 
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);

@@ -4,15 +4,19 @@ import {
   useGetUserTalentSkills,
   useUpdateTalentSkill,
 } from "@/api/api";
-import SkillExperienceSection from "@/components/skills/SkillExperienceSection";
-import SkillHourlyRateSection from "@/components/skills/SkillHourlyRateSection";
+import SkillExperienceRateSection from "@/components/skills/SkillExperienceRateSection";
 import SkillImagesSection from "@/components/skills/SkillImagesSection";
 import SkillSummarySection from "@/components/skills/SkillSummarySection";
 import SkillYoutubeVideoSection from "@/components/skills/SkillYoutubeVideoSection";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import {
+  Button,
+  ButtonIcon,
+  ButtonSpinner,
+  ButtonText,
+} from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
-import { TrashIcon } from "@/components/ui/icon";
+import { Icon, TrashIcon } from "@/components/ui/icon";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import {
   Modal,
@@ -25,8 +29,13 @@ import {
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
+import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import { useAuth } from "@/providers/auth-provider";
 import type { TalentSkill } from "@/types/skills";
+import {
+  deleteFileFromSupabase,
+  extractFilePathFromUrl,
+} from "@/utils/storage";
 import { Image } from "expo-image";
 import {
   Redirect,
@@ -43,6 +52,7 @@ export default function SkillDetailScreen() {
   const { session } = useAuth();
   const navigation = useNavigation();
   const router = useRouter();
+  const [isDeletingImages, setIsDeletingImages] = useState(false);
   const { mutateAsync: updateTalentSkill } = useUpdateTalentSkill();
   const { mutateAsync: deleteTalentSkill, isPending: isDeleting } =
     useDeleteTalentSkill();
@@ -65,6 +75,23 @@ export default function SkillDetailScreen() {
     try {
       if (!session?.user.id || !id)
         throw new Error("User ID or Skill ID is not available");
+
+      setIsDeletingImages(true);
+      for (let imageUrl of skill?.image_urls || []) {
+        // Attempt to delete each image, but don't block deletion if one fails
+        try {
+          const filePath = extractFilePathFromUrl(
+            imageUrl,
+            SKILL_IMAGES_BUCKET
+          );
+          if (filePath) {
+            await deleteFileFromSupabase("talent-skill-images", filePath);
+          }
+        } catch (error) {
+          console.warn("Failed to delete image:", imageUrl, error);
+        }
+      }
+      setIsDeletingImages(false);
 
       await deleteTalentSkill(parseInt(id as string));
       setDeleteModalVisible(false);
@@ -238,44 +265,55 @@ export default function SkillDetailScreen() {
 
           {/* Skill Sections */}
           <VStack space="lg">
-            <SkillExperienceSection
-              skill={skill}
-              isLoading={isLoading}
-              onUpdateSkill={updateSkill}
-            />
-            <SkillHourlyRateSection
-              skill={skill}
-              isLoading={isLoading}
-              onUpdateSkill={updateSkill}
+            <SkillExperienceRateSection
+              yearsOfExperience={skill?.years_of_experience ?? null}
+              hourlyRate={skill?.hourly_rate ?? null}
+              onUpdateExperienceRate={async (data) => {
+                await updateSkill({
+                  years_of_experience: data.years_of_experience || undefined,
+                  hourly_rate: data.hourly_rate || undefined,
+                });
+              }}
+              showEditControls={true}
+              mode="edit"
             />
             <SkillSummarySection
-              skill={skill}
-              isLoading={isLoading}
-              onUpdateSkill={updateSkill}
+              summary={skill?.summary ?? null}
+              onUpdateSummary={async (summary) => {
+                await updateSkill({ summary: summary || undefined });
+              }}
+              showEditControls={true}
+              mode="edit"
             />
             <SkillYoutubeVideoSection
-              skill={skill}
-              isLoading={isLoading}
-              onUpdateSkill={updateSkill}
+              youtubeUrl={skill?.youtube_url ?? null}
+              onUpdateYoutubeUrl={async (url) => {
+                await updateSkill({ youtube_url: url ?? undefined });
+              }}
+              showEditControls={true}
+              mode="edit"
             />
             <SkillImagesSection
               skill={skill}
               userId={session.user.id}
-              onUpdateSkill={updateSkill}
+              imageUrls={skill.image_urls}
+              onUpdateImageUrls={async (urls) => {
+                await updateSkill({ image_urls: urls });
+              }}
+              showEditControls={true}
             />
           </VStack>
 
           {/* Delete Skill Button */}
-          <VStack className="pt-4">
+          <VStack className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm">
             <Button
               size="lg"
-              variant="outline"
+              variant="solid"
               action="negative"
               onPress={() => setDeleteModalVisible(true)}
-              className="border-error-300 bg-background-0"
+              className="rounded-xl"
             >
-              <ButtonIcon as={TrashIcon} />
-              <ButtonText className="text-error-600">Delete Skill</ButtonText>
+              <ButtonText className="font-semibold">Delete Skill</ButtonText>
             </Button>
           </VStack>
         </VStack>
@@ -294,7 +332,7 @@ export default function SkillDetailScreen() {
           <ModalHeader className="border-b border-outline-200 pb-4">
             <VStack className="items-center" space="md">
               <Center className="w-16 h-16 rounded-full bg-error-50 border-2 border-error-200">
-                <TrashIcon className="w-6 h-6 text-error-600" />
+                <Icon as={TrashIcon} size="xl" className="text-error-600" />
               </Center>
               <Text size="xl" bold className="text-typography-900 text-center">
                 Delete Skill
@@ -325,16 +363,22 @@ export default function SkillDetailScreen() {
                 variant="outline"
                 className="flex-1 border-outline-300"
                 onPress={() => setDeleteModalVisible(false)}
+                disabled={isDeletingImages || isDeleting}
               >
                 <ButtonText className="text-typography-700">Cancel</ButtonText>
               </Button>
               <Button
                 action="negative"
                 className="flex-1"
-                disabled={isDeleting}
+                disabled={isDeletingImages || isDeleting}
                 onPress={deleteSkill}
               >
-                <ButtonText>Delete Skill</ButtonText>
+                {isDeletingImages || isDeleting ? <ButtonSpinner /> : null}
+                <ButtonText>
+                  {isDeletingImages || isDeleting
+                    ? "Deleting..."
+                    : "Delete Skill"}
+                </ButtonText>
               </Button>
             </HStack>
           </ModalFooter>
