@@ -104,16 +104,44 @@ export default function RecurringScheduleCard({
   const getCurrentValue = useCallback((): string => {
     if (!currentRRule) return "NONE";
 
+    console.log("Current RRULE:", JSON.stringify(currentRRule));
+    console.log("Available presets:", JSON.stringify(presets));
+
     // Check if current rrule matches any preset
     const matchingPreset = presets.find((preset) => {
       if (!preset.value || typeof preset.value === "string") return false;
-      // Deep compare RRuleOptions
-      return JSON.stringify(preset.value) === JSON.stringify(currentRRule);
+
+      // Helper function to clean object by removing null, undefined, and empty arrays
+      const cleanObject = (obj: any): any => {
+        const cleaned: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (value !== null && value !== undefined) {
+            if (Array.isArray(value)) {
+              if (value.length > 0) {
+                cleaned[key] = value;
+              }
+            } else {
+              cleaned[key] = value;
+            }
+          }
+        }
+        return cleaned;
+      };
+
+      // Clean both objects for comparison
+      const cleanedPreset = cleanObject(preset.value);
+      const cleanedCurrent = cleanObject(currentRRule);
+
+      // Deep compare cleaned RRuleOptions
+      return JSON.stringify(cleanedPreset) === JSON.stringify(cleanedCurrent);
     });
 
     if (matchingPreset) {
-      return presets.indexOf(matchingPreset).toString();
+      console.log("Matching preset found:", matchingPreset);
+      return matchingPreset.label;
     }
+
+    console.log("No matching preset found, using CUSTOM");
     return "CUSTOM";
   }, [currentRRule, presets]);
 
@@ -132,6 +160,7 @@ export default function RecurringScheduleCard({
   // Update selected value when rrule or presets change
   useEffect(() => {
     const newValue = getCurrentValue();
+    console.log("In useEffect for getCurrentValue, newValue:", newValue);
     setSelectedValue(newValue);
     setShowCustomForm(newValue === "CUSTOM");
   }, [getCurrentValue]);

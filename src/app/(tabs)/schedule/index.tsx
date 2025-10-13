@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const DEFAULT_DAYS = 30;
+const DEFAULT_DAYS = 500;
 
 export default function ScheduleScreen() {
   const { session } = useAuth();

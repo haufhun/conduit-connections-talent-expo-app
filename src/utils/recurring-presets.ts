@@ -96,6 +96,9 @@ export function getRecurringPresets(
           dtstart,
           interval: 1,
           byweekday: [0, 1, 2, 3, 4], // Monday-Friday
+          // bymonthday: [],
+          // // @ts-ignore Have to have this to get equality comparison to work
+          // bymonth: null,
           count: 20,
         },
       });
@@ -150,7 +153,7 @@ export function getRecurringPresets(
       freq: RRule.MONTHLY,
       dtstart,
       interval: 1,
-      bymonthday: startDate.getDate(),
+      bymonthday: [startDate.getDate()],
       count: 20,
     },
   });
@@ -163,8 +166,8 @@ export function getRecurringPresets(
       freq: RRule.YEARLY,
       dtstart,
       interval: 1,
-      bymonth: startDate.getMonth() + 1,
-      bymonthday: startDate.getDate(),
+      bymonthday: [startDate.getDate()],
+      bymonth: [startDate.getMonth() + 1],
       count: 20,
     },
   });
