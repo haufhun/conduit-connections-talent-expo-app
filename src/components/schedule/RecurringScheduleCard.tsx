@@ -104,9 +104,6 @@ export default function RecurringScheduleCard({
   const getCurrentValue = useCallback((): string => {
     if (!currentRRule) return "NONE";
 
-    console.log("Current RRULE:", JSON.stringify(currentRRule));
-    console.log("Available presets:", JSON.stringify(presets));
-
     // Check if current rrule matches any preset
     const matchingPreset = presets.find((preset) => {
       if (!preset.value || typeof preset.value === "string") return false;
@@ -137,11 +134,9 @@ export default function RecurringScheduleCard({
     });
 
     if (matchingPreset) {
-      console.log("Matching preset found:", matchingPreset);
       return matchingPreset.label;
     }
 
-    console.log("No matching preset found, using CUSTOM");
     return "CUSTOM";
   }, [currentRRule, presets]);
 
@@ -160,7 +155,6 @@ export default function RecurringScheduleCard({
   // Update selected value when rrule or presets change
   useEffect(() => {
     const newValue = getCurrentValue();
-    console.log("In useEffect for getCurrentValue, newValue:", newValue);
     setSelectedValue(newValue);
     setShowCustomForm(newValue === "CUSTOM");
   }, [getCurrentValue]);
