@@ -7,11 +7,15 @@ import {
 } from "@/components/ui/checkbox";
 import {
   FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
 import {
+  AlertCircleIcon,
   CalendarDaysIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -53,7 +57,12 @@ import {
 import { RRuleOptions } from "@/validators/blockouts.validators";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Control, Controller, UseFormSetValue } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  FieldErrors,
+  UseFormSetValue,
+} from "react-hook-form";
 import { Platform } from "react-native";
 
 interface RecurringScheduleCardProps {
@@ -62,6 +71,7 @@ interface RecurringScheduleCardProps {
   startTime: string;
   endTime: string;
   currentRRule?: RRuleOptions | null;
+  errors?: FieldErrors<any>;
 }
 
 export default function RecurringScheduleCard({
@@ -70,6 +80,7 @@ export default function RecurringScheduleCard({
   startTime,
   endTime,
   currentRRule,
+  errors,
 }: RecurringScheduleCardProps) {
   const [showCustomForm, setShowCustomForm] = useState(false);
 
@@ -825,6 +836,16 @@ export default function RecurringScheduleCard({
             </Text>
           </VStack>
         </VStack>
+      )}
+
+      {/* Form Errors */}
+      {errors?.rrule && (
+        <FormControlError className="mt-2">
+          <FormControlErrorIcon as={AlertCircleIcon} />
+          <FormControlErrorText>
+            {errors.rrule.message as string}
+          </FormControlErrorText>
+        </FormControlError>
       )}
     </VStack>
   );

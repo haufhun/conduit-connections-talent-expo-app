@@ -33,7 +33,7 @@ export default function CreateBlockoutScreen() {
     handleSubmit,
     setValue,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm({
     resolver: zodResolver(createBlockoutSchema),
     defaultValues: {
@@ -114,6 +114,7 @@ export default function CreateBlockoutScreen() {
             startTime={startTime}
             endTime={endTime}
             currentRRule={currentRRule}
+            errors={errors}
           />
 
           {/* Submit Button Card */}

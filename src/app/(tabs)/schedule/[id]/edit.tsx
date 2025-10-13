@@ -60,7 +60,7 @@ export default function EditBlockoutScreen() {
     setValue,
     watch,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm({
     resolver: zodResolver(updateBlockoutSchema),
     defaultValues: {
@@ -282,6 +282,7 @@ export default function EditBlockoutScreen() {
               startTime={startTime || dayjs.utc().toISOString()}
               endTime={endTime || dayjs.utc().toISOString()}
               currentRRule={currentRRule || null}
+              errors={errors}
             />
 
             {/* Submit Button Card */}
