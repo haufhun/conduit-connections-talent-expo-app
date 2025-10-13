@@ -17,7 +17,11 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { canEditBlockout } from "@/utils/blockout-permissions";
 import { getDayjsFromUtcDateString } from "@/utils/date";
-import { updateBlockoutSchema } from "@/validators/blockouts.validators";
+import {
+  createRRuleFromOptions,
+  getRRuleOptions,
+  updateBlockoutSchema,
+} from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -28,6 +32,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { RRule } from "rrule";
 
 // Enable timezone plugins
 dayjs.extend(utc);
@@ -72,6 +77,17 @@ export default function EditBlockoutScreen() {
   // Update form when blockout data is loaded
   useEffect(() => {
     if (blockout) {
+      // Convert rrule string from database to RRuleOptions
+      let rruleOptions = null;
+      if (blockout.rrule) {
+        try {
+          const rule = RRule.fromString(blockout.rrule);
+          rruleOptions = getRRuleOptions(rule);
+        } catch (error) {
+          console.warn("Failed to parse RRULE:", error);
+        }
+      }
+
       reset({
         title: blockout.title,
         description: blockout.description || "",
@@ -81,7 +97,7 @@ export default function EditBlockoutScreen() {
         end_time: getDayjsFromUtcDateString(blockout.end_time).toISOString(),
         timezone: blockout.timezone,
         is_all_day: blockout.is_all_day,
-        rrule: blockout.rrule || undefined,
+        rrule: rruleOptions,
       });
     }
   }, [blockout, reset]);
@@ -195,6 +211,13 @@ export default function EditBlockoutScreen() {
         return;
       }
 
+      // Convert RRuleOptions to string for API
+      let rruleString: string | undefined = undefined;
+      if (data.rrule) {
+        const rule = createRRuleFromOptions(data.rrule);
+        rruleString = rule.toString(); // Make sure we get the DTSTART and the RRULE part
+      }
+
       await updateBlockout({
         blockoutId,
         updates: {
@@ -204,7 +227,7 @@ export default function EditBlockoutScreen() {
           end_time: data.end_time,
           timezone: data.timezone,
           is_all_day: data.is_all_day || false,
-          rrule: data.rrule && data.rrule !== "NONE" ? data.rrule : undefined,
+          rrule: rruleString,
         },
       });
 
@@ -258,7 +281,7 @@ export default function EditBlockoutScreen() {
               setValue={setValue}
               startTime={startTime || dayjs.utc().toISOString()}
               endTime={endTime || dayjs.utc().toISOString()}
-              currentRRule={currentRRule || ""}
+              currentRRule={currentRRule || null}
             />
 
             {/* Submit Button Card */}

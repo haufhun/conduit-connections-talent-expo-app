@@ -9,6 +9,7 @@ import { VStack } from "@/components/ui/vstack";
 import {
   CreateBlockoutInput,
   createBlockoutSchema,
+  createRRuleFromOptions,
 } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
@@ -42,7 +43,7 @@ export default function CreateBlockoutScreen() {
       end_time: dayjs.utc().startOf("hour").add(2, "hour").toISOString(),
       timezone: dayjs.tz.guess(),
       is_all_day: false,
-      rrule: undefined,
+      rrule: null,
     },
   });
 
@@ -53,6 +54,13 @@ export default function CreateBlockoutScreen() {
 
   const onSubmit = async (data: CreateBlockoutInput) => {
     try {
+      // Convert RRuleOptions to string for API
+      let rruleString: string | undefined = undefined;
+      if (data.rrule) {
+        const rule = createRRuleFromOptions(data.rrule);
+        rruleString = rule.toString(); // Make sure we get the DTSTART and the RRULE part
+      }
+
       await createBlockout({
         title: data.title,
         description: data.description || undefined,
@@ -60,7 +68,7 @@ export default function CreateBlockoutScreen() {
         end_time: data.end_time,
         timezone: data.timezone,
         is_all_day: data.is_all_day || false,
-        rrule: data.rrule && data.rrule !== "NONE" ? data.rrule : undefined,
+        rrule: rruleString,
       });
 
       router.back();
@@ -105,7 +113,7 @@ export default function CreateBlockoutScreen() {
             setValue={setValue}
             startTime={startTime}
             endTime={endTime}
-            currentRRule={currentRRule || ""}
+            currentRRule={currentRRule}
           />
 
           {/* Submit Button Card */}

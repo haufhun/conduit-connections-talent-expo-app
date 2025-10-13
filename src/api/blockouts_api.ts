@@ -58,6 +58,7 @@ export const useUserSchedule = (
     queryKey: ["user-schedule", userId, startDate, endDate],
     queryFn: () => {
       return getUserSchedule(userId, startDate, endDate);
+      // return getTalentBlockouts(userId);
     },
     enabled: enabled && !!userId && !!startDate && !!endDate,
     staleTime: 1000 * 60 * 5, // 5 minutes

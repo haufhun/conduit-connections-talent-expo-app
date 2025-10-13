@@ -1,8 +1,10 @@
+import { RRuleOptions } from "@/validators/blockouts.validators";
 import dayjs from "dayjs";
+import { RRule } from "rrule";
 
 export interface RecurringPreset {
   label: string;
-  value: string; // "NONE" or an RRULE string
+  value: string | RRuleOptions | null; // "NONE", "CUSTOM", or RRuleOptions
 }
 
 /**
@@ -23,14 +25,6 @@ function getOrdinalSuffix(num: number): string {
   if (num === 4) return "fourth";
   if (num === 5) return "fifth";
   return `${num}th`;
-}
-
-/**
- * Get the day of week abbreviation (MO, TU, WE, etc.)
- */
-function getDayOfWeekAbbr(date: Date): string {
-  const days = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-  return days[date.getDay()];
 }
 
 /**
@@ -79,26 +73,42 @@ export function getRecurringPresets(
   startDate: Date,
   endDate: Date
 ): RecurringPreset[] {
+  const dtstart = startDate;
+
   const presets: RecurringPreset[] = [
     {
       label: "Does not repeat",
-      value: "NONE",
+      value: null,
     },
   ];
 
   const sameDay = isSameDay(startDate, endDate);
+  const dayNum = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const rruleDayNum = dayNum === 0 ? 6 : dayNum - 1; // Convert to RRule format (0 = Monday)
 
   // Add weekday/weekend preset if applicable
   if (sameDay) {
     if (isWeekday(startDate)) {
       presets.push({
         label: "Every Weekday",
-        value: "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;COUNT=20",
+        value: {
+          freq: RRule.WEEKLY,
+          dtstart,
+          interval: 1,
+          byweekday: [0, 1, 2, 3, 4], // Monday-Friday
+          count: 20,
+        },
       });
     } else if (isWeekend(startDate)) {
       presets.push({
         label: "Every Weekend",
-        value: "RRULE:FREQ=WEEKLY;BYDAY=SA,SU;COUNT=20",
+        value: {
+          freq: RRule.WEEKLY,
+          dtstart,
+          interval: 1,
+          byweekday: [5, 6], // Saturday-Sunday
+          count: 20,
+        },
       });
     }
   }
@@ -107,33 +117,56 @@ export function getRecurringPresets(
   if (sameDay) {
     presets.push({
       label: "Daily",
-      value: "RRULE:FREQ=DAILY;COUNT=20",
+      value: {
+        freq: RRule.DAILY,
+        dtstart,
+        interval: 1,
+        count: 20,
+      },
     });
   }
 
   // Weekly preset
-  const dayAbbr = getDayOfWeekAbbr(startDate);
   const dayName = getDayName(startDate);
   presets.push({
     label: `Weekly on ${dayName}`,
-    value: `RRULE:FREQ=WEEKLY;BYDAY=${dayAbbr};COUNT=20`,
+    value: {
+      freq: RRule.WEEKLY,
+      dtstart,
+      interval: 1,
+      byweekday: [rruleDayNum],
+      count: 20,
+    },
   });
 
   // Monthly preset
   const weekOfMonth = getWeekOfMonth(startDate);
   const ordinal = getOrdinalSuffix(weekOfMonth);
+
+  // For monthly, use the day of month approach
   presets.push({
     label: `Monthly on the ${ordinal} ${dayName}`,
-    value: `RRULE:FREQ=MONTHLY;BYDAY=${weekOfMonth}${dayAbbr};COUNT=20`,
+    value: {
+      freq: RRule.MONTHLY,
+      dtstart,
+      interval: 1,
+      bymonthday: startDate.getDate(),
+      count: 20,
+    },
   });
 
   // Annual preset
   const monthDay = dayjs(startDate).format("MMMM D");
   presets.push({
     label: `Annually on ${monthDay}`,
-    value: `RRULE:FREQ=YEARLY;BYMONTH=${
-      startDate.getMonth() + 1
-    };BYMONTHDAY=${startDate.getDate()};COUNT=20`,
+    value: {
+      freq: RRule.YEARLY,
+      dtstart,
+      interval: 1,
+      bymonth: startDate.getMonth() + 1,
+      bymonthday: startDate.getDate(),
+      count: 20,
+    },
   });
 
   // Custom option

@@ -46,10 +46,11 @@ import {
 import { getDayjsFromUtcDateString } from "@/utils/date";
 import { getRecurringPresets } from "@/utils/recurring-presets";
 import {
-  convertToRRule,
+  convertToRRuleOptions,
   generateReadableDescription,
-  parseRRule,
+  parseRRuleOptions,
 } from "@/utils/recurring-schedule";
+import { RRuleOptions } from "@/validators/blockouts.validators";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Control, Controller, UseFormSetValue } from "react-hook-form";
@@ -60,7 +61,7 @@ interface RecurringScheduleCardProps {
   setValue: UseFormSetValue<any>;
   startTime: string;
   endTime: string;
-  currentRRule?: string | null;
+  currentRRule?: RRuleOptions | null;
 }
 
 export default function RecurringScheduleCard({
@@ -94,11 +95,15 @@ export default function RecurringScheduleCard({
 
     // Check if current rrule matches any preset
     const matchingPreset = presets.find((preset) => {
-      if (preset.value === "NONE" || preset.value === "CUSTOM") return false;
-      return preset.value === currentRRule;
+      if (!preset.value || typeof preset.value === "string") return false;
+      // Deep compare RRuleOptions
+      return JSON.stringify(preset.value) === JSON.stringify(currentRRule);
     });
 
-    return matchingPreset ? matchingPreset.value : "CUSTOM";
+    if (matchingPreset) {
+      return presets.indexOf(matchingPreset).toString();
+    }
+    return "CUSTOM";
   }, [currentRRule, presets]);
 
   const [selectedValue, setSelectedValue] = useState<string>(() =>
@@ -130,25 +135,30 @@ export default function RecurringScheduleCard({
     } else if (value === "CUSTOM") {
       // Show custom form but keep existing rrule if any
       setShowCustomForm(true);
-      // If there's no rrule yet, set a default one
+      // If there's no rrule yet, set a default RRuleOptions
       if (!currentRRule) {
-        setValue("rrule", "RRULE:FREQ=WEEKLY;INTERVAL=1;COUNT=20");
+        const defaultOptions = convertToRRuleOptions(customOptions, startDate);
+        setValue("rrule", defaultOptions);
       }
     } else {
-      // Use preset rrule - already has COUNT=20 by default
-      // Apply the current end type settings
-      let finalRRule = value;
-      const baseRRule = value.split(";COUNT=")[0].split(";UNTIL=")[0];
+      // Use preset rrule - get from presets array by index
+      const presetIndex = parseInt(value);
+      const preset = presets[presetIndex];
 
-      if (presetEndType === "AFTER_OCCURRENCES") {
-        finalRRule = `${baseRRule};COUNT=${presetOccurrences}`;
-      } else if (presetEndDate) {
-        const until =
-          presetEndDate.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-        finalRRule = `${baseRRule};UNTIL=${until}`;
+      if (preset && preset.value && typeof preset.value !== "string") {
+        // Clone the preset value and apply current end type settings
+        let finalRRuleOptions = { ...preset.value };
+
+        if (presetEndType === "AFTER_OCCURRENCES") {
+          delete finalRRuleOptions.until;
+          finalRRuleOptions.count = presetOccurrences;
+        } else if (presetEndDate) {
+          delete finalRRuleOptions.count;
+          finalRRuleOptions.until = presetEndDate;
+        }
+
+        setValue("rrule", finalRRuleOptions);
       }
-
-      setValue("rrule", finalRRule);
       setShowCustomForm(false);
     }
   };
@@ -156,9 +166,9 @@ export default function RecurringScheduleCard({
   // Custom form state management
   const [customOptions, setCustomOptions] = useState<RecurringScheduleOptions>(
     () => {
-      if (currentRRule && currentRRule !== "NONE") {
+      if (currentRRule) {
         try {
-          return parseRRule(currentRRule, startDate);
+          return parseRRuleOptions(currentRRule);
         } catch (error) {
           console.warn("Failed to parse initial RRULE:", error);
         }
@@ -182,8 +192,8 @@ export default function RecurringScheduleCard({
   // Update RRULE when custom options change
   useEffect(() => {
     if (showCustomForm) {
-      const rrule = convertToRRule(customOptions, startDate);
-      setValue("rrule", rrule);
+      const rruleOptions = convertToRRuleOptions(customOptions, startDate);
+      setValue("rrule", rruleOptions);
     }
   }, [customOptions, startDate, showCustomForm, setValue]);
 
@@ -259,11 +269,17 @@ export default function RecurringScheduleCard({
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
-                  {presets.map((preset) => (
+                  {presets.map((preset, index) => (
                     <SelectItem
-                      key={preset.value}
+                      key={index}
                       label={preset.label}
-                      value={preset.value}
+                      value={
+                        preset.value === null
+                          ? "NONE"
+                          : preset.value === "CUSTOM"
+                          ? "CUSTOM"
+                          : index.toString()
+                      }
                     />
                   ))}
                 </SelectContent>
@@ -292,24 +308,25 @@ export default function RecurringScheduleCard({
                 setPresetEndType(value as "AFTER_OCCURRENCES" | "ON_DATE");
                 // Update the preset RRULE with new end condition
                 if (selectedValue !== "NONE" && selectedValue !== "CUSTOM") {
-                  const baseRRule = selectedValue
-                    .split(";COUNT=")[0]
-                    .split(";UNTIL=")[0];
-                  if (value === "AFTER_OCCURRENCES") {
-                    setValue(
-                      "rrule",
-                      `${baseRRule};COUNT=${presetOccurrences}`
-                    );
-                  } else {
-                    const until = presetEndDate
-                      ? presetEndDate
-                          .toISOString()
-                          .replace(/[-:]/g, "")
-                          .split(".")[0] + "Z"
-                      : "";
-                    if (until) {
-                      setValue("rrule", `${baseRRule};UNTIL=${until}`);
+                  const presetIndex = parseInt(selectedValue);
+                  const preset = presets[presetIndex];
+
+                  if (
+                    preset &&
+                    preset.value &&
+                    typeof preset.value !== "string"
+                  ) {
+                    let updatedRRuleOptions = { ...preset.value };
+
+                    if (value === "AFTER_OCCURRENCES") {
+                      delete updatedRRuleOptions.until;
+                      updatedRRuleOptions.count = presetOccurrences;
+                    } else if (presetEndDate) {
+                      delete updatedRRuleOptions.count;
+                      updatedRRuleOptions.until = presetEndDate;
                     }
+
+                    setValue("rrule", updatedRRuleOptions);
                   }
                 }
               }}
@@ -386,10 +403,19 @@ export default function RecurringScheduleCard({
                       selectedValue !== "NONE" &&
                       selectedValue !== "CUSTOM"
                     ) {
-                      const baseRRule = selectedValue
-                        .split(";COUNT=")[0]
-                        .split(";UNTIL=")[0];
-                      setValue("rrule", `${baseRRule};COUNT=${finalNum}`);
+                      const presetIndex = parseInt(selectedValue);
+                      const preset = presets[presetIndex];
+
+                      if (
+                        preset &&
+                        preset.value &&
+                        typeof preset.value !== "string"
+                      ) {
+                        const updatedRRuleOptions = { ...preset.value };
+                        delete updatedRRuleOptions.until;
+                        updatedRRuleOptions.count = finalNum;
+                        setValue("rrule", updatedRRuleOptions);
+                      }
                     }
                   }}
                   placeholder="20"
@@ -412,15 +438,19 @@ export default function RecurringScheduleCard({
               setPresetEndDate(selectedDate);
               // Update the preset RRULE with new end date
               if (selectedValue !== "NONE" && selectedValue !== "CUSTOM") {
-                const baseRRule = selectedValue
-                  .split(";COUNT=")[0]
-                  .split(";UNTIL=")[0];
-                const until =
-                  selectedDate
-                    .toISOString()
-                    .replace(/[-:]/g, "")
-                    .split(".")[0] + "Z";
-                setValue("rrule", `${baseRRule};UNTIL=${until}`);
+                const presetIndex = parseInt(selectedValue);
+                const preset = presets[presetIndex];
+
+                if (
+                  preset &&
+                  preset.value &&
+                  typeof preset.value !== "string"
+                ) {
+                  const updatedRRuleOptions = { ...preset.value };
+                  delete updatedRRuleOptions.count;
+                  updatedRRuleOptions.until = selectedDate;
+                  setValue("rrule", updatedRRuleOptions);
+                }
               }
             }
           }}

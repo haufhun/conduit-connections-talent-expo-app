@@ -26,6 +26,7 @@ export const expandRecurringBlockouts = (
       const blockoutEnd = new Date(blockout.end_time);
 
       if (blockoutStart < rangeEnd && blockoutEnd > rangeStart) {
+        console.log("Adding non-recurring blockout:", blockout.blockout_id);
         expandedBlockouts.push({
           blockout_id: blockout.blockout_id,
           title: blockout.title,
@@ -38,16 +39,28 @@ export const expandRecurringBlockouts = (
     } else {
       // Recurring blockout - expand using RRULE
       try {
+        // blockout.rrule is now an RRuleOptions object
+
         const rule = RRule.fromString(blockout.rrule);
+        console.log("Expanding RRULE:", JSON.stringify(rule));
+
         const originalStart = new Date(blockout.start_time);
         const originalEnd = new Date(blockout.end_time);
         const duration = originalEnd.getTime() - originalStart.getTime();
+
+        console.log("start and end:", originalStart, originalEnd);
 
         // Get occurrences within our date range (with some buffer)
         const occurrences = rule.between(
           new Date(rangeStart.getTime() - duration),
           new Date(rangeEnd.getTime() + duration),
           true
+        );
+
+        console.log(
+          "Occurrences for blockout",
+          blockout.blockout_id,
+          occurrences
         );
 
         occurrences.forEach((occurrence) => {

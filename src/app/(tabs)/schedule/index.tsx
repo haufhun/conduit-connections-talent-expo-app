@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const DEFAULT_DAYS = 365;
+const DEFAULT_DAYS = 30;
 
 export default function ScheduleScreen() {
   const { session } = useAuth();
@@ -31,6 +31,7 @@ export default function ScheduleScreen() {
     data: scheduleData,
     isLoading,
     error,
+    refetch,
   } = useUserSchedule(session?.user?.id || "", startDate, endDate);
 
   if (!session?.user?.id) {
@@ -186,6 +187,10 @@ export default function ScheduleScreen() {
                 {title}
               </Text>
             )}
+            refreshing={isLoading}
+            onRefresh={() => {
+              refetch();
+            }}
             contentContainerStyle={styles.sectionListContent}
             showsVerticalScrollIndicator={false}
             stickySectionHeadersEnabled={true}
