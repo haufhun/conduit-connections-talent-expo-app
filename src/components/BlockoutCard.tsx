@@ -107,7 +107,7 @@ export function BlockoutCard({ blockout, onPress }: BlockoutCardProps) {
         </VStack>
 
         {/* Recurring icon in bottom right */}
-        {blockout.original_blockout.is_recurring && (
+        {blockout.original_blockout.rrule && (
           <VStack className="absolute bottom-0 right-0">
             <Icon as={RefreshCw} size="sm" />
           </VStack>

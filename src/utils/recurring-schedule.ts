@@ -223,10 +223,26 @@ export const generateReadableDescription = (
 
   // Weekly specifics
   if (options.frequency === "WEEKLY" && options.weekdays.length > 0) {
-    const dayNames = options.weekdays.map(
-      (day) => day.charAt(0) + day.slice(1).toLowerCase()
-    );
-    description += ` on ${dayNames.join(", ")}`;
+    const weekdays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+
+    // Check if all 7 days are selected
+    if (options.weekdays.length === 7) {
+      description = "Every day";
+    }
+    // Check if all weekdays (Mon-Fri) are selected
+    else if (
+      options.weekdays.length === 5 &&
+      weekdays.every((day) => options.weekdays.includes(day as any))
+    ) {
+      description += " on weekdays";
+    }
+    // Otherwise, list the specific days
+    else {
+      const dayNames = options.weekdays.map(
+        (day) => day.charAt(0) + day.slice(1).toLowerCase()
+      );
+      description += ` on ${dayNames.join(", ")}`;
+    }
   }
 
   // Monthly specifics

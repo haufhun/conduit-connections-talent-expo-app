@@ -13,7 +13,6 @@ export const getTalentBlockouts = async (talentId: string) => {
     .from("talent_blockouts")
     .select("*")
     .eq("talent_id", talentId)
-    .eq("is_active", true)
     .order("start_time", { ascending: true });
 
   if (error) throw error;
@@ -25,7 +24,6 @@ export const getTalentBlockoutsById = async (blockoutId: number) => {
     .from("talent_blockouts")
     .select("*")
     .eq("id", blockoutId)
-    .eq("is_active", true)
     .single();
   if (error) throw error;
   return data as TalentBlockoutDatabase;
@@ -43,7 +41,6 @@ export const getTalentBlockoutsInRange = async (
     .from("talent_blockouts")
     .select("*")
     .eq("talent_id", talentId)
-    .eq("is_active", true)
     .gte("start_time", startDate)
     .lte("end_time", endDate)
     .order("start_time", { ascending: true });
@@ -60,8 +57,7 @@ export const getTalentRecurringBlockouts = async (talentId: string) => {
     .from("talent_blockouts")
     .select("*")
     .eq("talent_id", talentId)
-    .eq("is_active", true)
-    .eq("is_recurring", true)
+    .not("rrule", "is", null)
     .order("start_time", { ascending: true });
 
   if (error) throw error;
@@ -129,34 +125,18 @@ export const updateTalentBlockout = async (
 };
 
 /**
- * Delete a blockout (soft delete by setting is_active to false)
+ * Delete a blockout (hard delete - permanently removes from database)
  */
 export const deleteTalentBlockout = async (blockoutId: number) => {
   const { data, error } = await supabase
     .from("talent_blockouts")
-    .update({
-      is_active: false,
-      updated_at: new Date().toISOString(),
-    })
+    .delete()
     .eq("id", blockoutId)
     .select()
     .single();
 
   if (error) throw error;
   return data as TalentBlockoutDatabase;
-};
-
-/**
- * Hard delete a blockout (permanently remove from database)
- */
-export const hardDeleteTalentBlockout = async (blockoutId: number) => {
-  const { error } = await supabase
-    .from("talent_blockouts")
-    .delete()
-    .eq("id", blockoutId);
-
-  if (error) throw error;
-  return true;
 };
 
 /**
@@ -173,7 +153,6 @@ export const checkTalentAvailability = async (
     .from("talent_blockouts")
     .select("id, title, start_time, end_time, is_all_day")
     .eq("talent_id", talentId)
-    .eq("is_active", true)
     .or(
       `and(start_time.lte.${startTime},end_time.gte.${startTime}),and(start_time.lte.${endTime},end_time.gte.${endTime}),and(start_time.gte.${startTime},end_time.lte.${endTime})`
     );
@@ -198,7 +177,6 @@ export const getOverlappingBlockouts = async (
     .from("talent_blockouts")
     .select("*")
     .eq("talent_id", talentId)
-    .eq("is_active", true)
     .or(
       `and(start_time.lte.${startTime},end_time.gte.${startTime}),and(start_time.lte.${endTime},end_time.gte.${endTime}),and(start_time.gte.${startTime},end_time.lte.${endTime})`
     );
@@ -240,7 +218,6 @@ export const getUpcomingTalentBlockouts = async (talentId: string) => {
     .from("talent_blockouts")
     .select("*")
     .eq("talent_id", talentId)
-    .eq("is_active", true)
     .gte("start_time", now.toISOString())
     .lte("start_time", thirtyDaysFromNow.toISOString())
     .order("start_time", { ascending: true });

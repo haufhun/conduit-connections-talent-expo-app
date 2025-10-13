@@ -10,20 +10,19 @@ const baseBlockoutSchema = z.object({
     .string()
     .max(500, "Description must be less than 500 characters")
     .optional(),
-  metadata: z.record(z.any()).optional().default({}),
 });
 
 // Schema for time validation
 const timeSchemaBase = z.object({
   start_time: z.string().datetime("Invalid start time format"),
   end_time: z.string().datetime("Invalid end time format"),
+  timezone: z.string().min(1, "Timezone is required"),
   is_all_day: z.boolean().optional().default(false),
 });
 
 // Schema for recurrence validation
 const recurrenceSchemaBase = z.object({
-  is_recurring: z.boolean().optional().default(false),
-  rrule: z.string().optional(),
+  rrule: z.string().nullable().optional(),
 });
 
 // Complete schema for creating a blockout
@@ -33,10 +32,6 @@ export const createBlockoutSchema = baseBlockoutSchema
   .refine((data) => new Date(data.start_time) < new Date(data.end_time), {
     message: "End time must be after start time",
     path: ["end_time"],
-  })
-  .refine((data) => !data.is_recurring || (data.is_recurring && data.rrule), {
-    message: "RRULE is required for recurring blockouts",
-    path: ["rrule"],
   });
 
 // Schema for updating a blockout (all fields optional except validation rules)
@@ -44,11 +39,6 @@ export const updateBlockoutSchema = baseBlockoutSchema
   .partial()
   .merge(timeSchemaBase.partial())
   .merge(recurrenceSchemaBase.partial())
-  .merge(
-    z.object({
-      is_active: z.boolean().optional(),
-    })
-  )
   .refine(
     (data) => {
       if (data.start_time && data.end_time) {
@@ -59,18 +49,6 @@ export const updateBlockoutSchema = baseBlockoutSchema
     {
       message: "End time must be after start time",
       path: ["end_time"],
-    }
-  )
-  .refine(
-    (data) => {
-      if (data.is_recurring !== undefined) {
-        return !data.is_recurring || (data.is_recurring && data.rrule);
-      }
-      return true;
-    },
-    {
-      message: "RRULE is required for recurring blockouts",
-      path: ["rrule"],
     }
   );
 
@@ -150,8 +128,6 @@ export const getDefaultBlockoutValues = (): Partial<CreateBlockoutInput> => ({
   title: "",
   description: "",
   is_all_day: false,
-  is_recurring: false,
-  metadata: {},
 });
 
 // Helper function to format dates for form inputs

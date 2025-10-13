@@ -57,9 +57,8 @@ export const MONTHLY_TYPE_OPTIONS = [
 ];
 
 export const END_TYPE_OPTIONS = [
-  { label: "Never", value: "NEVER" as const },
-  { label: "On date", value: "ON_DATE" as const },
   { label: "After occurrences", value: "AFTER_OCCURRENCES" as const },
+  { label: "On date", value: "ON_DATE" as const },
 ];
 
 export const WEEK_OF_MONTH_OPTIONS = [

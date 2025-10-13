@@ -20,7 +20,7 @@ export const expandRecurringBlockouts = (
   const expandedBlockouts: ExpandedBlockout[] = [];
 
   blockouts.forEach((blockout) => {
-    if (!blockout.is_recurring || !blockout.rrule) {
+    if (!blockout.rrule) {
       // Non-recurring blockout - check if it overlaps with our range
       const blockoutStart = new Date(blockout.start_time);
       const blockoutEnd = new Date(blockout.end_time);

@@ -3,7 +3,7 @@ import {
   useGetTalentBlockoutById,
   useUpdateTalentBlockout,
 } from "@/api/blockouts_api";
-import { RecurringScheduleForm } from "@/components/schedule/RecurringScheduleForm";
+import RecurringScheduleCard from "@/components/schedule/RecurringScheduleCard";
 import ScheduleDateTimeCard from "@/components/schedule/ScheduleDateTimeCard";
 import ScheduleDescriptionCard from "@/components/schedule/ScheduleDescriptionCard";
 import ScheduleTitleCard from "@/components/schedule/ScheduleTitleCard";
@@ -13,17 +13,8 @@ import {
   ButtonSpinner,
   ButtonText,
 } from "@/components/ui/button";
-import {
-  Checkbox,
-  CheckboxIcon,
-  CheckboxIndicator,
-  CheckboxLabel,
-} from "@/components/ui/checkbox";
-import { FormControl } from "@/components/ui/form-control";
-import { CheckIcon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { UpdateTalentBlockout } from "@/types/blockouts";
 import { canEditBlockout } from "@/utils/blockout-permissions";
 import { getDayjsFromUtcDateString } from "@/utils/date";
 import { updateBlockoutSchema } from "@/validators/blockouts.validators";
@@ -33,8 +24,8 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Trash2 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -72,9 +63,9 @@ export default function EditBlockoutScreen() {
       description: "",
       start_time: dayjs.utc().startOf("hour").add(1, "hour").toISOString(),
       end_time: dayjs.utc().startOf("hour").add(2, "hour").toISOString(),
+      timezone: dayjs.tz.guess(),
       is_all_day: false,
-      is_recurring: false,
-      rrule: "",
+      rrule: undefined,
     },
   });
 
@@ -88,9 +79,9 @@ export default function EditBlockoutScreen() {
           blockout.start_time
         ).toISOString(),
         end_time: getDayjsFromUtcDateString(blockout.end_time).toISOString(),
+        timezone: blockout.timezone,
         is_all_day: blockout.is_all_day,
-        is_recurring: blockout.is_recurring,
-        rrule: blockout.rrule || "",
+        rrule: blockout.rrule || undefined,
       });
     }
   }, [blockout, reset]);
@@ -130,38 +121,9 @@ export default function EditBlockoutScreen() {
   const canEdit = blockout ? canEditBlockout(blockout) : false;
 
   const isAllDay = watch("is_all_day");
-  const isRecurring = watch("is_recurring");
   const startTime = watch("start_time");
   const endTime = watch("end_time");
-
-  useEffect(() => {
-    if (isAllDay) {
-      const currentStartTime = getDayjsFromUtcDateString(
-        startTime ?? new Date().toISOString()
-      );
-      const currentEndTime = getDayjsFromUtcDateString(
-        endTime ?? new Date().toISOString()
-      );
-
-      const startOfDay = currentStartTime.startOf("day");
-      const endOfDay = currentEndTime.endOf("day");
-      setValue("start_time", startOfDay.utc().toISOString());
-      setValue("end_time", endOfDay.utc().toISOString());
-    }
-  }, [isAllDay, startTime, endTime, setValue]);
-
-  // Memoized callback to prevent infinite re-renders
-  const handleRRuleChange = useCallback(
-    (rrule: string) => setValue("rrule", rrule),
-    [setValue]
-  );
-
-  // Memoized startDate to prevent infinite re-renders in RecurringScheduleForm
-  const memoizedStartDate = useMemo(
-    () =>
-      getDayjsFromUtcDateString(startTime || new Date().toISOString()).toDate(),
-    [startTime]
-  );
+  const currentRRule = watch("rrule");
 
   // Handle loading and error states
   if (isLoading) {
@@ -226,7 +188,7 @@ export default function EditBlockoutScreen() {
     );
   }
 
-  const onSubmit = async (data: UpdateTalentBlockout) => {
+  const onSubmit = async (data: any) => {
     try {
       if (!blockoutId) {
         Alert.alert("Error", "Blockout ID is missing");
@@ -240,15 +202,14 @@ export default function EditBlockoutScreen() {
           description: data.description || undefined,
           start_time: data.start_time,
           end_time: data.end_time,
+          timezone: data.timezone,
           is_all_day: data.is_all_day || false,
-          is_recurring: data.is_recurring || false,
-          rrule: data.is_recurring ? data.rrule : undefined,
+          rrule: data.rrule && data.rrule !== "NONE" ? data.rrule : undefined,
         },
       });
 
       router.back();
-    } catch (error) {
-      console.error("Error updating blockout:", error);
+    } catch {
       Alert.alert("Error", "Failed to update blockout");
     }
   };
@@ -292,42 +253,13 @@ export default function EditBlockoutScreen() {
             />
 
             {/* Recurring Card */}
-            <VStack
-              space="md"
-              className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm"
-            >
-              <Controller
-                control={control}
-                name="is_recurring"
-                render={({ field: { value, onChange } }) => (
-                  <FormControl>
-                    <Checkbox
-                      size="md"
-                      value="recurring"
-                      isChecked={value}
-                      onChange={onChange}
-                      aria-label="Recurring event"
-                      className="bg-background-50 p-3 rounded-lg"
-                    >
-                      <CheckboxIndicator>
-                        <CheckboxIcon as={CheckIcon} />
-                      </CheckboxIndicator>
-                      <CheckboxLabel className="text-typography-700 font-medium">
-                        Recurring
-                      </CheckboxLabel>
-                    </Checkbox>
-                  </FormControl>
-                )}
-              />
-
-              {isRecurring && (
-                <RecurringScheduleForm
-                  startDate={memoizedStartDate}
-                  onRRuleChange={handleRRuleChange}
-                  initialRRule={watch("rrule") || ""}
-                />
-              )}
-            </VStack>
+            <RecurringScheduleCard
+              control={control}
+              setValue={setValue}
+              startTime={startTime || dayjs.utc().toISOString()}
+              endTime={endTime || dayjs.utc().toISOString()}
+              currentRRule={currentRRule || ""}
+            />
 
             {/* Submit Button Card */}
             <VStack className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm">

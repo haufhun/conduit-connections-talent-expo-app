@@ -144,6 +144,11 @@ export const useUpdateTalentBlockout = () => {
 
       const blockout = await getTalentBlockoutsById(blockoutId);
 
+      // Preserve timezone if not explicitly updated
+      if (!updates.timezone) {
+        updates.timezone = blockout.timezone;
+      }
+
       if (updates.is_all_day || blockout.is_all_day) {
         const start = updates.start_time || blockout.start_time;
         const end = updates.end_time || blockout.end_time;
