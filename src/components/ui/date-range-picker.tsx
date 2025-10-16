@@ -12,13 +12,15 @@ import { AlertCircleIcon } from "@/components/ui/icon";
 import { VStack } from "@/components/ui/vstack";
 import { getDayjsFromUtcDateString } from "@/utils/date";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useState } from "react";
+import dayjs from "dayjs";
+import { useEffect, useRef, useState } from "react";
 import {
   Control,
   Controller,
   FieldValues,
   Path,
   UseFormSetValue,
+  useWatch,
 } from "react-hook-form";
 import { Platform } from "react-native";
 
@@ -52,6 +54,43 @@ export function DateRangePicker<T extends FieldValues>({
   endLabel = "End",
 }: DateRangePickerProps<T>) {
   const [selectedField, setSelectedField] = useState<string | null>(null);
+
+  // Watch the start and end times to track changes
+  const startTime = useWatch({ control, name: startTimeFieldName });
+  const endTime = useWatch({ control, name: endTimeFieldName });
+
+  // Use ref to store the previous start time
+  const previousStartTimeRef = useRef<string | null>(null);
+
+  // Effect to adjust end time when start time changes
+  useEffect(() => {
+    if (!startTime || !endTime) return;
+
+    // Skip on initial mount
+    if (previousStartTimeRef.current === null) {
+      previousStartTimeRef.current = startTime;
+      return;
+    }
+
+    // Check if start time has changed
+    if (previousStartTimeRef.current !== startTime) {
+      const previousStart = dayjs(previousStartTimeRef.current);
+      const newStart = dayjs(startTime);
+      const currentEnd = dayjs(endTime);
+
+      // Calculate the duration between previous start and current end
+      const durationMs = currentEnd.diff(previousStart);
+
+      // Apply the same duration to the new start time
+      const newEnd = newStart.add(durationMs, "millisecond");
+
+      // Update the end time
+      setValue(endTimeFieldName, newEnd.toISOString() as any);
+
+      // Update the previous start time
+      previousStartTimeRef.current = startTime;
+    }
+  }, [startTime, endTime, setValue, endTimeFieldName]);
 
   // Computed values based on selectedField
   const showStartDatePicker = selectedField === "start-date";
