@@ -3,9 +3,9 @@ import {
   useGetTalentBlockoutById,
   useUpdateTalentBlockout,
 } from "@/api/blockouts_api";
-import RecurringScheduleCard from "@/components/schedule/RecurringScheduleCard";
 import ScheduleDateTimeCard from "@/components/schedule/ScheduleDateTimeCard";
 import ScheduleDescriptionCard from "@/components/schedule/ScheduleDescriptionCard";
+import ScheduleRecurringCard from "@/components/schedule/ScheduleRecurringCard";
 import ScheduleTitleCard from "@/components/schedule/ScheduleTitleCard";
 import {
   Button,
@@ -276,7 +276,7 @@ export default function EditBlockoutScreen() {
             />
 
             {/* Recurring Card */}
-            <RecurringScheduleCard
+            <ScheduleRecurringCard
               control={control}
               setValue={setValue}
               startTime={startTime || dayjs.utc().toISOString()}

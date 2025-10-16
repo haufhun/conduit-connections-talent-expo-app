@@ -328,7 +328,7 @@ export default function SkillImagesSection({
                 renderItem={renderImage}
                 horizontal
                 contentContainerStyle={styles.listContent}
-                ListFooterComponent={
+                ListHeaderComponent={
                   !isEditing && imageUrls.length < 5 ? (
                     <View style={styles.container}>
                       <Button
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     height: 100,
     marginTop: 8,
     marginBottom: 8,
-    marginLeft: 4,
+    marginRight: 4,
   },
   imageWrapper: {
     width: "100%",
@@ -428,6 +428,5 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 12,
-    marginLeft: 8,
   },
 });

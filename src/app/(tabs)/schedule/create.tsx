@@ -1,7 +1,7 @@
 import { useCreateTalentBlockout } from "@/api/blockouts_api";
-import RecurringScheduleCard from "@/components/schedule/RecurringScheduleCard";
 import ScheduleDateTimeCard from "@/components/schedule/ScheduleDateTimeCard";
 import ScheduleDescriptionCard from "@/components/schedule/ScheduleDescriptionCard";
+import ScheduleRecurringCard from "@/components/schedule/ScheduleRecurringCard";
 import ScheduleTitleCard from "@/components/schedule/ScheduleTitleCard";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -108,7 +108,7 @@ export default function CreateBlockoutScreen() {
           />
 
           {/* Recurring Card */}
-          <RecurringScheduleCard
+          <ScheduleRecurringCard
             control={control}
             setValue={setValue}
             startTime={startTime}

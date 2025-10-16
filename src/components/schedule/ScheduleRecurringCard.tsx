@@ -74,7 +74,7 @@ interface RecurringScheduleCardProps {
   errors?: FieldErrors<any>;
 }
 
-export default function RecurringScheduleCard({
+export default function ScheduleRecurringCard({
   control,
   setValue,
   startTime,
