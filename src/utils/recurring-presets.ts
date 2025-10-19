@@ -77,7 +77,7 @@ export function getRecurringPresets(
 
   const presets: RecurringPreset[] = [
     {
-      label: "Does not repeat",
+      label: "None",
       value: null,
     },
   ];
