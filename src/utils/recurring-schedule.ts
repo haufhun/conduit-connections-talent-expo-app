@@ -28,7 +28,7 @@ export const convertToRRuleOptions = (
   // Handle monthly recurrence
   if (options.frequency === "MONTHLY") {
     if (options.monthlyType === "DAY_OF_MONTH") {
-      ruleOptions.bymonthday = options.dayOfMonth;
+      ruleOptions.bymonthday = [options.dayOfMonth];
     } else if (options.monthlyType === "DAY_OF_WEEK") {
       const weekday = mapWeekdayToRRule(options.dayOfWeek);
       if (options.weekOfMonth === -1) {

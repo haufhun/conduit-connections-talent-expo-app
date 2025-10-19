@@ -804,12 +804,15 @@ export default function ScheduleRecurringCard({
 
       {/* Form Errors */}
       {errors?.rrule && (
-        <FormControlError className="mt-2">
-          <FormControlErrorIcon as={AlertCircleIcon} />
-          <FormControlErrorText>
-            {errors.rrule.message as string}
-          </FormControlErrorText>
-        </FormControlError>
+        // <Text>There is some sort of error!</Text>
+        <FormControl>
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} />
+            <FormControlErrorText>
+              {errors.rrule["byweekday"].message as string}
+            </FormControlErrorText>
+          </FormControlError>
+        </FormControl>
       )}
     </VStack>
   );
