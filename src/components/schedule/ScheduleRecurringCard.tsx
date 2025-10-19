@@ -254,9 +254,6 @@ export default function ScheduleRecurringCard({
     [customRepeatOptions.weekdays, updateCustomRepeatOptions]
   );
 
-  // console.log("customRepeatOptions.endType:", customRepeatOptions.endType);
-  // console.log("END_TYPE_OPTIONS:", END_TYPE_OPTIONS);
-
   return (
     <VStack
       space="md"
