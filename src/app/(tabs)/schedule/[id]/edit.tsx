@@ -212,7 +212,7 @@ export default function EditBlockoutScreen() {
       }
 
       // Convert RRuleOptions to string for API
-      let rruleString: string | undefined = undefined;
+      let rruleString: string | null = null;
       if (data.rrule) {
         const rule = createRRuleFromOptions(data.rrule);
         rruleString = rule.toString(); // Make sure we get the DTSTART and the RRULE part

@@ -37,7 +37,7 @@ export type CreateTalentBlockout = {
   end_time: string;
   timezone: string;
   is_all_day?: boolean;
-  rrule?: string;
+  rrule?: string | null;
 };
 
 // For updating existing blockouts
