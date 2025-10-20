@@ -39,8 +39,8 @@ const EditScheduleForm = ({ blockoutId, blockoutData }: Props) => {
     defaultValues: {
       title: blockoutData.title,
       description: blockoutData.description,
-      start_time: blockoutData.start_time,
-      end_time: blockoutData.end_time,
+      start_time: moment.utc(blockoutData.start_time).toISOString(),
+      end_time: moment.utc(blockoutData.end_time).toISOString(),
       timezone: blockoutData.timezone,
       is_all_day: blockoutData.is_all_day,
       recurringSchedule: blockoutData.rrule
@@ -50,6 +50,7 @@ const EditScheduleForm = ({ blockoutId, blockoutData }: Props) => {
           )
         : null,
     },
+    mode: "all",
   });
   const isAllDay = watch("is_all_day");
   const startTime = watch("start_time");
