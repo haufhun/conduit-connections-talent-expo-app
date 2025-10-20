@@ -137,7 +137,7 @@ export default function EditBlockoutScreen() {
             headerRight: canEdit ? deleteButton : undefined,
           }}
         />
-        <EditScheduleForm blockoutData={blockout} />
+        <EditScheduleForm blockoutId={blockoutId} blockoutData={blockout} />
       </SafeAreaView>
     </>
   );

@@ -1,10 +1,9 @@
-import { RRuleOptions } from "@/validators/blockouts.validators";
-import dayjs from "dayjs";
-import { RRule } from "rrule";
+import { RecurringScheduleOptions } from "@/validators/blockouts.validators";
+import moment from "moment-timezone";
 
 export interface RecurringPreset {
   label: string;
-  value: string | RRuleOptions | null; // "NONE", "CUSTOM", or RRuleOptions
+  value: string | RecurringScheduleOptions | null; // "NONE", "CUSTOM", or RecurringScheduleOptions
 }
 
 /**
@@ -63,7 +62,32 @@ function isWeekend(date: Date): boolean {
  * Check if start and end dates are on the same day
  */
 function isSameDay(startDate: Date, endDate: Date): boolean {
-  return dayjs(startDate).isSame(dayjs(endDate), "day");
+  return moment(startDate).isSame(moment(endDate), "day");
+}
+
+/**
+ * Convert day number (0=Sunday) to our WeekdayType
+ */
+function getDayWeekdayType(
+  dayNum: number
+):
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY" {
+  const map = [
+    "SUNDAY",
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+  ] as const;
+  return map[dayNum];
 }
 
 /**
@@ -73,8 +97,6 @@ export function getRecurringPresets(
   startDate: Date,
   endDate: Date
 ): RecurringPreset[] {
-  const dtstart = startDate;
-
   const presets: RecurringPreset[] = [
     {
       label: "None",
@@ -84,7 +106,7 @@ export function getRecurringPresets(
 
   const sameDay = isSameDay(startDate, endDate);
   const dayNum = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  const rruleDayNum = dayNum === 0 ? 6 : dayNum - 1; // Convert to RRule format (0 = Monday)
+  const dayWeekdayType = getDayWeekdayType(dayNum);
 
   // Add weekday/weekend preset if applicable
   if (sameDay) {
@@ -92,25 +114,30 @@ export function getRecurringPresets(
       presets.push({
         label: "Every Weekday",
         value: {
-          freq: RRule.WEEKLY,
-          dtstart,
+          frequency: "WEEKLY",
           interval: 1,
-          byweekday: [0, 1, 2, 3, 4], // Monday-Friday
-          // bymonthday: [],
-          // // @ts-ignore Have to have this to get equality comparison to work
-          // bymonth: null,
-          count: 20,
+          weekdays: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
+          monthlyType: "DAY_OF_MONTH",
+          dayOfMonth: startDate.getDate(),
+          weekOfMonth: 1,
+          dayOfWeek: "MONDAY",
+          endType: "AFTER_OCCURRENCES",
+          occurrences: 20,
         },
       });
     } else if (isWeekend(startDate)) {
       presets.push({
         label: "Every Weekend",
         value: {
-          freq: RRule.WEEKLY,
-          dtstart,
+          frequency: "WEEKLY",
           interval: 1,
-          byweekday: [5, 6], // Saturday-Sunday
-          count: 20,
+          weekdays: ["SATURDAY", "SUNDAY"],
+          monthlyType: "DAY_OF_MONTH",
+          dayOfMonth: startDate.getDate(),
+          weekOfMonth: 1,
+          dayOfWeek: "MONDAY",
+          endType: "AFTER_OCCURRENCES",
+          occurrences: 20,
         },
       });
     }
@@ -121,10 +148,15 @@ export function getRecurringPresets(
     presets.push({
       label: "Daily",
       value: {
-        freq: RRule.DAILY,
-        dtstart,
+        frequency: "DAILY",
         interval: 1,
-        count: 20,
+        weekdays: [],
+        monthlyType: "DAY_OF_MONTH",
+        dayOfMonth: startDate.getDate(),
+        weekOfMonth: 1,
+        dayOfWeek: "MONDAY",
+        endType: "AFTER_OCCURRENCES",
+        occurrences: 20,
       },
     });
   }
@@ -134,11 +166,15 @@ export function getRecurringPresets(
   presets.push({
     label: `Weekly on ${dayName}`,
     value: {
-      freq: RRule.WEEKLY,
-      dtstart,
+      frequency: "WEEKLY",
       interval: 1,
-      byweekday: [rruleDayNum],
-      count: 20,
+      weekdays: [dayWeekdayType],
+      monthlyType: "DAY_OF_MONTH",
+      dayOfMonth: startDate.getDate(),
+      weekOfMonth: 1,
+      dayOfWeek: "MONDAY",
+      endType: "AFTER_OCCURRENCES",
+      occurrences: 20,
     },
   });
 
@@ -150,25 +186,32 @@ export function getRecurringPresets(
   presets.push({
     label: `Monthly on the ${ordinal} ${dayName}`,
     value: {
-      freq: RRule.MONTHLY,
-      dtstart,
+      frequency: "MONTHLY",
       interval: 1,
-      bymonthday: [startDate.getDate()],
-      count: 20,
+      weekdays: [],
+      monthlyType: "DAY_OF_MONTH",
+      dayOfMonth: startDate.getDate(),
+      weekOfMonth: 1,
+      dayOfWeek: "MONDAY",
+      endType: "AFTER_OCCURRENCES",
+      occurrences: 20,
     },
   });
 
   // Annual preset
-  const monthDay = dayjs(startDate).format("MMMM D");
+  const monthDay = moment(startDate).format("MMMM D");
   presets.push({
     label: `Annually on ${monthDay}`,
     value: {
-      freq: RRule.YEARLY,
-      dtstart,
+      frequency: "YEARLY",
       interval: 1,
-      bymonthday: [startDate.getDate()],
-      bymonth: [startDate.getMonth() + 1],
-      count: 20,
+      weekdays: [],
+      monthlyType: "DAY_OF_MONTH",
+      dayOfMonth: startDate.getDate(),
+      weekOfMonth: 1,
+      dayOfWeek: "MONDAY",
+      endType: "AFTER_OCCURRENCES",
+      occurrences: 20,
     },
   });
 

@@ -7,22 +7,16 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
+  convertRecurringScheduleToRRule,
   CreateBlockoutInput,
   createBlockoutSchema,
-  createRRuleFromOptions,
 } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 import { useRouter } from "expo-router";
+import moment from "moment-timezone";
 import { useForm } from "react-hook-form";
 import { Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Enable timezone plugins
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export default function CreateBlockoutScreen() {
   const router = useRouter();
@@ -39,26 +33,31 @@ export default function CreateBlockoutScreen() {
     defaultValues: {
       title: "",
       description: "",
-      start_time: dayjs.utc().startOf("hour").add(1, "hour").toISOString(),
-      end_time: dayjs.utc().startOf("hour").add(2, "hour").toISOString(),
-      timezone: dayjs.tz.guess(),
+      start_time: moment.utc().startOf("hour").add(1, "hour").toISOString(),
+      end_time: moment.utc().startOf("hour").add(2, "hour").toISOString(),
+      timezone: moment.tz.guess(),
       is_all_day: false,
-      rrule: null,
+      recurringSchedule: null,
     },
   });
 
   const isAllDay = watch("is_all_day");
   const startTime = watch("start_time");
   const endTime = watch("end_time");
-  const currentRRule = watch("rrule");
+  const currentRecurringSchedule = watch("recurringSchedule");
 
   const onSubmit = async (data: CreateBlockoutInput) => {
+    console.log("Creating blockout with data:", data);
+
     try {
-      // Convert RRuleOptions to string for API
+      // Convert RecurringScheduleOptions to RRULE string for API
       let rruleString: string | undefined = undefined;
-      if (data.rrule) {
-        const rule = createRRuleFromOptions(data.rrule);
-        rruleString = rule.toString(); // Make sure we get the DTSTART and the RRULE part
+      if (data.recurringSchedule) {
+        const startDate = moment(data.start_time).toDate();
+        rruleString = convertRecurringScheduleToRRule(
+          data.recurringSchedule,
+          startDate
+        );
       }
 
       await createBlockout({
@@ -76,6 +75,8 @@ export default function CreateBlockoutScreen() {
       Alert.alert("Error", "Failed to create blockout");
     }
   };
+
+  console.log("form recurringSchedule: ", currentRecurringSchedule);
 
   return (
     <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
@@ -113,7 +114,7 @@ export default function CreateBlockoutScreen() {
             setValue={setValue}
             startTime={startTime}
             endTime={endTime}
-            currentRRule={currentRRule}
+            currentRecurringSchedule={currentRecurringSchedule as any}
             errors={errors}
           />
 

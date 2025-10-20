@@ -7,30 +7,24 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { TalentBlockoutDatabase } from "@/types/blockouts";
+import { parseRRule } from "@/utils/recurring-schedule";
 import {
-  createRRuleFromOptions,
-  getRRuleOptions,
+  convertRecurringScheduleToRRule,
   UpdateBlockoutInput,
   updateBlockoutSchema,
 } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 import { useRouter } from "expo-router";
+import moment from "moment-timezone";
 import { useForm } from "react-hook-form";
 import { Alert, ScrollView } from "react-native";
-import { RRule } from "rrule";
-
-// Enable timezone plugins
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 type Props = {
+  blockoutId: number;
   blockoutData: TalentBlockoutDatabase;
 };
 
-const EditScheduleForm = ({ blockoutData }: Props) => {
+const EditScheduleForm = ({ blockoutId, blockoutData }: Props) => {
   const router = useRouter();
   const { mutateAsync: updateBlockout } = useUpdateTalentBlockout();
 
@@ -49,27 +43,33 @@ const EditScheduleForm = ({ blockoutData }: Props) => {
       end_time: blockoutData.end_time,
       timezone: blockoutData.timezone,
       is_all_day: blockoutData.is_all_day,
-      rrule: blockoutData.rrule
-        ? getRRuleOptions(RRule.fromString(blockoutData.rrule))
+      recurringSchedule: blockoutData.rrule
+        ? parseRRule(
+            blockoutData.rrule,
+            moment(blockoutData.start_time).toDate()
+          )
         : null,
     },
   });
   const isAllDay = watch("is_all_day");
   const startTime = watch("start_time");
   const endTime = watch("end_time");
-  const currentRRule = watch("rrule");
+  const currentRecurringSchedule = watch("recurringSchedule");
 
   const onSubmit = async (data: UpdateBlockoutInput) => {
     try {
-      // Convert RRuleOptions to string for API
+      // Convert RecurringScheduleOptions to RRULE string for API
       let rruleString: string | null = null;
-      if (data.rrule) {
-        const rule = createRRuleFromOptions(data.rrule);
-        rruleString = rule.toString(); // Make sure we get the DTSTART and the RRULE part
+      if (data.recurringSchedule) {
+        const startDate = moment(data.start_time).toDate();
+        rruleString = convertRecurringScheduleToRRule(
+          data.recurringSchedule,
+          startDate
+        );
       }
 
       await updateBlockout({
-        blockoutId: blockoutData.blockout_id,
+        blockoutId,
         updates: {
           title: data.title,
           description: data.description || undefined,
@@ -120,9 +120,9 @@ const EditScheduleForm = ({ blockoutData }: Props) => {
         <ScheduleRecurringCard
           control={control}
           setValue={setValue}
-          startTime={startTime || dayjs.utc().toISOString()}
-          endTime={endTime || dayjs.utc().toISOString()}
-          currentRRule={currentRRule || null}
+          startTime={startTime || moment.utc().toISOString()}
+          endTime={endTime || moment.utc().toISOString()}
+          currentRecurringSchedule={(currentRecurringSchedule as any) || null}
           errors={errors}
         />
 

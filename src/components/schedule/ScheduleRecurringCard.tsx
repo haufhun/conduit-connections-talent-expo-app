@@ -42,20 +42,15 @@ import {
   END_TYPE_OPTIONS,
   FREQUENCY_OPTIONS,
   MONTHLY_TYPE_OPTIONS,
-  RecurringScheduleOptions,
   WEEK_OF_MONTH_OPTIONS,
   WEEKDAY_OPTIONS,
   WeekdayType,
 } from "@/types/recurring-schedule";
-import { getDayjsFromUtcDateString } from "@/utils/date";
 import { getRecurringPresets } from "@/utils/recurring-presets";
-import {
-  convertToRRuleOptions,
-  generateReadableDescription,
-  parseRRuleOptions,
-} from "@/utils/recurring-schedule";
-import { RRuleOptions } from "@/validators/blockouts.validators";
+import { generateReadableDescription } from "@/utils/recurring-schedule";
+import { RecurringScheduleOptions } from "@/validators/blockouts.validators";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import moment from "moment-timezone";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Control,
@@ -70,7 +65,7 @@ interface RecurringScheduleCardProps {
   setValue: UseFormSetValue<any>;
   startTime: string;
   endTime: string;
-  currentRRule?: RRuleOptions | null;
+  currentRecurringSchedule?: RecurringScheduleOptions | null;
   errors?: FieldErrors<any>;
 }
 
@@ -79,18 +74,18 @@ export default function ScheduleRecurringCard({
   setValue,
   startTime,
   endTime,
-  currentRRule,
+  currentRecurringSchedule,
   errors,
 }: RecurringScheduleCardProps) {
   const [showCustomForm, setShowCustomForm] = useState(false);
 
   // Convert UTC ISO strings to Date objects
   const startDate = useMemo(
-    () => getDayjsFromUtcDateString(startTime).toDate(),
+    () => moment.utc(startTime).local().toDate(),
     [startTime]
   );
   const endDate = useMemo(
-    () => getDayjsFromUtcDateString(endTime).toDate(),
+    () => moment.utc(endTime).local().toDate(),
     [endTime]
   );
 
@@ -102,35 +97,17 @@ export default function ScheduleRecurringCard({
 
   // Determine current selection value
   const getCurrentRepeatValue = useCallback((): string => {
-    if (!currentRRule) return "None";
+    if (!currentRecurringSchedule) return "None";
 
-    // Check if current rrule matches any preset
+    // Check if current recurring schedule matches any preset
     const matchingPreset = presets.find((preset) => {
       if (!preset.value || typeof preset.value === "string") return false;
 
-      // Helper function to clean object by removing null, undefined, and empty arrays
-      const cleanObject = (obj: any): any => {
-        const cleaned: any = {};
-        for (const [key, value] of Object.entries(obj)) {
-          if (value !== null && value !== undefined) {
-            if (Array.isArray(value)) {
-              if (value.length > 0) {
-                cleaned[key] = value;
-              }
-            } else {
-              cleaned[key] = value;
-            }
-          }
-        }
-        return cleaned;
-      };
-
-      // Clean both objects for comparison
-      const cleanedPreset = cleanObject(preset.value);
-      const cleanedCurrent = cleanObject(currentRRule);
-
-      // Deep compare cleaned RRuleOptions
-      return JSON.stringify(cleanedPreset) === JSON.stringify(cleanedCurrent);
+      // Deep compare RecurringScheduleOptions
+      return (
+        JSON.stringify(preset.value) ===
+        JSON.stringify(currentRecurringSchedule)
+      );
     });
 
     if (matchingPreset) {
@@ -138,7 +115,7 @@ export default function ScheduleRecurringCard({
     }
 
     return "CUSTOM";
-  }, [currentRRule, presets]);
+  }, [currentRecurringSchedule, presets]);
 
   const [selectedRepeatValue, setSelectedRepeatValue] = useState<string>(() =>
     getCurrentRepeatValue()
@@ -155,56 +132,44 @@ export default function ScheduleRecurringCard({
     setSelectedRepeatValue(value);
 
     if (value === "None") {
-      // Clear the rrule
-      setValue("rrule", null);
+      // Clear the recurring schedule
+      setValue("recurringSchedule", null);
       setShowCustomForm(false);
     } else if (value === "CUSTOM") {
-      // Show custom form but keep existing rrule if any
+      // Show custom form - initialize with default if no existing schedule
       setShowCustomForm(true);
-      // If there's no rrule yet, set a default RRuleOptions
-      if (!currentRRule) {
-        const defaultOptions = convertToRRuleOptions(
-          customRepeatOptions,
-          startDate
-        );
-        setValue("rrule", defaultOptions);
+      if (!currentRecurringSchedule) {
+        const defaultOptions: RecurringScheduleOptions = {
+          frequency: "WEEKLY",
+          interval: 1,
+          weekdays: [],
+          monthlyType: "DAY_OF_MONTH",
+          dayOfMonth: startDate.getDate(),
+          weekOfMonth: 1,
+          dayOfWeek: "MONDAY",
+          endType: "AFTER_OCCURRENCES",
+          occurrences: 20,
+        };
+        setValue("recurringSchedule", defaultOptions);
       }
     } else {
-      // Use preset rrule - get from presets array by index
+      // Use preset recurring schedule
       const presetIndex = parseInt(value);
       const preset = presets[presetIndex];
 
       if (preset && preset.value && typeof preset.value !== "string") {
-        // Clone the preset value and apply current end type settings from customRepeatOptions
-        let finalRRuleOptions = { ...preset.value };
-
-        if (customRepeatOptions.endType === "AFTER_OCCURRENCES") {
-          delete finalRRuleOptions.until;
-          finalRRuleOptions.count = customRepeatOptions.occurrences || 20;
-        } else if (
-          customRepeatOptions.endType === "ON_DATE" &&
-          customRepeatOptions.endDate
-        ) {
-          delete finalRRuleOptions.count;
-          finalRRuleOptions.until = customRepeatOptions.endDate;
-        }
-
-        setValue("rrule", finalRRuleOptions);
+        setValue("recurringSchedule", preset.value);
       }
       setShowCustomForm(false);
     }
   };
 
-  const [customRepeatOptions, setCustomRepeatOptions] =
-    useState<RecurringScheduleOptions>(() => {
-      if (currentRRule) {
-        try {
-          return parseRRuleOptions(currentRRule);
-        } catch (error) {
-          console.warn("Failed to parse initial RRULE:", error);
-        }
-      }
-      return {
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+
+  // Update a specific field in the recurring schedule
+  const updateRecurringSchedule = useCallback(
+    (updates: Partial<RecurringScheduleOptions>) => {
+      const current = currentRecurringSchedule || {
         frequency: "WEEKLY",
         interval: 1,
         weekdays: [],
@@ -215,43 +180,23 @@ export default function ScheduleRecurringCard({
         endType: "AFTER_OCCURRENCES",
         occurrences: 20,
       };
-    });
 
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-
-  // Update RRULE when custom options change
-  useEffect(() => {
-    if (showCustomForm) {
-      const rruleOptions = convertToRRuleOptions(
-        customRepeatOptions,
-        startDate
-      );
-      setValue("rrule", rruleOptions);
-    }
-  }, [customRepeatOptions, startDate, showCustomForm, setValue]);
-
-  const updateCustomRepeatOptions = useCallback(
-    (updates: Partial<RecurringScheduleOptions>) => {
-      setCustomRepeatOptions((prev) => ({ ...prev, ...updates }));
+      const updated = { ...current, ...updates };
+      setValue("recurringSchedule", updated);
     },
-    []
+    [currentRecurringSchedule, startDate, setValue]
   );
 
   const handleWeekdayToggle = useCallback(
     (weekday: WeekdayType, isChecked: boolean) => {
-      if (isChecked) {
-        updateCustomRepeatOptions({
-          weekdays: [...customRepeatOptions.weekdays, weekday],
-        });
-      } else {
-        updateCustomRepeatOptions({
-          weekdays: customRepeatOptions.weekdays.filter(
-            (day) => day !== weekday
-          ),
-        });
-      }
+      const currentWeekdays = currentRecurringSchedule?.weekdays || [];
+      const updatedWeekdays = isChecked
+        ? [...currentWeekdays, weekday]
+        : currentWeekdays.filter((day: WeekdayType) => day !== weekday);
+
+      updateRecurringSchedule({ weekdays: updatedWeekdays });
     },
-    [customRepeatOptions.weekdays, updateCustomRepeatOptions]
+    [currentRecurringSchedule, updateRecurringSchedule]
   );
 
   return (
@@ -274,7 +219,7 @@ export default function ScheduleRecurringCard({
         </FormControlLabel>
         <Controller
           control={control}
-          name="rrule"
+          name="recurringSchedule"
           render={({ field }) => (
             <Select
               selectedValue={selectedRepeatValue}
@@ -336,14 +281,17 @@ export default function ScheduleRecurringCard({
                   </FormControlLabelText>
                 </FormControlLabel>
                 <Select
-                  selectedValue={customRepeatOptions.frequency}
+                  selectedValue={
+                    currentRecurringSchedule?.frequency || "WEEKLY"
+                  }
                   selectedLabel={
                     FREQUENCY_OPTIONS.find(
-                      (option) => option.value === customRepeatOptions.frequency
+                      (option) =>
+                        option.value === currentRecurringSchedule?.frequency
                     )?.label
                   }
                   onValueChange={(value) =>
-                    updateCustomRepeatOptions({ frequency: value as any })
+                    updateRecurringSchedule({ frequency: value as any })
                   }
                 >
                   <SelectTrigger
@@ -387,24 +335,28 @@ export default function ScheduleRecurringCard({
                   >
                     <InputField
                       keyboardType="numeric"
-                      value={customRepeatOptions.interval.toString()}
+                      value={(
+                        currentRecurringSchedule?.interval || 1
+                      ).toString()}
                       onChangeText={(text) => {
                         const num = parseInt(text) || 1;
-                        updateCustomRepeatOptions({
+                        updateRecurringSchedule({
                           interval: Math.max(1, num),
                         });
                       }}
                     />
                   </Input>
                   <Text className="text-typography-600 font-medium">
-                    {customRepeatOptions.frequency.toLowerCase()}
-                    {customRepeatOptions.interval > 1 ? "s" : ""}
+                    {(
+                      currentRecurringSchedule?.frequency || "WEEKLY"
+                    ).toLowerCase()}
+                    {(currentRecurringSchedule?.interval || 1) > 1 ? "s" : ""}
                   </Text>
                 </HStack>
               </FormControl>
 
               {/* Weekly Options */}
-              {customRepeatOptions.frequency === "WEEKLY" && (
+              {currentRecurringSchedule?.frequency === "WEEKLY" && (
                 <FormControl>
                   <FormControlLabel>
                     <HStack space="xs" className="items-center">
@@ -427,9 +379,9 @@ export default function ScheduleRecurringCard({
                         key={weekday.value}
                         size="md"
                         value={weekday.value}
-                        isChecked={customRepeatOptions.weekdays.includes(
-                          weekday.value
-                        )}
+                        isChecked={(
+                          currentRecurringSchedule?.weekdays || []
+                        ).includes(weekday.value)}
                         onChange={(isChecked) =>
                           handleWeekdayToggle(weekday.value, isChecked)
                         }
@@ -449,7 +401,7 @@ export default function ScheduleRecurringCard({
               )}
 
               {/* Monthly Options */}
-              {customRepeatOptions.frequency === "MONTHLY" && (
+              {currentRecurringSchedule?.frequency === "MONTHLY" && (
                 <VStack space="md" className="bg-background-50 p-4 rounded-lg">
                   <Text size="md" className="font-medium text-typography-700">
                     Monthly Options
@@ -462,15 +414,18 @@ export default function ScheduleRecurringCard({
                       </FormControlLabelText>
                     </FormControlLabel>
                     <Select
-                      selectedValue={customRepeatOptions.monthlyType}
+                      selectedValue={
+                        currentRecurringSchedule?.monthlyType || "DAY_OF_MONTH"
+                      }
                       selectedLabel={
                         MONTHLY_TYPE_OPTIONS.find(
                           (option) =>
-                            option.value === customRepeatOptions.monthlyType
+                            option.value ===
+                            currentRecurringSchedule?.monthlyType
                         )?.label
                       }
                       onValueChange={(value) =>
-                        updateCustomRepeatOptions({ monthlyType: value as any })
+                        updateRecurringSchedule({ monthlyType: value as any })
                       }
                     >
                       <SelectTrigger size="lg" variant="outline">
@@ -495,7 +450,7 @@ export default function ScheduleRecurringCard({
                     </Select>
                   </FormControl>
 
-                  {customRepeatOptions.monthlyType === "DAY_OF_MONTH" && (
+                  {currentRecurringSchedule?.monthlyType === "DAY_OF_MONTH" && (
                     <FormControl>
                       <FormControlLabel>
                         <FormControlLabelText className="font-medium text-typography-600">
@@ -509,10 +464,13 @@ export default function ScheduleRecurringCard({
                       >
                         <InputField
                           keyboardType="numeric"
-                          value={customRepeatOptions.dayOfMonth.toString()}
+                          value={(
+                            currentRecurringSchedule?.dayOfMonth ||
+                            startDate.getDate()
+                          ).toString()}
                           onChangeText={(text) => {
                             const num = parseInt(text) || 1;
-                            updateCustomRepeatOptions({
+                            updateRecurringSchedule({
                               dayOfMonth: Math.max(1, Math.min(31, num)),
                             });
                           }}
@@ -521,7 +479,7 @@ export default function ScheduleRecurringCard({
                     </FormControl>
                   )}
 
-                  {customRepeatOptions.monthlyType === "DAY_OF_WEEK" && (
+                  {currentRecurringSchedule?.monthlyType === "DAY_OF_WEEK" && (
                     <HStack space="md">
                       <FormControl className="flex-1">
                         <FormControlLabel>
@@ -530,15 +488,18 @@ export default function ScheduleRecurringCard({
                           </FormControlLabelText>
                         </FormControlLabel>
                         <Select
-                          selectedValue={customRepeatOptions.weekOfMonth.toString()}
+                          selectedValue={(
+                            currentRecurringSchedule?.weekOfMonth || 1
+                          ).toString()}
                           selectedLabel={
                             WEEK_OF_MONTH_OPTIONS.find(
                               (option) =>
-                                option.value === customRepeatOptions.weekOfMonth
+                                option.value ===
+                                currentRecurringSchedule?.weekOfMonth
                             )?.label
                           }
                           onValueChange={(value) =>
-                            updateCustomRepeatOptions({
+                            updateRecurringSchedule({
                               weekOfMonth: parseInt(value),
                             })
                           }
@@ -572,15 +533,18 @@ export default function ScheduleRecurringCard({
                           </FormControlLabelText>
                         </FormControlLabel>
                         <Select
-                          selectedValue={customRepeatOptions.dayOfWeek}
+                          selectedValue={
+                            currentRecurringSchedule?.dayOfWeek || "MONDAY"
+                          }
                           selectedLabel={
                             WEEKDAY_OPTIONS.find(
                               (option) =>
-                                option.value === customRepeatOptions.dayOfWeek
+                                option.value ===
+                                currentRecurringSchedule?.dayOfWeek
                             )?.label
                           }
                           onValueChange={(value) =>
-                            updateCustomRepeatOptions({
+                            updateRecurringSchedule({
                               dayOfWeek: value as WeekdayType,
                             })
                           }
@@ -621,41 +585,16 @@ export default function ScheduleRecurringCard({
               </FormControlLabelText>
             </FormControlLabel>
             <Select
-              selectedValue={customRepeatOptions.endType}
+              selectedValue={
+                currentRecurringSchedule?.endType || "AFTER_OCCURRENCES"
+              }
               selectedLabel={
                 END_TYPE_OPTIONS.find(
-                  (option) => option.value === customRepeatOptions.endType
+                  (option) => option.value === currentRecurringSchedule?.endType
                 )?.label
               }
               onValueChange={(value) => {
-                updateCustomRepeatOptions({ endType: value as any });
-                // Update the preset RRULE if not in custom mode
-                if (selectedRepeatValue !== "CUSTOM") {
-                  const presetIndex = parseInt(selectedRepeatValue);
-                  const preset = presets[presetIndex];
-
-                  if (
-                    preset &&
-                    preset.value &&
-                    typeof preset.value !== "string"
-                  ) {
-                    let updatedRRuleOptions = { ...preset.value };
-
-                    if (value === "AFTER_OCCURRENCES") {
-                      delete updatedRRuleOptions.until;
-                      updatedRRuleOptions.count =
-                        customRepeatOptions.occurrences || 20;
-                    } else if (
-                      value === "ON_DATE" &&
-                      customRepeatOptions.endDate
-                    ) {
-                      delete updatedRRuleOptions.count;
-                      updatedRRuleOptions.until = customRepeatOptions.endDate;
-                    }
-
-                    setValue("rrule", updatedRRuleOptions);
-                  }
-                }
+                updateRecurringSchedule({ endType: value as any });
               }}
             >
               <SelectTrigger
@@ -684,7 +623,7 @@ export default function ScheduleRecurringCard({
             </Select>
           </FormControl>
 
-          {customRepeatOptions.endType === "ON_DATE" && (
+          {currentRecurringSchedule?.endType === "ON_DATE" && (
             <FormControl>
               <FormControlLabel>
                 <FormControlLabelText className="font-medium text-typography-600">
@@ -698,15 +637,15 @@ export default function ScheduleRecurringCard({
                 className="bg-background-50"
               >
                 <ButtonText className="text-typography-700">
-                  {customRepeatOptions.endDate
-                    ? customRepeatOptions.endDate.toLocaleDateString()
+                  {currentRecurringSchedule?.endDate
+                    ? currentRecurringSchedule.endDate.toLocaleDateString()
                     : "Select end date"}
                 </ButtonText>
               </Button>
             </FormControl>
           )}
 
-          {customRepeatOptions.endType === "AFTER_OCCURRENCES" && (
+          {currentRecurringSchedule?.endType === "AFTER_OCCURRENCES" && (
             <FormControl>
               <FormControlLabel>
                 <FormControlLabelText className="font-medium text-typography-600">
@@ -720,29 +659,15 @@ export default function ScheduleRecurringCard({
               >
                 <InputField
                   keyboardType="numeric"
-                  value={customRepeatOptions.occurrences?.toString() || "20"}
+                  value={(
+                    currentRecurringSchedule?.occurrences || 20
+                  ).toString()}
                   onChangeText={(text) => {
                     const num = parseInt(text) || 20;
                     const finalNum = Math.max(1, num);
-                    updateCustomRepeatOptions({
+                    updateRecurringSchedule({
                       occurrences: finalNum,
                     });
-                    // Update the preset RRULE if not in custom mode
-                    if (selectedRepeatValue !== "CUSTOM") {
-                      const presetIndex = parseInt(selectedRepeatValue);
-                      const preset = presets[presetIndex];
-
-                      if (
-                        preset &&
-                        preset.value &&
-                        typeof preset.value !== "string"
-                      ) {
-                        const updatedRRuleOptions = { ...preset.value };
-                        delete updatedRRuleOptions.until;
-                        updatedRRuleOptions.count = finalNum;
-                        setValue("rrule", updatedRRuleOptions);
-                      }
-                    }
                   }}
                   placeholder="20"
                 />
@@ -753,29 +678,13 @@ export default function ScheduleRecurringCard({
           {/* End Date Picker */}
           {showEndDatePicker && (
             <DateTimePicker
-              value={customRepeatOptions.endDate || new Date()}
+              value={currentRecurringSchedule?.endDate || new Date()}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={(event: any, selectedDate?: Date) => {
                 setShowEndDatePicker(false);
                 if (selectedDate) {
-                  updateCustomRepeatOptions({ endDate: selectedDate });
-                  // Update the preset RRULE if not in custom mode
-                  if (selectedRepeatValue !== "CUSTOM") {
-                    const presetIndex = parseInt(selectedRepeatValue);
-                    const preset = presets[presetIndex];
-
-                    if (
-                      preset &&
-                      preset.value &&
-                      typeof preset.value !== "string"
-                    ) {
-                      const updatedRRuleOptions = { ...preset.value };
-                      delete updatedRRuleOptions.count;
-                      updatedRRuleOptions.until = selectedDate;
-                      setValue("rrule", updatedRRuleOptions);
-                    }
-                  }
+                  updateRecurringSchedule({ endDate: selectedDate });
                 }
               }}
               minimumDate={startDate}
@@ -783,7 +692,7 @@ export default function ScheduleRecurringCard({
           )}
 
           {/* Readable Summary - only show for custom */}
-          {showCustomForm && (
+          {showCustomForm && currentRecurringSchedule && (
             <VStack
               space="sm"
               className="mt-2 p-4 bg-primary-50 rounded-xl border border-primary-200"
@@ -795,7 +704,7 @@ export default function ScheduleRecurringCard({
                 </Text>
               </HStack>
               <Text size="sm" className="text-primary-600 leading-relaxed">
-                {generateReadableDescription(customRepeatOptions)}
+                {generateReadableDescription(currentRecurringSchedule)}
               </Text>
             </VStack>
           )}
@@ -803,13 +712,14 @@ export default function ScheduleRecurringCard({
       )}
 
       {/* Form Errors */}
-      {errors?.rrule && (
-        // <Text>There is some sort of error!</Text>
+      {errors?.recurringSchedule && (
         <FormControl>
           <FormControlError>
             <FormControlErrorIcon as={AlertCircleIcon} />
             <FormControlErrorText>
-              {errors.rrule["byweekday"].message as string}
+              {typeof errors.recurringSchedule.message === "string"
+                ? errors.recurringSchedule.message
+                : "Invalid recurring schedule configuration"}
             </FormControlErrorText>
           </FormControlError>
         </FormControl>

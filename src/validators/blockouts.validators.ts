@@ -1,86 +1,79 @@
+import { convertToRRuleOptions } from "@/utils/recurring-schedule";
 import { RRule } from "rrule";
 import { z } from "zod";
 
-// RRule options type that matches the rrule package structure
-// export interface RRuleOptions {
-//   freq:
-//     | typeof RRule.DAILY
-//     | typeof RRule.WEEKLY
-//     | typeof RRule.MONTHLY
-//     | typeof RRule.YEARLY;
-//   dtstart: Date;
-//   interval: number;
-//   byweekday?: number | Weekday | (number | Weekday)[];
-//   bymonthday?: number | number[];
-//   bymonth?: number | number[];
-//   count?: number;
-//   until?: Date;
-// }
-
-// Zod schema for RRule options validation
-const rruleOptionsSchema = z
+// Zod schema for RecurringScheduleOptions validation
+const recurringScheduleOptionsSchema = z
   .object({
-    freq: z.union([
-      z.literal(RRule.DAILY),
-      z.literal(RRule.WEEKLY),
-      z.literal(RRule.MONTHLY),
-      z.literal(RRule.YEARLY),
-    ]),
-    dtstart: z.date(),
+    frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]),
     interval: z.number().int().positive(),
-    byweekday: z.array(z.number()).optional(),
-    bymonthday: z.array(z.number()).optional(),
-    bymonth: z.array(z.number()).optional(),
-    count: z.number().int().positive().optional(),
-    until: z.date().optional(),
+    weekdays: z
+      .array(
+        z.enum([
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY",
+          "SATURDAY",
+          "SUNDAY",
+        ])
+      )
+      .default([]),
+    monthlyType: z.enum(["DAY_OF_MONTH", "DAY_OF_WEEK"]),
+    dayOfMonth: z.number().int().min(1).max(31),
+    weekOfMonth: z.number().int().min(-1).max(4),
+    dayOfWeek: z.enum([
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+      "SUNDAY",
+    ]),
+    endType: z.enum(["NEVER", "ON_DATE", "AFTER_OCCURRENCES"]),
+    endDate: z.date().optional(),
+    occurrences: z.number().int().positive().optional(),
   })
   .refine(
     (data) => {
-      // Must have either count or until, but not both
-      return (data.count !== undefined) !== (data.until !== undefined);
-    },
-    {
-      message: "Must specify either 'count' or 'until', but not both",
-      path: ["count"],
-    }
-  )
-  .refine(
-    (data) => {
-      // If freq is WEEKLY, byweekday is required
-      if (data.freq === RRule.WEEKLY) {
-        return data.byweekday !== undefined;
+      // If endType is ON_DATE, endDate is required
+      if (data.endType === "ON_DATE") {
+        return data.endDate !== undefined;
       }
       return true;
     },
     {
-      message: "byweekday is required when frequency is WEEKLY",
-      path: ["byweekday"],
+      message: "End date is required when end type is ON_DATE",
+      path: ["endDate"],
     }
   )
   .refine(
     (data) => {
-      // If freq is MONTHLY or YEARLY, bymonthday is required
-      if (data.freq === RRule.MONTHLY || data.freq === RRule.YEARLY) {
-        return data.bymonthday !== undefined;
+      // If endType is AFTER_OCCURRENCES, occurrences is required
+      if (data.endType === "AFTER_OCCURRENCES") {
+        return data.occurrences !== undefined && data.occurrences > 0;
       }
       return true;
     },
     {
-      message: "bymonthday is required when frequency is MONTHLY or YEARLY",
-      path: ["bymonthday"],
+      message:
+        "Number of occurrences is required when end type is AFTER_OCCURRENCES",
+      path: ["occurrences"],
     }
   )
   .refine(
     (data) => {
-      // If freq is YEARLY, bymonth is required
-      if (data.freq === RRule.YEARLY) {
-        return data.bymonth !== undefined;
+      // If frequency is WEEKLY, at least one weekday should be selected
+      if (data.frequency === "WEEKLY") {
+        return data.weekdays.length > 0;
       }
       return true;
     },
     {
-      message: "bymonth is required when frequency is YEARLY",
-      path: ["bymonth"],
+      message: "At least one weekday must be selected for weekly recurrence",
+      path: ["weekdays"],
     }
   );
 
@@ -107,7 +100,7 @@ const timeSchemaBase = z.object({
 
 // Schema for recurrence validation
 const recurrenceSchemaBase = z.object({
-  rrule: rruleOptionsSchema.nullable().optional(),
+  recurringSchedule: recurringScheduleOptionsSchema.nullable().optional(),
 });
 
 // Complete schema for creating a blockout
@@ -138,27 +131,23 @@ export const updateBlockoutSchema = baseBlockoutSchema
   );
 
 // Types inferred from schemas
-export type RRuleOptions = z.infer<typeof rruleOptionsSchema>;
+export type RecurringScheduleOptions = z.infer<
+  typeof recurringScheduleOptionsSchema
+>;
 export type CreateBlockoutInput = z.infer<typeof createBlockoutSchema>;
 export type CreateBlockoutSchemaType = z.infer<typeof createBlockoutSchema>;
 export type UpdateBlockoutInput = z.infer<typeof updateBlockoutSchema>;
 
-// Helper function to convert RRuleOptions to RRule instance
-export const createRRuleFromOptions = (options: RRuleOptions): RRule => {
-  return new RRule(options as any);
+// Helper function to convert RecurringScheduleOptions to RRule string
+export const createRRuleStringFromRecurringSchedule = (
+  options: RecurringScheduleOptions,
+  startDate: Date
+): string => {
+  const rruleOptions = convertToRRuleOptions(options, startDate);
+  const rule = new RRule(rruleOptions as any);
+  return rule.toString();
 };
 
-// Helper function to convert RRule instance to RRuleOptions
-export const getRRuleOptions = (rule: RRule): RRuleOptions => {
-  const opts = rule.options;
-  return {
-    freq: opts.freq,
-    dtstart: opts.dtstart!,
-    interval: opts.interval ?? 1,
-    byweekday: opts.byweekday as number[] | undefined,
-    bymonthday: opts.bymonthday as number[] | undefined,
-    bymonth: opts.bymonth as number[] | undefined,
-    count: opts.count ?? undefined,
-    until: opts.until ?? undefined,
-  };
-};
+// Alias for consistency
+export const convertRecurringScheduleToRRule =
+  createRRuleStringFromRecurringSchedule;

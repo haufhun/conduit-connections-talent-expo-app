@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import moment from "moment-timezone";
 import type { TalentWithSkills } from "../types/user-talent-skills";
 import { expandRecurringBlockouts, isUserAvailable } from "../utils/rrule";
 
@@ -141,8 +142,8 @@ export const getUserSchedule = async (
 
     const expandedBlockouts = expandRecurringBlockouts(
       user?.talent_blockouts || [],
-      new Date(startDate),
-      new Date(endDate)
+      moment.utc(startDate).toDate(),
+      moment.utc(endDate).toDate()
     );
 
     return { data: expandedBlockouts, error: null };

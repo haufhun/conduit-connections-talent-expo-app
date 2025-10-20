@@ -7,17 +7,11 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentExpandedBlockout } from "@/types/blockouts";
-import { getDayjsFromUtcDateString } from "@/utils/date";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 import { Redirect, useRouter } from "expo-router";
+import moment from "moment-timezone";
 import React from "react";
 import { ActivityIndicator, SectionList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 const DEFAULT_DAYS = 500;
 
@@ -25,8 +19,8 @@ export default function ScheduleScreen() {
   const { session } = useAuth();
   const router = useRouter();
 
-  const startDate = dayjs().utc().format("YYYY-MM-DD");
-  const endDate = dayjs().utc().add(DEFAULT_DAYS, "day").format("YYYY-MM-DD");
+  const startDate = moment().utc().format("YYYY-MM-DD");
+  const endDate = moment().utc().add(DEFAULT_DAYS, "day").format("YYYY-MM-DD");
   const {
     data: scheduleData,
     isLoading,
@@ -43,9 +37,9 @@ export default function ScheduleScreen() {
   // Group blockouts by date and format for SectionList
   // For multi-day blockouts, create entries for each day they span (from today onwards)
   const groupedBlockouts = blockouts.reduce((acc, blockout) => {
-    const start = getDayjsFromUtcDateString(blockout.start_time);
-    const end = getDayjsFromUtcDateString(blockout.end_time);
-    const today = dayjs().startOf("day");
+    const start = moment.utc(blockout.start_time).local();
+    const end = moment.utc(blockout.end_time).local();
+    const today = moment().startOf("day");
 
     // If it's a single day blockout, add it normally
     if (start.isSame(end, "day")) {

@@ -10,9 +10,8 @@ import {
 import { HStack } from "@/components/ui/hstack";
 import { AlertCircleIcon } from "@/components/ui/icon";
 import { VStack } from "@/components/ui/vstack";
-import { getDayjsFromUtcDateString } from "@/utils/date";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import dayjs from "dayjs";
+import moment from "moment-timezone";
 import { useEffect, useRef, useState } from "react";
 import {
   Control,
@@ -24,14 +23,14 @@ import {
 } from "react-hook-form";
 import { Platform } from "react-native";
 
-// Format date using dayjs in user's timezone
+// Format date using moment in user's timezone
 const formatDate = (dateString: string) => {
-  return getDayjsFromUtcDateString(dateString).format("ddd, MMM D, YYYY");
+  return moment.utc(dateString).local().format("ddd, MMM D, YYYY");
 };
 
-// Format time using dayjs in user's timezone
+// Format time using moment in user's timezone
 const formatTime = (dateString: string) => {
-  return getDayjsFromUtcDateString(dateString).format("h:mm A");
+  return moment.utc(dateString).local().format("h:mm A");
 };
 
 interface DateRangePickerProps<T extends FieldValues> {
@@ -74,9 +73,9 @@ export function DateRangePicker<T extends FieldValues>({
 
     // Check if start time has changed
     if (previousStartTimeRef.current !== startTime) {
-      const previousStart = dayjs(previousStartTimeRef.current);
-      const newStart = dayjs(startTime);
-      const currentEnd = dayjs(endTime);
+      const previousStart = moment(previousStartTimeRef.current);
+      const newStart = moment(startTime);
+      const currentEnd = moment(endTime);
 
       // Calculate the duration between previous start and current end
       const durationMs = currentEnd.diff(previousStart);
@@ -104,6 +103,8 @@ export function DateRangePicker<T extends FieldValues>({
   ) => {
     if (!selectedDate) return;
 
+    // The DateTimePicker returns a Date object in local time
+    // Convert it to ISO string which will be in UTC
     setValue(
       type === "start" ? startTimeFieldName : endTimeFieldName,
       selectedDate.toISOString() as any
@@ -156,7 +157,7 @@ export function DateRangePicker<T extends FieldValues>({
             {selectedField === "start-date" && showStartDatePicker && (
               <VStack className="items-center mt-4">
                 <DateTimePicker
-                  value={new Date(value)}
+                  value={moment.utc(value).local().toDate()}
                   mode="date"
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(_event, selectedDate) =>
@@ -171,7 +172,7 @@ export function DateRangePicker<T extends FieldValues>({
               !isAllDay && (
                 <VStack className="items-center mt-4">
                   <DateTimePicker
-                    value={new Date(value)}
+                    value={moment.utc(value).local().toDate()}
                     mode="time"
                     display={Platform.OS === "ios" ? "spinner" : "default"}
                     onChange={(_event, selectedDate) =>
@@ -226,7 +227,7 @@ export function DateRangePicker<T extends FieldValues>({
             {selectedField === "end-date" && showEndDatePicker && (
               <VStack className="items-center mt-4">
                 <DateTimePicker
-                  value={getDayjsFromUtcDateString(value).toDate()}
+                  value={moment.utc(value).local().toDate()}
                   mode="date"
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(_event, selectedDate) =>
@@ -239,7 +240,7 @@ export function DateRangePicker<T extends FieldValues>({
             {selectedField === "end-time" && showEndTimePicker && !isAllDay && (
               <VStack className="items-center mt-4">
                 <DateTimePicker
-                  value={getDayjsFromUtcDateString(value).toDate()}
+                  value={moment.utc(value).local().toDate()}
                   mode="time"
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(_event, selectedDate) =>

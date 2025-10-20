@@ -1,3 +1,4 @@
+import moment from "moment-timezone";
 import { RRule } from "rrule";
 
 export interface ExpandedBlockout {
@@ -22,11 +23,10 @@ export const expandRecurringBlockouts = (
   blockouts.forEach((blockout) => {
     if (!blockout.rrule) {
       // Non-recurring blockout - check if it overlaps with our range
-      const blockoutStart = new Date(blockout.start_time);
-      const blockoutEnd = new Date(blockout.end_time);
+      const blockoutStart = moment.utc(blockout.start_time).toDate();
+      const blockoutEnd = moment.utc(blockout.end_time).toDate();
 
       if (blockoutStart < rangeEnd && blockoutEnd > rangeStart) {
-        console.log("Adding non-recurring blockout:", blockout.blockout_id);
         expandedBlockouts.push({
           blockout_id: blockout.blockout_id,
           title: blockout.title,
@@ -42,29 +42,22 @@ export const expandRecurringBlockouts = (
         // blockout.rrule is now an RRuleOptions object
 
         const rule = RRule.fromString(blockout.rrule);
-        console.log("Expanding RRULE:", JSON.stringify(rule));
 
-        const originalStart = new Date(blockout.start_time);
-        const originalEnd = new Date(blockout.end_time);
+        const originalStart = moment.utc(blockout.start_time).toDate();
+        const originalEnd = moment.utc(blockout.end_time).toDate();
         const duration = originalEnd.getTime() - originalStart.getTime();
-
-        console.log("start and end:", originalStart, originalEnd);
 
         // Get occurrences within our date range (with some buffer)
         const occurrences = rule.between(
-          new Date(rangeStart.getTime() - duration),
-          new Date(rangeEnd.getTime() + duration),
+          moment.utc(rangeStart.getTime() - duration).toDate(),
+          moment.utc(rangeEnd.getTime() + duration).toDate(),
           true
         );
 
-        console.log(
-          "Occurrences for blockout",
-          blockout.blockout_id,
-          occurrences
-        );
-
         occurrences.forEach((occurrence) => {
-          const occurrenceEnd = new Date(occurrence.getTime() + duration);
+          const occurrenceEnd = moment
+            .utc(occurrence.getTime() + duration)
+            .toDate();
 
           // Check if this occurrence overlaps with our range
           if (occurrence < rangeEnd && occurrenceEnd > rangeStart) {
@@ -87,7 +80,13 @@ export const expandRecurringBlockouts = (
     }
   });
 
-  return expandedBlockouts;
+  const filteredBlockouts = expandedBlockouts.filter(
+    (expandedBlockout) =>
+      expandedBlockout.end_time >= rangeStart.toISOString() &&
+      expandedBlockout.start_time <= rangeEnd.toISOString()
+  );
+
+  return filteredBlockouts;
 };
 
 /**
@@ -105,8 +104,8 @@ export const isUserAvailable = (
   );
 
   const conflictingBlockouts = expandedBlockouts.filter((blockout) => {
-    const blockoutStart = new Date(blockout.start_time);
-    const blockoutEnd = new Date(blockout.end_time);
+    const blockoutStart = moment.utc(blockout.start_time).toDate();
+    const blockoutEnd = moment.utc(blockout.end_time).toDate();
 
     // Check for overlap
     return blockoutStart < requestEnd && blockoutEnd > requestStart;

@@ -62,58 +62,6 @@ export const convertToRRuleOptions = (
 };
 
 /**
- * @deprecated Use convertToRRuleOptions instead
- */
-export const convertToRRule = (
-  options: RecurringScheduleOptions,
-  startDate: Date
-): string => {
-  const ruleOptions: any = {
-    freq: mapFrequencyToRRule(options.frequency),
-    interval: options.interval,
-    dtstart: startDate,
-  };
-
-  // Handle weekly recurrence
-  if (options.frequency === "WEEKLY" && options.weekdays.length > 0) {
-    ruleOptions.byweekday = options.weekdays.map(mapWeekdayToRRule);
-  }
-
-  // Handle monthly recurrence
-  if (options.frequency === "MONTHLY") {
-    if (options.monthlyType === "DAY_OF_MONTH") {
-      ruleOptions.bymonthday = options.dayOfMonth;
-    } else if (options.monthlyType === "DAY_OF_WEEK") {
-      const weekday = mapWeekdayToRRule(options.dayOfWeek);
-      if (options.weekOfMonth === -1) {
-        // Last occurrence of the weekday in the month
-        ruleOptions.byweekday = [weekday.nth(-1)];
-      } else {
-        // Specific week of the month
-        ruleOptions.byweekday = [weekday.nth(options.weekOfMonth)];
-      }
-    }
-  }
-
-  // Handle end conditions
-  if (options.endType === "ON_DATE" && options.endDate) {
-    ruleOptions.until = datetime(
-      options.endDate.getFullYear(),
-      options.endDate.getMonth() + 1,
-      options.endDate.getDate(),
-      23,
-      59,
-      59 // End of day
-    );
-  } else if (options.endType === "AFTER_OCCURRENCES" && options.occurrences) {
-    ruleOptions.count = options.occurrences;
-  }
-
-  const rule = new RRule(ruleOptions);
-  return rule.toString().split("\n")[1]; // Get just the RRULE part, not DTSTART
-};
-
-/**
  * Parse RRuleOptions (from API/storage) to RecurringScheduleOptions (for form state)
  */
 export const parseRRuleOptions = (

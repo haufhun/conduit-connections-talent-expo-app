@@ -1,8 +1,5 @@
-import { getDayjsFromUtcDateString } from "@/utils/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
+import moment from "moment-timezone";
 import { useAuth } from "../providers/auth-provider";
 import type {
   CreateTalentBlockout,
@@ -21,9 +18,6 @@ import {
   getAvailableUsers,
   getUserSchedule,
 } from "./talent_blockout_schedule_spb";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export const useAvailableUsers = (filter: AvailabilityFilter) => {
   return useQuery({
@@ -77,10 +71,12 @@ export const useCreateTalentBlockout = () => {
   return useMutation<TalentBlockoutDatabase, Error, CreateTalentBlockout>({
     mutationFn: async (blockoutData) => {
       if (blockoutData.is_all_day) {
-        const startTime = getDayjsFromUtcDateString(blockoutData.start_time)
+        const startTime = moment
+          .utc(blockoutData.start_time)
           .startOf("day")
           .toISOString();
-        const endTime = getDayjsFromUtcDateString(blockoutData.end_time)
+        const endTime = moment
+          .utc(blockoutData.end_time)
           .endOf("day")
           .toISOString();
 
@@ -154,12 +150,8 @@ export const useUpdateTalentBlockout = () => {
         const start = updates.start_time || blockout.start_time;
         const end = updates.end_time || blockout.end_time;
 
-        const startTime = getDayjsFromUtcDateString(start)
-          .startOf("day")
-          .toISOString();
-        const endTime = getDayjsFromUtcDateString(end)
-          .endOf("day")
-          .toISOString();
+        const startTime = moment.utc(start).startOf("day").toISOString();
+        const endTime = moment.utc(end).endOf("day").toISOString();
 
         updates.start_time = startTime;
         updates.end_time = endTime;

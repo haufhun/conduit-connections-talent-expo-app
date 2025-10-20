@@ -2,6 +2,7 @@ import {
   TalentBlockoutDatabase,
   TalentExpandedBlockout,
 } from "@/types/blockouts";
+import moment from "moment";
 
 /**
  * Utility functions for checking blockout permissions
@@ -16,7 +17,7 @@ import {
  */
 export const canEditBlockout = (blockout: TalentBlockoutDatabase): boolean => {
   const now = new Date();
-  const endTime = new Date(blockout.end_time);
+  const endTime = moment.utc(blockout.end_time).toDate();
   return endTime > now;
 };
 
@@ -42,8 +43,8 @@ export const canDeleteBlockout = (
  */
 export const getBlockoutStatus = (blockout: TalentExpandedBlockout) => {
   const now = new Date();
-  const startTime = new Date(blockout.start_time);
-  const endTime = new Date(blockout.end_time);
+  const startTime = moment.utc(blockout.start_time).toDate();
+  const endTime = moment.utc(blockout.end_time).toDate();
 
   if (endTime <= now) {
     return {
