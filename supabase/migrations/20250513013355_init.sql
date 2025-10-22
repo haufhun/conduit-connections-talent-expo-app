@@ -214,6 +214,7 @@ user_blockouts_agg as (
           'description', tb.description,
           'start_time', tb.start_time,
           'end_time', tb.end_time,
+          'timezone', tb.timezone,
           'is_all_day', tb.is_all_day,
           'rrule', tb.rrule,
           'created_at', tb.created_at,
