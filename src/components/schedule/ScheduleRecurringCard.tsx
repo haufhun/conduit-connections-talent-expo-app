@@ -103,10 +103,25 @@ export default function ScheduleRecurringCard({
     const matchingPreset = presets.find((preset) => {
       if (!preset.value || typeof preset.value === "string") return false;
 
-      // Deep compare RecurringScheduleOptions
+      // Deep compare RecurringScheduleOptions (excluding end conditions)
+      const presetValue = preset.value;
+      const currentValue = currentRecurringSchedule;
+
+      if (preset.label === "Weekly on Wednesday") {
+        console.log("Comparing weekly Wednesday preset");
+        console.log("presetValue", presetValue);
+        console.log("currentValue", currentValue);
+      }
+
       return (
-        JSON.stringify(preset.value) ===
-        JSON.stringify(currentRecurringSchedule)
+        presetValue.frequency === currentValue.frequency &&
+        presetValue.interval === currentValue.interval &&
+        presetValue.monthlyType === currentValue.monthlyType &&
+        presetValue.dayOfMonth === currentValue.dayOfMonth &&
+        presetValue.weekOfMonth === currentValue.weekOfMonth &&
+        presetValue.dayOfWeek === currentValue.dayOfWeek &&
+        JSON.stringify(presetValue.weekdays) ===
+          JSON.stringify(currentValue.weekdays)
       );
     });
 

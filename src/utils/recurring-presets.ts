@@ -118,7 +118,7 @@ export function getRecurringPresets(
           interval: 1,
           weekdays: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
           monthlyType: "DAY_OF_MONTH",
-          dayOfMonth: startDate.getDate(),
+          dayOfMonth: 1, // This field is irrelevant for WEEKLY frequency it seems
           weekOfMonth: 1,
           dayOfWeek: "MONDAY",
           endType: "AFTER_OCCURRENCES",
@@ -133,7 +133,7 @@ export function getRecurringPresets(
           interval: 1,
           weekdays: ["SATURDAY", "SUNDAY"],
           monthlyType: "DAY_OF_MONTH",
-          dayOfMonth: startDate.getDate(),
+          dayOfMonth: 1, // This field is irrelevant for WEEKLY frequency it seems
           weekOfMonth: 1,
           dayOfWeek: "MONDAY",
           endType: "AFTER_OCCURRENCES",
@@ -152,7 +152,7 @@ export function getRecurringPresets(
         interval: 1,
         weekdays: [],
         monthlyType: "DAY_OF_MONTH",
-        dayOfMonth: startDate.getDate(),
+        dayOfMonth: 1, // This field is irrelevant for WEEKLY frequency it seems
         weekOfMonth: 1,
         dayOfWeek: "MONDAY",
         endType: "AFTER_OCCURRENCES",
@@ -170,7 +170,7 @@ export function getRecurringPresets(
       interval: 1,
       weekdays: [dayWeekdayType],
       monthlyType: "DAY_OF_MONTH",
-      dayOfMonth: startDate.getDate(),
+      dayOfMonth: 1, // This field is irrelevant for WEEKLY frequency it seems
       weekOfMonth: 1,
       dayOfWeek: "MONDAY",
       endType: "AFTER_OCCURRENCES",
@@ -183,8 +183,33 @@ export function getRecurringPresets(
   const ordinal = getOrdinalSuffix(weekOfMonth);
 
   // For monthly, use the day of month approach
+  // presets.push({
+  //   label: `Monthly on the ${ordinal} ${dayName}`,
+  //   value: {
+  //     frequency: "MONTHLY",
+  //     interval: 1,
+  //     weekdays: [],
+  //     monthlyType: "DAY_OF_MONTH",
+  //     dayOfMonth: startDate.getDate(),
+  //     weekOfMonth: 1,
+  //     dayOfWeek: "MONDAY",
+  //     endType: "AFTER_OCCURRENCES",
+  //     occurrences: 20,
+  //   },
+  // });
+
+  const dayOfMonth = startDate.getDate();
+  const suffix =
+    dayOfMonth === 1 || dayOfMonth === 21 || dayOfMonth === 31
+      ? "st"
+      : dayOfMonth === 2 || dayOfMonth === 22
+      ? "nd"
+      : dayOfMonth === 3 || dayOfMonth === 23
+      ? "rd"
+      : "th";
+
   presets.push({
-    label: `Monthly on the ${ordinal} ${dayName}`,
+    label: `Monthly on the ${dayOfMonth}${suffix}`,
     value: {
       frequency: "MONTHLY",
       interval: 1,
