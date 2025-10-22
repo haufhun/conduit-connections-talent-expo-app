@@ -29,6 +29,9 @@ export const getOccurrencesFromRecurringBlockout = (
   rangeStart: Date,
   rangeEnd: Date
 ): ExpandedBlockout[] => {
+  // This is potentially going to have issues:
+  // String manipulation of ISO timestamps with .slice(0, -6) is fragile and assumes a specific timezone offset format. This will break if the timezone offset is not exactly 6 characters (e.g., single-digit hour offsets like '+5:30'). Consider using moment's .format() with explicit format strings instead.
+
   const date = new Date(blockout.start_time); // This is in UTC
   const isoWithTimezone = moment(date).tz(blockout.timezone).format();
   const isoWithoutTimezone = isoWithTimezone.slice(0, -6) + "Z";
