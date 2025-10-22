@@ -78,6 +78,7 @@ export default function ScheduleRecurringCard({
   errors,
 }: RecurringScheduleCardProps) {
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [userSelectedCustom, setUserSelectedCustom] = useState(false);
 
   // Convert UTC ISO strings to Date objects
   const startDate = useMemo(
@@ -98,6 +99,9 @@ export default function ScheduleRecurringCard({
   // Determine current selection value
   const getCurrentRepeatValue = useCallback((): string => {
     if (!currentRecurringSchedule) return "None";
+
+    // If user explicitly selected Custom, maintain that selection
+    if (userSelectedCustom) return "CUSTOM";
 
     // Check if current recurring schedule matches any preset
     const matchingPreset = presets.find((preset) => {
@@ -130,7 +134,7 @@ export default function ScheduleRecurringCard({
     }
 
     return "CUSTOM";
-  }, [currentRecurringSchedule, presets]);
+  }, [currentRecurringSchedule, presets, userSelectedCustom]);
 
   const [selectedRepeatValue, setSelectedRepeatValue] = useState<string>(() =>
     getCurrentRepeatValue()
@@ -150,9 +154,11 @@ export default function ScheduleRecurringCard({
       // Clear the recurring schedule
       setValue("recurringSchedule", null);
       setShowCustomForm(false);
+      setUserSelectedCustom(false);
     } else if (value === "CUSTOM") {
       // Show custom form - initialize with default if no existing schedule
       setShowCustomForm(true);
+      setUserSelectedCustom(true);
       if (!currentRecurringSchedule) {
         const defaultOptions: RecurringScheduleOptions = {
           frequency: "WEEKLY",
@@ -176,6 +182,7 @@ export default function ScheduleRecurringCard({
         setValue("recurringSchedule", preset.value);
       }
       setShowCustomForm(false);
+      setUserSelectedCustom(false);
     }
   };
 
