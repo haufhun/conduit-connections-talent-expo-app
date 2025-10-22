@@ -107,8 +107,8 @@ export default function ScheduleRecurringCard({
       const presetValue = preset.value;
       const currentValue = currentRecurringSchedule;
 
-      if (preset.label === "Weekly on Wednesday") {
-        console.log("Comparing weekly Wednesday preset");
+      if (preset.label.includes("Monthly on the fourth")) {
+        console.log("Comparing monthly preset");
         console.log("presetValue", presetValue);
         console.log("currentValue", currentValue);
       }
@@ -254,7 +254,7 @@ export default function ScheduleRecurringCard({
               </SelectTrigger>
               <SelectPortal>
                 <SelectBackdrop />
-                <SelectContent>
+                <SelectContent className="pb-8">
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
@@ -319,7 +319,7 @@ export default function ScheduleRecurringCard({
                   </SelectTrigger>
                   <SelectPortal>
                     <SelectBackdrop />
-                    <SelectContent>
+                    <SelectContent className="pb-8">
                       <SelectDragIndicatorWrapper>
                         <SelectDragIndicator />
                       </SelectDragIndicatorWrapper>
@@ -449,7 +449,7 @@ export default function ScheduleRecurringCard({
                       </SelectTrigger>
                       <SelectPortal>
                         <SelectBackdrop />
-                        <SelectContent>
+                        <SelectContent className="pb-8">
                           <SelectDragIndicatorWrapper>
                             <SelectDragIndicator />
                           </SelectDragIndicatorWrapper>
@@ -525,7 +525,7 @@ export default function ScheduleRecurringCard({
                           </SelectTrigger>
                           <SelectPortal>
                             <SelectBackdrop />
-                            <SelectContent>
+                            <SelectContent className="pb-8">
                               <SelectDragIndicatorWrapper>
                                 <SelectDragIndicator />
                               </SelectDragIndicatorWrapper>
@@ -570,7 +570,7 @@ export default function ScheduleRecurringCard({
                           </SelectTrigger>
                           <SelectPortal>
                             <SelectBackdrop />
-                            <SelectContent>
+                            <SelectContent className="pb-8">
                               <SelectDragIndicatorWrapper>
                                 <SelectDragIndicator />
                               </SelectDragIndicatorWrapper>
@@ -622,7 +622,7 @@ export default function ScheduleRecurringCard({
               </SelectTrigger>
               <SelectPortal>
                 <SelectBackdrop />
-                <SelectContent>
+                <SelectContent className="pb-8">
                   <SelectDragIndicatorWrapper>
                     <SelectDragIndicator />
                   </SelectDragIndicatorWrapper>
