@@ -9,7 +9,7 @@ import { VStack } from "@/components/ui/vstack";
 import { TalentBlockoutDatabase } from "@/types/blockouts";
 import { parseRRule } from "@/utils/recurring-schedule";
 import {
-  convertRecurringScheduleToRRule,
+  createRRuleStringFromRecurringSchedule,
   UpdateBlockoutInput,
   updateBlockoutSchema,
 } from "@/validators/blockouts.validators";
@@ -62,10 +62,8 @@ const EditScheduleForm = ({ blockoutId, blockoutData }: Props) => {
       // Convert RecurringScheduleOptions to RRULE string for API
       let rruleString: string | null = null;
       if (data.recurringSchedule) {
-        const startDate = moment(data.start_time).toDate();
-        rruleString = convertRecurringScheduleToRRule(
-          data.recurringSchedule,
-          startDate
+        rruleString = createRRuleStringFromRecurringSchedule(
+          data.recurringSchedule
         );
       }
 

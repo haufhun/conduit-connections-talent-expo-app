@@ -12,7 +12,7 @@ import { RRule, datetime } from "rrule";
  */
 export const convertToRRuleOptions = (
   options: RecurringScheduleOptions,
-  startDate: Date
+  startDate?: Date
 ): Partial<RRuleOptions> => {
   const ruleOptions: Partial<RRuleOptions> = {
     freq: mapFrequencyToRRule(options.frequency),

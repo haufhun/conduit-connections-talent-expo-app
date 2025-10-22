@@ -7,9 +7,9 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import {
-  convertRecurringScheduleToRRule,
   CreateBlockoutInput,
   createBlockoutSchema,
+  createRRuleStringFromRecurringSchedule,
 } from "@/validators/blockouts.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
@@ -47,16 +47,12 @@ export default function CreateBlockoutScreen() {
   const currentRecurringSchedule = watch("recurringSchedule");
 
   const onSubmit = async (data: CreateBlockoutInput) => {
-    console.log("Creating blockout with data:", data);
-
     try {
       // Convert RecurringScheduleOptions to RRULE string for API
       let rruleString: string | undefined = undefined;
       if (data.recurringSchedule) {
-        const startDate = moment(data.start_time).toDate();
-        rruleString = convertRecurringScheduleToRRule(
-          data.recurringSchedule,
-          startDate
+        rruleString = createRRuleStringFromRecurringSchedule(
+          data.recurringSchedule
         );
       }
 
@@ -75,8 +71,6 @@ export default function CreateBlockoutScreen() {
       Alert.alert("Error", "Failed to create blockout");
     }
   };
-
-  console.log("form recurringSchedule: ", currentRecurringSchedule);
 
   return (
     <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">

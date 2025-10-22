@@ -144,7 +144,7 @@ export type { RRuleOptions };
 // Helper function to convert RecurringScheduleOptions to RRule string
 export const createRRuleStringFromRecurringSchedule = (
   options: RecurringScheduleOptions,
-  startDate: Date
+  startDate?: Date
 ): string => {
   const rruleOptions = convertToRRuleOptions(options, startDate);
   // Cast to any due to type incompatibility between library version and actual usage
@@ -152,7 +152,3 @@ export const createRRuleStringFromRecurringSchedule = (
   const rule = new RRule(rruleOptions as any);
   return rule.toString();
 };
-
-// Alias for consistency
-export const convertRecurringScheduleToRRule =
-  createRRuleStringFromRecurringSchedule;

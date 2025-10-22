@@ -29,16 +29,20 @@ export const getOccurrencesFromRecurringBlockout = (
   rangeStart: Date,
   rangeEnd: Date
 ): ExpandedBlockout[] => {
-  const rule = RRule.fromString(rrule);
-  rule.options.tzid = blockout.timezone;
+  const date = new Date(blockout.start_time); // This is in UTC
+  const isoWithTimezone = moment(date).tz(blockout.timezone).format();
+  const isoWithoutTimezone = isoWithTimezone.slice(0, -6) + "Z";
+  const startDate = moment(isoWithoutTimezone).format("YYYYMMDDTHHmmss");
+
+  const fullRrule = `DTSTART;TZID=${blockout.timezone}:${startDate};\n` + rrule;
+
+  const rule = RRule.fromString(fullRrule);
 
   const original = rule.between(rangeStart, rangeEnd, true);
-  console.log("original:", original);
 
   const mapped = original.map((date) =>
     moment(date).utc().local(true).toDate()
   );
-  console.log("mapped:", mapped);
 
   const duration =
     moment(blockout.end_time).valueOf() - moment(blockout.start_time).valueOf();
@@ -52,36 +56,25 @@ export const getOccurrencesFromRecurringBlockout = (
     original_blockout: blockout,
   }));
 
-  console.log(
-    "expandedBlockouts:",
-    expandedBlockouts.map((b) => b.start_time + " - " + b.end_time)
-  );
-
   return expandedBlockouts;
 
   // The dtstart is in UTC time. We need to convert it to local time but set the timezone as UTC time
   // If we try to do moment(rule.options.dtstart).local().toDate(), it will go forward 5 hours (in CDT) instead of back 5 hours
-  // console.log("rule.dtstart:", rule.options.dtstart);
   // const timezoneOffsetMinutes = moment.tz(blockout.timezone).utcOffset();
   // const timezoneOffsetHours = Math.floor(timezoneOffsetMinutes / 60);
   // const newDtstartInProperTz = moment
   //   .utc(rule.options.dtstart)
   //   .add(timezoneOffsetHours, "hours")
   //   .toDate();
-  // console.log("newDtstartInProperTz:", newDtstartInProperTz);
 
   // // Update the rule with the corrected dtstart
   // rule.options.dtstart = newDtstartInProperTz;
   // rule.options.tzid = blockout.timezone;
-  // console.log("Rule:", JSON.stringify(rule.options));
 
   // const original = rule.between(rangeStart, rangeEnd, true);
   // const original = rule.all();
-  // console.log("original:", original);
 
   // original.forEach((date) => {
-  //   // console.log("mappedBack:", date.toLocaleTimeString());
-  //   console.log(moment(date).toLocaleString());
   // });
 
   // return original;
@@ -127,7 +120,6 @@ export const expandRecurringBlockouts = (
 
         // // Parse the rrule string and add timezone support
         // const rule = RRule.fromString(blockout.rrule);
-        // // console.log("rule:", JSON.stringify(rule));
 
         // // Parse the original start and end times in the blockout's timezone
         // const originalStartInTZ = moment.tz(
@@ -137,7 +129,6 @@ export const expandRecurringBlockouts = (
         // const originalEndInTZ = moment.tz(blockout.end_time, blockout.timezone);
         // const duration =
         //   originalEndInTZ.valueOf() - originalStartInTZ.valueOf();
-        // // console.log("originalStartInTZ:", originalStartInTZ);
 
         // // Convert range dates to the blockout's timezone to find occurrences
         // const rangeStartInTZ = moment.tz(rangeStart, blockout.timezone);
