@@ -32,7 +32,7 @@ export const getOccurrencesFromRecurringBlockout = (
   const date = new Date(blockout.start_time); // This is in UTC
   const isoWithTimezone = moment(date).tz(blockout.timezone).format();
   const isoWithoutTimezone = isoWithTimezone.slice(0, -6) + "Z";
-  const startDate = moment(isoWithoutTimezone).format("YYYYMMDDTHHmmss");
+  const startDate = moment(isoWithoutTimezone).format("YYYYMMDD[T]HHmmss");
 
   const fullRrule = `DTSTART;TZID=${blockout.timezone}:${startDate};\n` + rrule;
 
@@ -57,27 +57,6 @@ export const getOccurrencesFromRecurringBlockout = (
   }));
 
   return expandedBlockouts;
-
-  // The dtstart is in UTC time. We need to convert it to local time but set the timezone as UTC time
-  // If we try to do moment(rule.options.dtstart).local().toDate(), it will go forward 5 hours (in CDT) instead of back 5 hours
-  // const timezoneOffsetMinutes = moment.tz(blockout.timezone).utcOffset();
-  // const timezoneOffsetHours = Math.floor(timezoneOffsetMinutes / 60);
-  // const newDtstartInProperTz = moment
-  //   .utc(rule.options.dtstart)
-  //   .add(timezoneOffsetHours, "hours")
-  //   .toDate();
-
-  // // Update the rule with the corrected dtstart
-  // rule.options.dtstart = newDtstartInProperTz;
-  // rule.options.tzid = blockout.timezone;
-
-  // const original = rule.between(rangeStart, rangeEnd, true);
-  // const original = rule.all();
-
-  // original.forEach((date) => {
-  // });
-
-  // return original;
 };
 
 /**
