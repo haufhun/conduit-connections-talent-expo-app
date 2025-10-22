@@ -146,13 +146,7 @@ export const getUserSchedule = async (
       moment.utc(endDate).toDate()
     );
 
-    const formattedBlockouts = expandedBlockouts.map((b) => ({
-      ...b,
-      start_time: moment.utc(b.start_time).toISOString(),
-      end_time: moment.utc(b.end_time).toISOString(),
-    }));
-
-    return { data: formattedBlockouts, error: null };
+    return { data: expandedBlockouts, error: null };
   } catch (error) {
     return { data: null, error };
   }

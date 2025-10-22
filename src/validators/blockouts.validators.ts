@@ -1,5 +1,5 @@
 import { convertToRRuleOptions } from "@/utils/recurring-schedule";
-import { RRule } from "rrule";
+import { RRule, Options as RRuleOptions } from "rrule";
 import { z } from "zod";
 
 // Zod schema for RecurringScheduleOptions validation
@@ -138,12 +138,17 @@ export type CreateBlockoutInput = z.infer<typeof createBlockoutSchema>;
 export type CreateBlockoutSchemaType = z.infer<typeof createBlockoutSchema>;
 export type UpdateBlockoutInput = z.infer<typeof updateBlockoutSchema>;
 
+// Re-export RRuleOptions from rrule package for convenience
+export type { RRuleOptions };
+
 // Helper function to convert RecurringScheduleOptions to RRule string
 export const createRRuleStringFromRecurringSchedule = (
   options: RecurringScheduleOptions,
   startDate: Date
 ): string => {
   const rruleOptions = convertToRRuleOptions(options, startDate);
+  // Cast to any due to type incompatibility between library version and actual usage
+  // The RRule constructor accepts Partial<Options> but types may not reflect this correctly
   const rule = new RRule(rruleOptions as any);
   return rule.toString();
 };

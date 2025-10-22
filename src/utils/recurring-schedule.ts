@@ -13,11 +13,27 @@ import { RRule, datetime } from "rrule";
 export const convertToRRuleOptions = (
   options: RecurringScheduleOptions,
   startDate: Date
-): RRuleOptions => {
-  const ruleOptions: RRuleOptions = {
+): Partial<RRuleOptions> => {
+  const ruleOptions: Partial<RRuleOptions> = {
     freq: mapFrequencyToRRule(options.frequency),
     interval: options.interval,
     dtstart: startDate,
+    wkst: null,
+    count: null,
+    until: null,
+    tzid: null,
+    bysetpos: null,
+    bymonth: null,
+    bymonthday: null,
+    bynmonthday: null,
+    byyearday: null,
+    byweekno: null,
+    byweekday: null,
+    bynweekday: null,
+    byhour: null,
+    byminute: null,
+    bysecond: null,
+    byeaster: null,
   };
 
   // Handle weekly recurrence
@@ -65,8 +81,10 @@ export const convertToRRuleOptions = (
  * Parse RRuleOptions (from API/storage) to RecurringScheduleOptions (for form state)
  */
 export const parseRRuleOptions = (
-  rruleOptions: RRuleOptions
+  rruleOptions: Partial<RRuleOptions>
 ): RecurringScheduleOptions => {
+  // Cast to any due to type incompatibility between library version and actual usage
+  // The RRule constructor accepts Partial<Options> but types may not reflect this correctly
   const rule = new RRule(rruleOptions as any);
 
   const options: RecurringScheduleOptions = {

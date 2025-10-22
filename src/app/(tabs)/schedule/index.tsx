@@ -19,8 +19,11 @@ export default function ScheduleScreen() {
   const { session } = useAuth();
   const router = useRouter();
 
-  const startDate = moment().utc().format("YYYY-MM-DD");
-  const endDate = moment().utc().add(DEFAULT_DAYS, "day").format("YYYY-MM-DD");
+  const startDate = moment().local().format("YYYY-MM-DD");
+  const endDate = moment()
+    .local()
+    .add(DEFAULT_DAYS, "day")
+    .format("YYYY-MM-DD");
   const {
     data: scheduleData,
     isLoading,
