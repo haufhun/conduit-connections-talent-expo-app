@@ -72,13 +72,14 @@ export const useCreateTalentBlockout = () => {
     mutationFn: async (blockoutData) => {
       if (blockoutData.is_all_day) {
         const startTime = moment
-          .utc(blockoutData.start_time)
+          .tz(blockoutData.start_time, blockoutData.timezone)
           .startOf("day")
           .toISOString();
         const endTime = moment
-          .utc(blockoutData.end_time)
+          .tz(blockoutData.end_time, blockoutData.timezone)
           .endOf("day")
           .toISOString();
+        console.log("All-day blockout times:", { startTime, endTime });
 
         blockoutData.start_time = startTime;
         blockoutData.end_time = endTime;
@@ -150,8 +151,14 @@ export const useUpdateTalentBlockout = () => {
         const start = updates.start_time || blockout.start_time;
         const end = updates.end_time || blockout.end_time;
 
-        const startTime = moment.utc(start).startOf("day").toISOString();
-        const endTime = moment.utc(end).endOf("day").toISOString();
+        const startTime = moment
+          .tz(start, updates.timezone!)
+          .startOf("day")
+          .toISOString();
+        const endTime = moment
+          .tz(end, updates.timezone!)
+          .endOf("day")
+          .toISOString();
 
         updates.start_time = startTime;
         updates.end_time = endTime;

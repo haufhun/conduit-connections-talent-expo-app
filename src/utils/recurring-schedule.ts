@@ -198,7 +198,6 @@ export const parseRRule = (
   startDate: Date
 ): RecurringScheduleOptions => {
   // This is a simplified parser - you might want to make it more robust
-  console.log("Parsing RRULE string:", rruleString);
 
   // Remove the "RRULE:" prefix if it exists
   const wholeRRuleString = !rruleString.startsWith("RRULE:")
