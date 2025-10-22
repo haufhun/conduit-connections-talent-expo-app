@@ -136,21 +136,26 @@ export function DateRangePicker<T extends FieldValues>({
               <Button
                 size="lg"
                 variant={selectedField === "start-date" ? "solid" : "outline"}
-                className="flex-1"
+                style={{ flex: isAllDay ? 1.0 : 0.6 }}
                 onPress={() => handleFieldPress("start-date")}
               >
-                <ButtonText>{formatDate(value)}</ButtonText>
+                <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                  {formatDate(value)}
+                </ButtonText>
               </Button>
               {!isAllDay && (
                 <Button
                   size="lg"
                   variant={selectedField === "start-time" ? "solid" : "outline"}
-                  className="flex-1"
+                  style={{ flex: 0.4 }}
                   onPress={() => handleFieldPress("start-time")}
                 >
-                  <ButtonText>{formatTime(value)}</ButtonText>
+                  <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                    {formatTime(value)}
+                  </ButtonText>
                 </Button>
               )}
+              {/* {isAllDay && <HStack style={{ flex: 0.4 }} />} */}
             </HStack>
 
             {/* Date/Time Picker positioned directly below start time fields */}
@@ -206,21 +211,26 @@ export function DateRangePicker<T extends FieldValues>({
               <Button
                 size="lg"
                 variant={selectedField === "end-date" ? "solid" : "outline"}
-                className="flex-1"
+                style={{ flex: isAllDay ? 1.0 : 0.6 }}
                 onPress={() => handleFieldPress("end-date")}
               >
-                <ButtonText>{formatDate(value)}</ButtonText>
+                <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                  {formatDate(value)}
+                </ButtonText>
               </Button>
               {!isAllDay && (
                 <Button
                   size="lg"
                   variant={selectedField === "end-time" ? "solid" : "outline"}
-                  className="flex-1"
+                  style={{ flex: 0.4 }}
                   onPress={() => handleFieldPress("end-time")}
                 >
-                  <ButtonText>{formatTime(value)}</ButtonText>
+                  <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                    {formatTime(value)}
+                  </ButtonText>
                 </Button>
               )}
+              {/* {isAllDay && <HStack style={{ flex: 0.4 }} />} */}
             </HStack>
 
             {/* Date/Time Picker positioned directly below end time fields */}
