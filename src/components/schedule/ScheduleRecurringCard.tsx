@@ -81,6 +81,11 @@ export default function ScheduleRecurringCard({
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [userSelectedCustom, setUserSelectedCustom] = useState(false);
 
+  // Local state for input values to allow empty strings
+  const [intervalValue, setIntervalValue] = useState<string>("");
+  const [occurrencesValue, setOccurrencesValue] = useState<string>("");
+  const [dayOfMonthValue, setDayOfMonthValue] = useState<string>("");
+
   // Convert UTC ISO strings to Date objects
   const startDate = useMemo(
     () => moment.utc(startTime).local().toDate(),
@@ -147,6 +152,19 @@ export default function ScheduleRecurringCard({
     setSelectedRepeatValue(newValue);
     setShowCustomForm(newValue === "CUSTOM");
   }, [getCurrentRepeatValue]);
+
+  // Sync local input values with recurring schedule
+  useEffect(() => {
+    if (currentRecurringSchedule) {
+      setIntervalValue((currentRecurringSchedule.interval || 1).toString());
+      setOccurrencesValue(
+        (currentRecurringSchedule.occurrences || 20).toString()
+      );
+      setDayOfMonthValue(
+        (currentRecurringSchedule.dayOfMonth || startDate.getDate()).toString()
+      );
+    }
+  }, [currentRecurringSchedule, startDate]);
 
   const handleSelectionChange = (value: string) => {
     setSelectedRepeatValue(value);
@@ -358,14 +376,28 @@ export default function ScheduleRecurringCard({
                   >
                     <InputField
                       keyboardType="numeric"
-                      value={(
-                        currentRecurringSchedule?.interval || 1
-                      ).toString()}
+                      value={intervalValue}
                       onChangeText={(text) => {
-                        const num = parseInt(text) || 1;
-                        updateRecurringSchedule({
-                          interval: Math.max(1, num),
-                        });
+                        // Allow empty string or valid numbers
+                        setIntervalValue(text);
+                        if (text === "") {
+                          return;
+                        }
+                        const num = parseInt(text);
+                        if (!isNaN(num) && num >= 1) {
+                          updateRecurringSchedule({ interval: num });
+                        }
+                      }}
+                      onBlur={() => {
+                        // Ensure valid value on blur
+                        if (
+                          intervalValue === "" ||
+                          parseInt(intervalValue) < 1
+                        ) {
+                          const defaultValue = 1;
+                          setIntervalValue(defaultValue.toString());
+                          updateRecurringSchedule({ interval: defaultValue });
+                        }
                       }}
                     />
                   </Input>
@@ -487,15 +519,31 @@ export default function ScheduleRecurringCard({
                       >
                         <InputField
                           keyboardType="numeric"
-                          value={(
-                            currentRecurringSchedule?.dayOfMonth ||
-                            startDate.getDate()
-                          ).toString()}
+                          value={dayOfMonthValue}
                           onChangeText={(text) => {
-                            const num = parseInt(text) || 1;
-                            updateRecurringSchedule({
-                              dayOfMonth: Math.max(1, Math.min(31, num)),
-                            });
+                            // Allow empty string or valid numbers
+                            setDayOfMonthValue(text);
+                            if (text === "") {
+                              return;
+                            }
+                            const num = parseInt(text);
+                            if (!isNaN(num) && num >= 1 && num <= 31) {
+                              updateRecurringSchedule({ dayOfMonth: num });
+                            }
+                          }}
+                          onBlur={() => {
+                            // Ensure valid value on blur
+                            if (
+                              dayOfMonthValue === "" ||
+                              parseInt(dayOfMonthValue) < 1 ||
+                              parseInt(dayOfMonthValue) > 31
+                            ) {
+                              const defaultValue = startDate.getDate();
+                              setDayOfMonthValue(defaultValue.toString());
+                              updateRecurringSchedule({
+                                dayOfMonth: defaultValue,
+                              });
+                            }
                           }}
                         />
                       </Input>
@@ -682,15 +730,28 @@ export default function ScheduleRecurringCard({
               >
                 <InputField
                   keyboardType="numeric"
-                  value={(
-                    currentRecurringSchedule?.occurrences || 20
-                  ).toString()}
+                  value={occurrencesValue}
                   onChangeText={(text) => {
-                    const num = parseInt(text) || 20;
-                    const finalNum = Math.max(1, num);
-                    updateRecurringSchedule({
-                      occurrences: finalNum,
-                    });
+                    // Allow empty string or valid numbers
+                    setOccurrencesValue(text);
+                    if (text === "") {
+                      return;
+                    }
+                    const num = parseInt(text);
+                    if (!isNaN(num) && num >= 1) {
+                      updateRecurringSchedule({ occurrences: num });
+                    }
+                  }}
+                  onBlur={() => {
+                    // Ensure valid value on blur
+                    if (
+                      occurrencesValue === "" ||
+                      parseInt(occurrencesValue) < 1
+                    ) {
+                      const defaultValue = 20;
+                      setOccurrencesValue(defaultValue.toString());
+                      updateRecurringSchedule({ occurrences: defaultValue });
+                    }
                   }}
                   placeholder="20"
                 />
