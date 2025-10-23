@@ -1,49 +1,63 @@
 import {
   RecurringScheduleOptions,
+  WeekdayType,
   mapFrequencyToRRule,
   mapWeekdayToRRule,
 } from "@/types/recurring-schedule";
+import { RRuleOptions } from "@/validators/blockouts.validators";
 import { RRule, datetime } from "rrule";
 
-export const convertToRRule = (
+/**
+ * Convert RecurringScheduleOptions (form state) to RRuleOptions (for API/storage)
+ */
+export const convertToRRuleOptions = (
   options: RecurringScheduleOptions,
-  startDate: Date
-): string => {
-  const ruleOptions: any = {
+  startDate?: Date
+): Partial<RRuleOptions> => {
+  const ruleOptions: Partial<RRuleOptions> = {
     freq: mapFrequencyToRRule(options.frequency),
     interval: options.interval,
-    dtstart: datetime(
-      startDate.getFullYear(),
-      startDate.getMonth() + 1, // RRule uses 1-based months
-      startDate.getDate(),
-      startDate.getHours(),
-      startDate.getMinutes(),
-      startDate.getSeconds()
-    ),
+    dtstart: startDate,
+    wkst: null,
+    count: null,
+    until: null,
+    tzid: null,
+    bysetpos: null,
+    bymonth: null,
+    bymonthday: null,
+    bynmonthday: null,
+    byyearday: null,
+    byweekno: null,
+    byweekday: null,
+    bynweekday: null,
+    byhour: null,
+    byminute: null,
+    bysecond: null,
+    byeaster: null,
   };
 
   // Handle weekly recurrence
   if (options.frequency === "WEEKLY" && options.weekdays.length > 0) {
-    ruleOptions.byweekday = options.weekdays.map(mapWeekdayToRRule);
+    ruleOptions.byweekday = options.weekdays.map(mapWeekdayToRRule) as any;
   }
 
   // Handle monthly recurrence
   if (options.frequency === "MONTHLY") {
     if (options.monthlyType === "DAY_OF_MONTH") {
-      ruleOptions.bymonthday = options.dayOfMonth;
+      ruleOptions.bymonthday = [options.dayOfMonth];
     } else if (options.monthlyType === "DAY_OF_WEEK") {
       const weekday = mapWeekdayToRRule(options.dayOfWeek);
       if (options.weekOfMonth === -1) {
         // Last occurrence of the weekday in the month
-        ruleOptions.byweekday = [weekday.nth(-1)];
+        ruleOptions.byweekday = [weekday.nth(-1)] as any;
       } else {
         // Specific week of the month
-        ruleOptions.byweekday = [weekday.nth(options.weekOfMonth)];
+        ruleOptions.byweekday = [weekday.nth(options.weekOfMonth)] as any;
       }
     }
   }
 
-  // Handle end conditions
+  // Handle end conditions (must have one or the other)
   if (options.endType === "ON_DATE" && options.endDate) {
     ruleOptions.until = datetime(
       options.endDate.getFullYear(),
@@ -55,21 +69,145 @@ export const convertToRRule = (
     );
   } else if (options.endType === "AFTER_OCCURRENCES" && options.occurrences) {
     ruleOptions.count = options.occurrences;
+  } else {
+    // Default to 20 occurrences if no end condition specified
+    ruleOptions.count = 20;
   }
 
-  const rule = new RRule(ruleOptions);
-  return rule.toString().split("\n")[1]; // Get just the RRULE part, not DTSTART
+  return ruleOptions;
 };
 
+/**
+ * Parse RRuleOptions (from API/storage) to RecurringScheduleOptions (for form state)
+ */
+export const parseRRuleOptions = (
+  rruleOptions: Partial<RRuleOptions>
+): RecurringScheduleOptions => {
+  // Cast to any due to type incompatibility between library version and actual usage
+  // The RRule constructor accepts Partial<Options> but types may not reflect this correctly
+  const rule = new RRule(rruleOptions as any);
+
+  const options: RecurringScheduleOptions = {
+    frequency: "WEEKLY",
+    interval: rule.options.interval || 1,
+    weekdays: [],
+    monthlyType: "DAY_OF_MONTH",
+    dayOfMonth: 1,
+    weekOfMonth: 1,
+    dayOfWeek: "MONDAY",
+    endType: "NEVER",
+  };
+
+  // Map frequency
+  switch (rule.options.freq) {
+    case RRule.DAILY:
+      options.frequency = "DAILY";
+      break;
+    case RRule.WEEKLY:
+      options.frequency = "WEEKLY";
+      break;
+    case RRule.MONTHLY:
+      options.frequency = "MONTHLY";
+      break;
+    case RRule.YEARLY:
+      options.frequency = "YEARLY";
+      break;
+  }
+
+  // Map weekdays for weekly recurrence
+  if (rule.options.byweekday && options.frequency === "WEEKLY") {
+    const weekdayMap: { [key: number]: WeekdayType } = {
+      0: "MONDAY",
+      1: "TUESDAY",
+      2: "WEDNESDAY",
+      3: "THURSDAY",
+      4: "FRIDAY",
+      5: "SATURDAY",
+      6: "SUNDAY",
+    };
+
+    const byweekday = Array.isArray(rule.options.byweekday)
+      ? rule.options.byweekday
+      : [rule.options.byweekday];
+
+    options.weekdays = byweekday
+      .map((wd: any) => {
+        const weekdayNum = typeof wd === "number" ? wd : wd.weekday;
+        return weekdayMap[weekdayNum];
+      })
+      .filter(Boolean);
+  }
+
+  // Handle monthly recurrence
+  if (options.frequency === "MONTHLY") {
+    if (rule.options.bymonthday) {
+      // Day of month pattern
+      options.monthlyType = "DAY_OF_MONTH";
+      options.dayOfMonth = Array.isArray(rule.options.bymonthday)
+        ? rule.options.bymonthday[0]
+        : rule.options.bymonthday;
+    } else if (rule.options.byweekday) {
+      // Day of week pattern
+      options.monthlyType = "DAY_OF_WEEK";
+
+      const weekdayMap: { [key: number]: WeekdayType } = {
+        0: "MONDAY",
+        1: "TUESDAY",
+        2: "WEDNESDAY",
+        3: "THURSDAY",
+        4: "FRIDAY",
+        5: "SATURDAY",
+        6: "SUNDAY",
+      };
+
+      const byweekday = Array.isArray(rule.options.byweekday)
+        ? rule.options.byweekday[0]
+        : rule.options.byweekday;
+
+      const weekdayNum =
+        typeof byweekday === "number" ? byweekday : (byweekday as any).weekday;
+      options.dayOfWeek = weekdayMap[weekdayNum];
+
+      // Get the nth occurrence (1-4, or -1 for last)
+      if (typeof byweekday !== "number" && (byweekday as any).n) {
+        options.weekOfMonth = (byweekday as any).n;
+      } else {
+        // Default to first occurrence if no nth specified
+        options.weekOfMonth = 1;
+      }
+    }
+  }
+
+  // Handle end conditions
+  if (rule.options.until) {
+    options.endType = "ON_DATE";
+    options.endDate = rule.options.until;
+  } else if (rule.options.count) {
+    options.endType = "AFTER_OCCURRENCES";
+    options.occurrences = rule.options.count;
+  }
+
+  return options;
+};
+
+/**
+ * @deprecated Use parseRRuleOptions instead
+ */
 export const parseRRule = (
   rruleString: string,
   startDate: Date
 ): RecurringScheduleOptions => {
   // This is a simplified parser - you might want to make it more robust
+
+  // Remove the "RRULE:" prefix if it exists
+  const wholeRRuleString = !rruleString.startsWith("RRULE:")
+    ? `RRULE:${rruleString}`
+    : rruleString;
+
   const rule = RRule.fromString(
     `DTSTART:${
       startDate.toISOString().replace(/[-:]/g, "").split(".")[0]
-    }Z\nRRULE:${rruleString}`
+    }Z\n${wholeRRuleString}`
   );
 
   const options: RecurringScheduleOptions = {
@@ -100,8 +238,8 @@ export const parseRRule = (
   }
 
   // Map weekdays for weekly recurrence
-  if (rule.options.byweekday) {
-    const weekdayMap: { [key: number]: any } = {
+  if (rule.options.byweekday && options.frequency === "WEEKLY") {
+    const weekdayMap: { [key: number]: WeekdayType } = {
       0: "MONDAY",
       1: "TUESDAY",
       2: "WEDNESDAY",
@@ -121,6 +259,46 @@ export const parseRRule = (
         return weekdayMap[weekdayNum];
       })
       .filter(Boolean);
+  }
+
+  // Handle monthly recurrence
+  if (options.frequency === "MONTHLY") {
+    if (rule.options.bymonthday) {
+      // Day of month pattern
+      options.monthlyType = "DAY_OF_MONTH";
+      options.dayOfMonth = Array.isArray(rule.options.bymonthday)
+        ? rule.options.bymonthday[0]
+        : rule.options.bymonthday;
+    } else if (rule.options.byweekday) {
+      // Day of week pattern
+      options.monthlyType = "DAY_OF_WEEK";
+
+      const weekdayMap: { [key: number]: WeekdayType } = {
+        0: "MONDAY",
+        1: "TUESDAY",
+        2: "WEDNESDAY",
+        3: "THURSDAY",
+        4: "FRIDAY",
+        5: "SATURDAY",
+        6: "SUNDAY",
+      };
+
+      const byweekday = Array.isArray(rule.options.byweekday)
+        ? rule.options.byweekday[0]
+        : rule.options.byweekday;
+
+      const weekdayNum =
+        typeof byweekday === "number" ? byweekday : (byweekday as any).weekday;
+      options.dayOfWeek = weekdayMap[weekdayNum];
+
+      // Get the nth occurrence (1-4, or -1 for last)
+      if (typeof byweekday !== "number" && (byweekday as any).n) {
+        options.weekOfMonth = (byweekday as any).n;
+      } else {
+        // Default to first occurrence if no nth specified
+        options.weekOfMonth = 1;
+      }
+    }
   }
 
   // Handle end conditions
@@ -175,10 +353,26 @@ export const generateReadableDescription = (
 
   // Weekly specifics
   if (options.frequency === "WEEKLY" && options.weekdays.length > 0) {
-    const dayNames = options.weekdays.map(
-      (day) => day.charAt(0) + day.slice(1).toLowerCase()
-    );
-    description += ` on ${dayNames.join(", ")}`;
+    const weekdays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+
+    // Check if all 7 days are selected
+    if (options.weekdays.length === 7) {
+      description = "Every day";
+    }
+    // Check if all weekdays (Mon-Fri) are selected
+    else if (
+      options.weekdays.length === 5 &&
+      weekdays.every((day) => options.weekdays.includes(day as any))
+    ) {
+      description += " on weekdays";
+    }
+    // Otherwise, list the specific days
+    else {
+      const dayNames = options.weekdays.map(
+        (day) => day.charAt(0) + day.slice(1).toLowerCase()
+      );
+      description += ` on ${dayNames.join(", ")}`;
+    }
   }
 
   // Monthly specifics

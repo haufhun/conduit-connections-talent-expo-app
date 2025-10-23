@@ -10,26 +10,27 @@ import {
 import { HStack } from "@/components/ui/hstack";
 import { AlertCircleIcon } from "@/components/ui/icon";
 import { VStack } from "@/components/ui/vstack";
-import { getDayjsFromUtcDateString } from "@/utils/date";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useState } from "react";
+import moment from "moment-timezone";
+import { useEffect, useRef, useState } from "react";
 import {
   Control,
   Controller,
   FieldValues,
   Path,
   UseFormSetValue,
+  useWatch,
 } from "react-hook-form";
 import { Platform } from "react-native";
 
-// Format date using dayjs in user's timezone
+// Format date using moment in user's timezone
 const formatDate = (dateString: string) => {
-  return getDayjsFromUtcDateString(dateString).format("ddd, MMM D, YYYY");
+  return moment.utc(dateString).local().format("ddd, MMM D, YYYY");
 };
 
-// Format time using dayjs in user's timezone
+// Format time using moment in user's timezone
 const formatTime = (dateString: string) => {
-  return getDayjsFromUtcDateString(dateString).format("h:mm A");
+  return moment.utc(dateString).local().format("h:mm A");
 };
 
 interface DateRangePickerProps<T extends FieldValues> {
@@ -53,6 +54,43 @@ export function DateRangePicker<T extends FieldValues>({
 }: DateRangePickerProps<T>) {
   const [selectedField, setSelectedField] = useState<string | null>(null);
 
+  // Watch the start and end times to track changes
+  const startTime = useWatch({ control, name: startTimeFieldName });
+  const endTime = useWatch({ control, name: endTimeFieldName });
+
+  // Use ref to store the previous start time
+  const previousStartTimeRef = useRef<string | null>(null);
+
+  // Effect to adjust end time when start time changes
+  useEffect(() => {
+    if (!startTime || !endTime) return;
+
+    // Skip on initial mount
+    if (previousStartTimeRef.current === null) {
+      previousStartTimeRef.current = startTime;
+      return;
+    }
+
+    // Check if start time has changed
+    if (previousStartTimeRef.current !== startTime) {
+      const previousStart = moment(previousStartTimeRef.current);
+      const newStart = moment(startTime);
+      const currentEnd = moment(endTime);
+
+      // Calculate the duration between previous start and current end
+      const durationMs = currentEnd.diff(previousStart);
+
+      // Apply the same duration to the new start time
+      const newEnd = newStart.add(durationMs, "millisecond");
+
+      // Update the end time
+      setValue(endTimeFieldName, newEnd.toISOString() as any);
+
+      // Update the previous start time
+      previousStartTimeRef.current = startTime;
+    }
+  }, [startTime, endTime, setValue, endTimeFieldName]);
+
   // Computed values based on selectedField
   const showStartDatePicker = selectedField === "start-date";
   const showStartTimePicker = selectedField === "start-time";
@@ -65,6 +103,8 @@ export function DateRangePicker<T extends FieldValues>({
   ) => {
     if (!selectedDate) return;
 
+    // The DateTimePicker returns a Date object in local time
+    // Convert it to ISO string which will be in UTC
     setValue(
       type === "start" ? startTimeFieldName : endTimeFieldName,
       selectedDate.toISOString() as any
@@ -96,28 +136,33 @@ export function DateRangePicker<T extends FieldValues>({
               <Button
                 size="lg"
                 variant={selectedField === "start-date" ? "solid" : "outline"}
-                className="flex-1"
+                style={{ flex: isAllDay ? 1.0 : 0.6 }}
                 onPress={() => handleFieldPress("start-date")}
               >
-                <ButtonText>{formatDate(value)}</ButtonText>
+                <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                  {formatDate(value)}
+                </ButtonText>
               </Button>
               {!isAllDay && (
                 <Button
                   size="lg"
                   variant={selectedField === "start-time" ? "solid" : "outline"}
-                  className="flex-1"
+                  style={{ flex: 0.4 }}
                   onPress={() => handleFieldPress("start-time")}
                 >
-                  <ButtonText>{formatTime(value)}</ButtonText>
+                  <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                    {formatTime(value)}
+                  </ButtonText>
                 </Button>
               )}
+              {/* {isAllDay && <HStack style={{ flex: 0.4 }} />} */}
             </HStack>
 
             {/* Date/Time Picker positioned directly below start time fields */}
             {selectedField === "start-date" && showStartDatePicker && (
               <VStack className="items-center mt-4">
                 <DateTimePicker
-                  value={new Date(value)}
+                  value={moment.utc(value).local().toDate()}
                   mode="date"
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(_event, selectedDate) =>
@@ -132,7 +177,7 @@ export function DateRangePicker<T extends FieldValues>({
               !isAllDay && (
                 <VStack className="items-center mt-4">
                   <DateTimePicker
-                    value={new Date(value)}
+                    value={moment.utc(value).local().toDate()}
                     mode="time"
                     display={Platform.OS === "ios" ? "spinner" : "default"}
                     onChange={(_event, selectedDate) =>
@@ -166,28 +211,33 @@ export function DateRangePicker<T extends FieldValues>({
               <Button
                 size="lg"
                 variant={selectedField === "end-date" ? "solid" : "outline"}
-                className="flex-1"
+                style={{ flex: isAllDay ? 1.0 : 0.6 }}
                 onPress={() => handleFieldPress("end-date")}
               >
-                <ButtonText>{formatDate(value)}</ButtonText>
+                <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                  {formatDate(value)}
+                </ButtonText>
               </Button>
               {!isAllDay && (
                 <Button
                   size="lg"
                   variant={selectedField === "end-time" ? "solid" : "outline"}
-                  className="flex-1"
+                  style={{ flex: 0.4 }}
                   onPress={() => handleFieldPress("end-time")}
                 >
-                  <ButtonText>{formatTime(value)}</ButtonText>
+                  <ButtonText numberOfLines={1} adjustsFontSizeToFit>
+                    {formatTime(value)}
+                  </ButtonText>
                 </Button>
               )}
+              {/* {isAllDay && <HStack style={{ flex: 0.4 }} />} */}
             </HStack>
 
             {/* Date/Time Picker positioned directly below end time fields */}
             {selectedField === "end-date" && showEndDatePicker && (
               <VStack className="items-center mt-4">
                 <DateTimePicker
-                  value={getDayjsFromUtcDateString(value).toDate()}
+                  value={moment.utc(value).local().toDate()}
                   mode="date"
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(_event, selectedDate) =>
@@ -200,7 +250,7 @@ export function DateRangePicker<T extends FieldValues>({
             {selectedField === "end-time" && showEndTimePicker && !isAllDay && (
               <VStack className="items-center mt-4">
                 <DateTimePicker
-                  value={getDayjsFromUtcDateString(value).toDate()}
+                  value={moment.utc(value).local().toDate()}
                   mode="time"
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(_event, selectedDate) =>

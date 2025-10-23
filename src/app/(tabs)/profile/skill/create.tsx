@@ -1,67 +1,40 @@
 import { useCreateTalentSkill, useGetSkills } from "@/api/api";
-import FilePickerActionSheet from "@/components/FilePickerActionSheet";
+import SelectSkillSection from "@/components/skills/SelectSkillSection";
+import SkillExperienceRateSection from "@/components/skills/SkillExperienceRateSection";
+import SkillImagesSection from "@/components/skills/SkillImagesSection";
+import SkillSummarySection from "@/components/skills/SkillSummarySection";
+import SkillYoutubeVideoSection from "@/components/skills/SkillYoutubeVideoSection";
 import { Button, ButtonText } from "@/components/ui/button";
-import {
-  FormControl,
-  FormControlError,
-  FormControlErrorIcon,
-  FormControlErrorText,
-  FormControlLabel,
-  FormControlLabelText,
-} from "@/components/ui/form-control";
-import { HStack } from "@/components/ui/hstack";
-import { AlertCircleIcon, ChevronRightIcon } from "@/components/ui/icon";
-import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
+
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
-import { MAX_SKILL_IMAGES, SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import { useAuth } from "@/providers/auth-provider";
-import { uploadFileToSupabase } from "@/utils/storage";
-import {
-  CreateSkillSchemaType,
-  createSkillSchema,
-} from "@/validators/skills.validators";
+import { createSkillSchema } from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
-import * as ImageManipulator from "expo-image-manipulator";
+
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Controller, useForm } from "react-hook-form";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import YoutubePlayer from "react-native-youtube-iframe";
+
 import { z } from "zod";
+
+// Modified schema for create screen that allows empty image arrays initially
+const createSkillFormSchema = createSkillSchema
+  .omit({ image_urls: true })
+  .extend({
+    image_urls: z.array(z.string()).default([]),
+  });
+
+type CreateSkillFormType = z.infer<typeof createSkillFormSchema>;
 
 export default function CreateSkillScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { session } = useAuth();
-  const [playing, setPlaying] = useState(false);
-  const [isPressed, setIsPressed] = useState(true);
-
-  const getYoutubeVideoId = (url: string) => {
-    if (!url) return null;
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  };
-
-  const onStateChange = useCallback((state: string) => {
-    if (state === "ended") {
-      setPlaying(false);
-    }
-  }, []);
 
   const { mutateAsync: createSkill } = useCreateTalentSkill();
-  const [showActionsheet, setShowActionsheet] = useState(false);
   const { data: skills } = useGetSkills();
 
   const {
@@ -69,9 +42,9 @@ export default function CreateSkillScreen() {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateSkillSchemaType>({
-    resolver: zodResolver(createSkillSchema),
+    formState: { isSubmitting },
+  } = useForm<CreateSkillFormType>({
+    resolver: zodResolver(createSkillFormSchema) as any,
     defaultValues: {
       skill_id: undefined,
       summary: "",
@@ -109,7 +82,7 @@ export default function CreateSkillScreen() {
     }, [params.selectedSkillId, setValue, router])
   );
 
-  const onSubmit = async (data: z.infer<typeof createSkillSchema>) => {
+  const onSubmit = async (data: CreateSkillFormType) => {
     try {
       await createSkill({
         skill_id: data.skill_id,
@@ -120,68 +93,24 @@ export default function CreateSkillScreen() {
         image_urls: data.image_urls,
       });
 
-      router.back();
+      router.replace("/profile");
     } catch (error) {
       console.error("Error creating skill:", error);
       Alert.alert("Error", "Failed to create skill");
     }
   };
 
-  const handleImageFileUpload = async (uri: string, contentType: string) => {
-    if (!session?.user?.id) {
-      Alert.alert("Error", "You must be signed in to upload files");
-      return;
-    }
-
-    try {
-      let fileOptions = {
-        contentType,
-        fileExtension: "jpg",
-      };
-
-      // Compress image
-      const compressedImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 1080 } }],
-        {
-          compress: 0.7,
-          format: ImageManipulator.SaveFormat.JPEG,
-        }
-      );
-
-      // Upload file to Supabase
-      const fileUrl = await uploadFileToSupabase(
-        compressedImage.uri,
-        SKILL_IMAGES_BUCKET,
-        `users/${session.user.id}/skills`,
-        fileOptions
-      );
-
-      // Update the image URLs
-      const currentUrls = watch("image_urls");
-      setValue("image_urls", [...currentUrls, fileUrl]);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      Alert.alert("Error", "Failed to upload file");
-    }
-  };
-
-  const handleAddImage = () => {
-    if (imageUrls.length >= MAX_SKILL_IMAGES) {
-      Alert.alert(
-        "Maximum Files",
-        `You can only add up to ${MAX_SKILL_IMAGES} skill images.`
-      );
-      return;
-    }
-    setShowActionsheet(true);
-  };
-
   return (
-    <SafeAreaView edges={["bottom"]} className="flex-1 bg-primary">
-      <ScrollView className="flex-1">
-        <VStack space="lg" className="p-[20px]">
-          <VStack space="sm">
+    <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <VStack space="lg" className="p-6">
+          <VStack
+            space="sm"
+            className="bg-white rounded-2xl p-6 border border-primary-200 shadow-sm"
+          >
+            <Text size="xl" bold className="text-typography-900 mb-2">
+              Create New Skill
+            </Text>
             <Text className="text-typography-600">
               Tell us about your expertise and experience
             </Text>
@@ -191,284 +120,111 @@ export default function CreateSkillScreen() {
             control={control}
             name="skill_id"
             render={({ fieldState: { error } }) => (
-              <>
-                <FormControl isInvalid={Boolean(error)}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/profile/skill/select");
-                    }}
-                  >
-                    <FormControlLabel>
-                      <FormControlLabelText>Select Skill</FormControlLabelText>
-                    </FormControlLabel>
-
-                    <Input
-                      size="lg"
-                      variant="outline"
-                      isReadOnly
-                      isDisabled
-                      pointerEvents="none"
-                    >
-                      <InputField
-                        placeholder="Tap to select a skill..."
-                        value={selectedSkillName || ""}
-                        editable={false}
-                        style={{ color: selectedSkillName ? "#000" : "#999" }}
-                      />
-                      <InputSlot>
-                        <InputIcon as={ChevronRightIcon} />
-                      </InputSlot>
-                    </Input>
-                  </TouchableOpacity>
-
-                  <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText size="sm">
-                      {error?.message}
-                    </FormControlErrorText>
-                  </FormControlError>
-                </FormControl>
-              </>
+              <SelectSkillSection
+                selectedSkillName={selectedSkillName ?? null}
+                error={error?.message}
+              />
             )}
           />
 
           <Controller
             control={control}
             name="summary"
-            render={({ field: { value, onChange }, fieldState: { error } }) => (
-              <FormControl isInvalid={Boolean(error)}>
-                <FormControlLabel>
-                  <FormControlLabelText>Summary</FormControlLabelText>
-                </FormControlLabel>
-                <Input
-                  size="lg"
-                  variant="outline"
-                  className="min-h-[160px] h-[160px]"
-                >
-                  <InputField
-                    placeholder="Write a summary of your experience with this skill..."
-                    value={value ?? ""}
-                    onChangeText={onChange}
-                    multiline
-                    numberOfLines={6}
-                    textAlignVertical="top"
-                    style={styles.summaryInput}
-                  />
-                </Input>
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText size="sm">
-                    {error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
+            render={({ fieldState: { error } }) => (
+              <SkillSummarySection
+                summary={watch("summary") ?? null}
+                onUpdateSummary={(summary) =>
+                  setValue("summary", summary || "")
+                }
+                showEditControls={true}
+                mode="create"
+                error={error?.message}
+              />
             )}
           />
 
-          <HStack space="md">
-            <VStack space="md" className="flex-1">
-              <Controller
-                control={control}
-                name="years_of_experience"
-                render={({
-                  field: { value, onChange },
-                  fieldState: { error },
-                }) => (
-                  <FormControl isInvalid={Boolean(error)}>
-                    <FormControlLabel>
-                      <FormControlLabelText>
-                        Years of Experience
-                      </FormControlLabelText>
-                    </FormControlLabel>
-                    <Input size="lg" variant="outline">
-                      <InputField
-                        placeholder="Years"
-                        value={value?.toString() ?? ""}
-                        onChangeText={(text) => {
-                          const num = parseFloat(text);
-                          onChange(isNaN(num) ? "" : num);
-                        }}
-                        keyboardType="decimal-pad"
-                      />
-                    </Input>
-                    <FormControlError>
-                      <FormControlErrorIcon as={AlertCircleIcon} />
-                      <FormControlErrorText size="sm">
-                        {error?.message}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  </FormControl>
-                )}
-              />
-            </VStack>
-
-            <VStack space="md" className="flex-1">
+          <Controller
+            control={control}
+            name="years_of_experience"
+            render={({ fieldState: { error: yearsError } }) => (
               <Controller
                 control={control}
                 name="hourly_rate"
-                render={({
-                  field: { value, onChange },
-                  fieldState: { error },
-                }) => (
-                  <FormControl isInvalid={Boolean(errors.hourly_rate)}>
-                    <FormControlLabel>
-                      <FormControlLabelText>Hourly Rate</FormControlLabelText>
-                    </FormControlLabel>
-
-                    <Input size="lg" variant="outline">
-                      <InputField
-                        placeholder="$/hr"
-                        value={value?.toString() ?? ""}
-                        onChangeText={(text) => {
-                          const num = parseFloat(text);
-                          onChange(isNaN(num) ? "" : num);
-                        }}
-                        keyboardType="decimal-pad"
-                      />
-                    </Input>
-                    <FormControlError>
-                      <FormControlErrorIcon as={AlertCircleIcon} />
-                      <FormControlErrorText size="sm">
-                        {error?.message}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  </FormControl>
+                render={({ fieldState: { error: rateError } }) => (
+                  <SkillExperienceRateSection
+                    yearsOfExperience={watch("years_of_experience") ?? null}
+                    hourlyRate={watch("hourly_rate") ?? null}
+                    onUpdateExperienceRate={(data) => {
+                      if (data.years_of_experience !== null) {
+                        setValue(
+                          "years_of_experience",
+                          data.years_of_experience
+                        );
+                      }
+                      if (data.hourly_rate !== null) {
+                        setValue("hourly_rate", data.hourly_rate);
+                      }
+                    }}
+                    showEditControls={true}
+                    mode="create"
+                    yearsOfExperienceError={yearsError?.message}
+                    hourlyRateError={rateError?.message}
+                  />
                 )}
               />
-            </VStack>
-          </HStack>
+            )}
+          />
 
           <Controller
             control={control}
             name="youtube_url"
-            render={({ field: { value, onChange }, fieldState: { error } }) => (
-              <FormControl isInvalid={Boolean(error)}>
-                <FormControlLabel>
-                  <FormControlLabelText>YouTube Video URL</FormControlLabelText>
-                </FormControlLabel>
-                <Input size="lg" variant="outline">
-                  <InputField
-                    placeholder="Enter YouTube video URL..."
-                    value={value ?? ""}
-                    onChangeText={onChange}
-                  />
-                </Input>
-                {value && (
-                  <View style={{ height: 200, marginTop: 8 }}>
-                    <YoutubePlayer
-                      height={200}
-                      videoId={getYoutubeVideoId(value)}
-                      play={playing}
-                      onChangeState={onStateChange}
-                    />
-                  </View>
-                )}
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText size="sm">
-                    {error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
+            render={({ fieldState: { error } }) => (
+              <SkillYoutubeVideoSection
+                youtubeUrl={watch("youtube_url") ?? null}
+                onUpdateYoutubeUrl={(url) =>
+                  setValue("youtube_url", url ?? undefined)
+                }
+                showEditControls={true}
+                mode="create"
+                error={error?.message}
+              />
             )}
           />
 
-          <VStack space="md">
-            <Text bold className="text-typography-700">
-              Images
-            </Text>
-            <Text className="text-typography-600">
-              Add up to 5 images showcasing your work
-            </Text>
+          <Controller
+            control={control}
+            name="image_urls"
+            render={({ fieldState: { error } }) => (
+              <SkillImagesSection
+                userId={session?.user?.id || ""}
+                imageUrls={imageUrls}
+                onUpdateImageUrls={(urls) => setValue("image_urls", urls)}
+                showEditControls={imageUrls.length > 0}
+                mode="create"
+                error={error?.message}
+              />
+            )}
+          />
 
-            <Controller
-              control={control}
-              name="image_urls"
-              render={({
-                field: { value, onChange },
-                fieldState: { error },
-              }) => (
-                <FormControl isInvalid={Boolean(error)}>
-                  <HStack space="sm" style={styles.imagesGrid}>
-                    {imageUrls.map((url, index) => (
-                      <View
-                        key={index}
-                        className="w-[100] h-[100] rounded-lg overflow-hidden bg-secondary-100"
-                      >
-                        <Image
-                          source={{ uri: url }}
-                          style={{ width: "100%", height: "100%" }}
-                          contentFit="cover"
-                        />
-                      </View>
-                    ))}
-                    {imageUrls.length < 5 && (
-                      <Button
-                        variant="outline"
-                        onPress={handleAddImage}
-                        style={styles.addImageButton}
-                        className="items-center justify-center border-2 border-dashed border-opacity-75 border-typography-500 bg-white"
-                      >
-                        <VStack space="xs" className="items-center">
-                          <Text className="text-typography-300">Add Item</Text>
-                        </VStack>
-                      </Button>
-                    )}
-                  </HStack>
-
-                  <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} />
-                    <FormControlErrorText size="sm">
-                      {error?.message}
-                    </FormControlErrorText>
-                  </FormControlError>
-                </FormControl>
-              )}
-            />
+          <VStack className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm">
+            <Button
+              size="lg"
+              variant="solid"
+              action="primary"
+              onPress={handleSubmit(onSubmit as any)}
+              isDisabled={isSubmitting}
+              className="rounded-xl"
+            >
+              <ButtonText className="font-semibold">
+                {isSubmitting ? "Creating..." : "Create Skill"}
+              </ButtonText>
+            </Button>
           </VStack>
-
-          <Button
-            size="lg"
-            variant="solid"
-            action="primary"
-            onPress={handleSubmit(onSubmit)}
-            isDisabled={isSubmitting}
-          >
-            <ButtonText>
-              {isSubmitting ? "Creating..." : "Create Skill"}
-            </ButtonText>
-          </Button>
         </VStack>
 
-        {errors && <VStack className="h-24" />}
+        {/* Bottom padding */}
+        <VStack className="h-8" />
       </ScrollView>
-
-      <FilePickerActionSheet
-        supportedImageTypes={["image/jpeg", "image/png", "image/heic"]}
-        showActionsheet={showActionsheet}
-        setShowActionsheet={setShowActionsheet}
-        handleFileUpload={handleImageFileUpload}
-      />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  summaryInput: {
-    height: 160,
-    paddingTop: 12,
-    paddingBottom: 12,
-    textAlignVertical: "top",
-  },
-  imagesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  addImageButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-  },
-});

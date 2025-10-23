@@ -1,7 +1,7 @@
 import FilePickerActionSheet from "@/components/FilePickerActionSheet";
 import SkillImagesInfoModal from "@/components/skills/SkillImagesInfoModal";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+
 import { HStack } from "@/components/ui/hstack";
 import { AddIcon, EditIcon, Icon } from "@/components/ui/icon";
 import { IconSymbol } from "@/components/ui/IconSymbol";
@@ -10,11 +10,19 @@ import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
 import { SKILL_IMAGES_BUCKET } from "@/constants/Supabase";
 import type { TalentSkill } from "@/types/skills";
-import { uploadFileToSupabase } from "@/utils/storage";
+import {
+  deleteFileFromSupabase,
+  extractFilePathFromUrl,
+  uploadFileToSupabase,
+} from "@/utils/storage";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
-import { ImageIcon, MinusCircleIcon } from "lucide-react-native";
+import {
+  AlertCircleIcon,
+  ImageIcon,
+  MinusCircleIcon,
+} from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -36,9 +44,13 @@ import Animated, {
 } from "react-native-reanimated";
 
 interface SkillImagesSectionProps {
-  skill: TalentSkill;
+  skill?: TalentSkill;
   userId: string;
-  onUpdateSkill: (updates: Partial<TalentSkill>) => Promise<void>;
+  imageUrls: string[];
+  onUpdateImageUrls: (urls: string[]) => void | Promise<void>;
+  showEditControls?: boolean;
+  mode?: "create" | "edit";
+  error?: string;
 }
 
 type ImageItem = {
@@ -49,14 +61,18 @@ type ImageItem = {
 export default function SkillImagesSection({
   skill,
   userId,
-  onUpdateSkill,
+  imageUrls,
+  onUpdateImageUrls,
+  showEditControls = true,
+  mode = "edit",
+  error,
 }: SkillImagesSectionProps) {
   const [showActionsheet, setShowActionsheet] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   // Convert image URLs to items with keys for DraggableFlatList
-  const imageItems = skill.image_urls.map((url) => ({
+  const imageItems = imageUrls.map((url) => ({
     key: url,
     url,
   }));
@@ -111,12 +127,12 @@ export default function SkillImagesSection({
       const fileUrl = await uploadFileToSupabase(
         compressedImage.uri,
         SKILL_IMAGES_BUCKET,
-        `users/${userId}/skills/${skill.id}`,
+        `users/${userId}/skills${skill?.id ? `/${skill.id}` : ""}`,
         fileOptions
       );
 
-      const updatedUrls = [...skill.image_urls, fileUrl];
-      await onUpdateSkill({ image_urls: updatedUrls });
+      const updatedUrls = [...imageUrls, fileUrl];
+      await onUpdateImageUrls(updatedUrls);
     } catch (error) {
       console.error("Error uploading file:", error);
       Alert.alert("Error", "Failed to upload file");
@@ -124,7 +140,7 @@ export default function SkillImagesSection({
   };
 
   const handleAdd = () => {
-    if (skill.image_urls.length >= 5) {
+    if (imageUrls.length >= 5) {
       Alert.alert("Maximum Files", "You can only add up to 5 portfolio items.");
       return;
     }
@@ -145,8 +161,25 @@ export default function SkillImagesSection({
             await Haptics.notificationAsync(
               Haptics.NotificationFeedbackType.Success
             );
-            const newUrls = skill.image_urls.filter((u) => u !== url);
-            await onUpdateSkill({ image_urls: newUrls });
+
+            // Extract the file path from the URL and delete from Supabase storage
+            const filePath = extractFilePathFromUrl(url, SKILL_IMAGES_BUCKET);
+            if (filePath) {
+              try {
+                await deleteFileFromSupabase(SKILL_IMAGES_BUCKET, filePath);
+              } catch (storageError) {
+                console.warn(
+                  "Failed to delete file from storage:",
+                  storageError
+                );
+                // Continue with URL removal even if storage deletion fails
+                // This prevents orphaned references in the database
+              }
+            }
+
+            // Remove the URL from the array and update
+            const newUrls = imageUrls.filter((u) => u !== url);
+            await onUpdateImageUrls(newUrls);
           } catch (error) {
             console.error("Error deleting image:", error);
             Alert.alert("Error", "Failed to delete image");
@@ -203,40 +236,66 @@ export default function SkillImagesSection({
   };
 
   return (
-    <Card className="p-4 bg-background-0 border-outline-100 rounded-lg">
-      <VStack space="md">
+    <>
+      <VStack
+        space="md"
+        className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm"
+      >
         <HStack className="justify-between items-center">
           <HStack space="sm" className="items-center">
             <Icon as={ImageIcon} size="md" className="text-tertiary-500" />
             <Text size="lg" className="font-semibold text-typography-900">
               Portfolio Images
             </Text>
-            <TouchableOpacity
-              onPress={() => setInfoModalVisible(true)}
-              className="w-7 h-7 rounded-full bg-info-50 items-center justify-center border border-info-200"
-            >
-              <IconSymbol
-                name="questionmark.circle.fill"
-                size={16}
-                color={BrandColors.INFO}
-              />
-            </TouchableOpacity>
+            {showEditControls && (
+              <TouchableOpacity
+                onPress={() => setInfoModalVisible(true)}
+                className="w-7 h-7 rounded-full bg-info-50 items-center justify-center border border-info-200"
+              >
+                <IconSymbol
+                  name="questionmark.circle.fill"
+                  size={16}
+                  color={BrandColors.INFO}
+                />
+              </TouchableOpacity>
+            )}
           </HStack>
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={() => setIsEditing(!isEditing)}
-            className="border-primary-300 bg-primary-50"
-          >
-            <ButtonIcon as={EditIcon} size="sm" className="text-primary-600" />
-            <ButtonText className="text-primary-600 ml-1">
-              {isEditing ? "Done" : "Edit"}
-            </ButtonText>
-          </Button>
+          {showEditControls && (
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setIsEditing(!isEditing)}
+              className="border-primary-300 bg-primary-50"
+            >
+              <ButtonIcon
+                as={EditIcon}
+                size="sm"
+                className="text-primary-600"
+              />
+              <ButtonText className="text-primary-600 ml-1">
+                {isEditing ? "Done" : "Edit"}
+              </ButtonText>
+            </Button>
+          )}
         </HStack>
 
-        {skill.image_urls.length === 0 ? (
-          <View className="py-8 px-4 bg-background-50 rounded-lg border-2 border-dashed border-outline-200">
+        {!showEditControls && (
+          <Text className="text-typography-600 mb-2">
+            Add up to 5 images showcasing your work
+          </Text>
+        )}
+
+        {error && mode === "create" && (
+          <HStack space="xs" className="items-center">
+            <Icon as={AlertCircleIcon} size="sm" className="text-error-600" />
+            <Text size="sm" className="text-error-600">
+              {error}
+            </Text>
+          </HStack>
+        )}
+
+        {imageUrls.length === 0 ? (
+          <View className="py-8 px-4 bg-background-50 rounded-xl border-2 border-dashed border-outline-200">
             <VStack space="sm" className="items-center">
               <Icon as={ImageIcon} size="xl" className="text-outline-400" />
               <Text className="text-typography-500 text-center">
@@ -257,39 +316,44 @@ export default function SkillImagesSection({
             </VStack>
           </View>
         ) : (
-          <View style={styles.listContainer}>
-            <DraggableFlatList
-              data={imageItems}
-              onDragEnd={({ data }) => {
-                const newUrls = data.map((item) => item.url);
-                onUpdateSkill({ image_urls: newUrls });
-              }}
-              keyExtractor={(item) => item.key}
-              renderItem={renderImage}
-              horizontal
-              contentContainerStyle={styles.listContent}
-            />
-
-            {!isEditing && skill.image_urls.length < 5 && (
-              <Button
-                variant="outline"
-                onPress={handleAdd}
-                style={styles.addImageButton}
-                className="items-center justify-center border-2 border-dashed border-primary-300 bg-primary-50"
-              >
-                <VStack space="xs" className="items-center">
-                  <ButtonIcon
-                    as={AddIcon}
-                    size="xl"
-                    className="text-primary-600"
-                  />
-                  <ButtonText className="text-primary-600 text-xs">
-                    Add Item
-                  </ButtonText>
-                </VStack>
-              </Button>
-            )}
-          </View>
+          <VStack space="md" className="bg-background-50 p-4 rounded-xl">
+            <View style={styles.listContainer}>
+              <DraggableFlatList
+                data={imageItems}
+                onDragEnd={({ data }) => {
+                  const newUrls = data.map((item) => item.url);
+                  onUpdateImageUrls(newUrls);
+                }}
+                keyExtractor={(item) => item.key}
+                renderItem={renderImage}
+                horizontal
+                contentContainerStyle={styles.listContent}
+                ListHeaderComponent={
+                  !isEditing && imageUrls.length < 5 ? (
+                    <View style={styles.container}>
+                      <Button
+                        variant="outline"
+                        onPress={handleAdd}
+                        style={styles.addImageButton}
+                        className="items-center justify-center border-2 border-dashed border-primary-300 bg-white"
+                      >
+                        <VStack space="xs" className="items-center">
+                          <ButtonIcon
+                            as={AddIcon}
+                            size="xl"
+                            className="text-primary-600"
+                          />
+                          <ButtonText className="text-primary-600 text-xs">
+                            Add Image
+                          </ButtonText>
+                        </VStack>
+                      </Button>
+                    </View>
+                  ) : null
+                }
+              />
+            </View>
+          </VStack>
         )}
       </VStack>
 
@@ -300,11 +364,13 @@ export default function SkillImagesSection({
         handleFileUpload={handleImageFileUpload}
       />
 
-      <SkillImagesInfoModal
-        isOpen={infoModalVisible}
-        onClose={() => setInfoModalVisible(false)}
-      />
-    </Card>
+      {showEditControls && (
+        <SkillImagesInfoModal
+          isOpen={infoModalVisible}
+          onClose={() => setInfoModalVisible(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -314,7 +380,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   listContent: {
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
     gap: 8,
   },
   container: {
@@ -322,7 +388,7 @@ const styles = StyleSheet.create({
     height: 100,
     marginTop: 8,
     marginBottom: 8,
-    marginLeft: 4,
+    marginRight: 4,
   },
   imageWrapper: {
     width: "100%",
@@ -332,7 +398,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: "100%",
     height: "100%",
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
   },
   image: {
@@ -361,7 +427,6 @@ const styles = StyleSheet.create({
   addImageButton: {
     width: 100,
     height: 100,
-    borderRadius: 8,
-    marginLeft: 8,
+    borderRadius: 12,
   },
 });

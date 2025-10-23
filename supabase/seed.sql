@@ -552,62 +552,62 @@ BEGIN
           metadata = '{"bio": "Turning parties into celebrations"}'::jsonb WHERE id = fred_id;
 
   -- Insert sample blockouts for all users (around June 11, 2025)
-  INSERT INTO talent_blockouts (talent_id, title, description, start_time, end_time, is_all_day)
-  VALUES
-    -- John Doe (user1) blockouts (San Francisco, CA - UTC-8)
-      (user1_id, 'Conference Trip', 'Attending React Conference in San Jose', '2025-06-08 16:00:00+00:00', '2025-06-10 01:00:00+00:00', false),
-      (user1_id, 'Family Vacation', 'Week off for family time', '2025-06-14 07:00:00+00:00', '2025-06-22 06:59:59+00:00', true),
-      (user1_id, 'Client Meeting', 'Important client presentation', '2025-06-12 21:00:00+00:00', '2025-06-12 23:00:00+00:00', false),
+  -- INSERT INTO talent_blockouts (talent_id, title, description, start_time, end_time, is_all_day)
+  -- VALUES
+  --   -- John Doe (user1) blockouts (San Francisco, CA - UTC-8)
+  --     (user1_id, 'Conference Trip', 'Attending React Conference in San Jose', '2025-06-08 16:00:00+00:00', '2025-06-10 01:00:00+00:00', false),
+  --     (user1_id, 'Family Vacation', 'Week off for family time', '2025-06-14 07:00:00+00:00', '2025-06-22 06:59:59+00:00', true),
+  --     (user1_id, 'Client Meeting', 'Important client presentation', '2025-06-12 21:00:00+00:00', '2025-06-12 23:00:00+00:00', false),
       
-      -- Harry Potter blockouts (Kansas City, KS - UTC-6, UTC-5 during summer)
-      (harry_id, 'Recording Session', 'Studio time for new album', '2025-06-24 15:00:00+00:00', '2025-06-24 16:00:00+00:00', false),
-      (harry_id, 'Wizard Convention', 'Annual gathering of magical musicians', '2025-06-20 05:00:00+00:00', '2025-06-23 04:59:59+00:00', true),
-      (harry_id, 'Equipment Maintenance', 'Guitar and lighting gear service', '2025-06-13 14:00:00+00:00', '2025-06-13 22:00:00+00:00', false),
+  --     -- Harry Potter blockouts (Kansas City, KS - UTC-6, UTC-5 during summer)
+  --     (harry_id, 'Recording Session', 'Studio time for new album', '2025-06-24 15:00:00+00:00', '2025-06-24 16:00:00+00:00', false),
+  --     (harry_id, 'Wizard Convention', 'Annual gathering of magical musicians', '2025-06-20 05:00:00+00:00', '2025-06-23 04:59:59+00:00', true),
+  --     (harry_id, 'Equipment Maintenance', 'Guitar and lighting gear service', '2025-06-13 14:00:00+00:00', '2025-06-13 22:00:00+00:00', false),
 
-      -- Hermione Granger blockouts (St. Louis, MO - UTC-6, UTC-5 during summer)
-      (hermione_id, 'Wedding Event', 'Sound engineering for wedding ceremony', '2025-06-07 13:00:00+00:00', '2025-06-08 04:00:00+00:00', false),
-      (hermione_id, 'Equipment Training', 'Learning new sound board techniques', '2025-06-11 18:00:00+00:00', '2025-06-11 23:00:00+00:00', false),
-      (hermione_id, 'Corporate Event', 'Managing audio for business conference', '2025-06-18 12:00:00+00:00', '2025-06-19 00:00:00+00:00', false),
+  --     -- Hermione Granger blockouts (St. Louis, MO - UTC-6, UTC-5 during summer)
+  --     (hermione_id, 'Wedding Event', 'Sound engineering for wedding ceremony', '2025-06-07 13:00:00+00:00', '2025-06-08 04:00:00+00:00', false),
+  --     (hermione_id, 'Equipment Training', 'Learning new sound board techniques', '2025-06-11 18:00:00+00:00', '2025-06-11 23:00:00+00:00', false),
+  --     (hermione_id, 'Corporate Event', 'Managing audio for business conference', '2025-06-18 12:00:00+00:00', '2025-06-19 00:00:00+00:00', false),
       
-      -- Ron Weasley blockouts (Omaha, NE - UTC-6, UTC-5 during summer)
-      (ron_id, 'Band Practice', 'Weekly rehearsal with the Weasley Brothers Band', '2025-06-11 00:00:00+00:00', '2025-06-11 03:00:00+00:00', false),
-      (ron_id, 'Drum Lesson', 'Teaching drums to local kids', '2025-06-12 21:00:00+00:00', '2025-06-12 23:00:00+00:00', false),
-      (ron_id, 'Music Festival', 'Three-day festival performance', '2025-06-20 05:00:00+00:00', '2025-06-23 04:59:59+00:00', true),
+  --     -- Ron Weasley blockouts (Omaha, NE - UTC-6, UTC-5 during summer)
+  --     (ron_id, 'Band Practice', 'Weekly rehearsal with the Weasley Brothers Band', '2025-06-11 00:00:00+00:00', '2025-06-11 03:00:00+00:00', false),
+  --     (ron_id, 'Drum Lesson', 'Teaching drums to local kids', '2025-06-12 21:00:00+00:00', '2025-06-12 23:00:00+00:00', false),
+  --     (ron_id, 'Music Festival', 'Three-day festival performance', '2025-06-20 05:00:00+00:00', '2025-06-23 04:59:59+00:00', true),
       
-      -- Luna Lovegood blockouts (Lincoln, NE - UTC-6, UTC-5 during summer)
-      (luna_id, 'Full Moon Concert', 'Special ethereal performance under full moon', '2025-06-12 01:00:00+00:00', '2025-06-12 07:00:00+00:00', false),
-      (luna_id, 'DJ Workshop', 'Teaching experimental mixing techniques', '2025-06-14 19:00:00+00:00', '2025-06-14 23:00:00+00:00', false),
-      (luna_id, 'Meditation Retreat', 'Silent retreat for creative inspiration', '2025-06-16 05:00:00+00:00', '2025-06-19 04:59:59+00:00', true),
+  --     -- Luna Lovegood blockouts (Lincoln, NE - UTC-6, UTC-5 during summer)
+  --     (luna_id, 'Full Moon Concert', 'Special ethereal performance under full moon', '2025-06-12 01:00:00+00:00', '2025-06-12 07:00:00+00:00', false),
+  --     (luna_id, 'DJ Workshop', 'Teaching experimental mixing techniques', '2025-06-14 19:00:00+00:00', '2025-06-14 23:00:00+00:00', false),
+  --     (luna_id, 'Meditation Retreat', 'Silent retreat for creative inspiration', '2025-06-16 05:00:00+00:00', '2025-06-19 04:59:59+00:00', true),
       
-      -- Neville Longbottom blockouts (Wichita, KS - UTC-6, UTC-5 during summer))
-      (neville_id, 'Film Shoot', 'Documentary about local gardens', '2025-06-09 11:00:00+00:00', '2025-06-10 01:00:00+00:00', false),
-      (neville_id, 'Equipment Rental', 'Picking up new camera gear', '2025-06-13 15:00:00+00:00', '2025-06-13 17:00:00+00:00', false),
-      (neville_id, 'Video Editing', 'Post-production work on recent project', '2025-06-15 14:00:00+00:00', '2025-06-15 22:00:00+00:00', false),
+  --     -- Neville Longbottom blockouts (Wichita, KS - UTC-6, UTC-5 during summer))
+  --     (neville_id, 'Film Shoot', 'Documentary about local gardens', '2025-06-09 11:00:00+00:00', '2025-06-10 01:00:00+00:00', false),
+  --     (neville_id, 'Equipment Rental', 'Picking up new camera gear', '2025-06-13 15:00:00+00:00', '2025-06-13 17:00:00+00:00', false),
+  --     (neville_id, 'Video Editing', 'Post-production work on recent project', '2025-06-15 14:00:00+00:00', '2025-06-15 22:00:00+00:00', false),
       
-      -- Ginny Weasley blockouts (Kansas City, MO - UTC-6, UTC-5 during summer))
-      (ginny_id, 'Charity Gala', 'Managing large charity fundraising event', '2025-06-08 22:00:00+00:00', '2025-06-09 04:30:00+00:00', false),
-      (ginny_id, 'Venue Scouting', 'Checking potential locations for summer events', '2025-06-12 15:00:00+00:00', '2025-06-12 20:00:00+00:00', false),
-      (ginny_id, 'Event Planning Meeting', 'Client consultation for wedding', '2025-06-17 19:00:00+00:00', '2025-06-17 21:00:00+00:00', false),
+  --     -- Ginny Weasley blockouts (Kansas City, MO - UTC-6, UTC-5 during summer))
+  --     (ginny_id, 'Charity Gala', 'Managing large charity fundraising event', '2025-06-08 22:00:00+00:00', '2025-06-09 04:30:00+00:00', false),
+  --     (ginny_id, 'Venue Scouting', 'Checking potential locations for summer events', '2025-06-12 15:00:00+00:00', '2025-06-12 20:00:00+00:00', false),
+  --     (ginny_id, 'Event Planning Meeting', 'Client consultation for wedding', '2025-06-17 19:00:00+00:00', '2025-06-17 21:00:00+00:00', false),
       
-      -- Draco Malfoy blockouts (Overland Park, KS - UTC-6, UTC-5 during summer))
-      (draco_id, 'Theater Production', 'Lighting design for local theater', '2025-06-07 23:00:00+00:00', '2025-06-08 04:00:00+00:00', false),
-      (draco_id, 'Equipment Upgrade', 'Installing new LED lighting system', '2025-06-11 13:00:00+00:00', '2025-06-11 21:00:00+00:00', false),
-      (draco_id, 'Fashion Show', 'Runway lighting for fashion week', '2025-06-19 20:00:00+00:00', '2025-06-20 03:00:00+00:00', false),
+  --     -- Draco Malfoy blockouts (Overland Park, KS - UTC-6, UTC-5 during summer))
+  --     (draco_id, 'Theater Production', 'Lighting design for local theater', '2025-06-07 23:00:00+00:00', '2025-06-08 04:00:00+00:00', false),
+  --     (draco_id, 'Equipment Upgrade', 'Installing new LED lighting system', '2025-06-11 13:00:00+00:00', '2025-06-11 21:00:00+00:00', false),
+  --     (draco_id, 'Fashion Show', 'Runway lighting for fashion week', '2025-06-19 20:00:00+00:00', '2025-06-20 03:00:00+00:00', false),
       
-      -- Cho Chang blockouts (Springfield, MO - UTC-6, UTC-5 during summer)
-      (cho_id, 'Orchestra Recording', 'Sound engineering for symphony', '2025-06-10 14:00:00+00:00', '2025-06-10 22:00:00+00:00', false),
-      (cho_id, 'Audio Workshop', 'Teaching sound engineering basics', '2025-06-14 15:00:00+00:00', '2025-06-14 21:00:00+00:00', false),
-      (cho_id, 'Studio Maintenance', 'Calibrating recording equipment', '2025-06-16 14:00:00+00:00', '2025-06-16 17:00:00+00:00', false),
+  --     -- Cho Chang blockouts (Springfield, MO - UTC-6, UTC-5 during summer)
+  --     (cho_id, 'Orchestra Recording', 'Sound engineering for symphony', '2025-06-10 14:00:00+00:00', '2025-06-10 22:00:00+00:00', false),
+  --     (cho_id, 'Audio Workshop', 'Teaching sound engineering basics', '2025-06-14 15:00:00+00:00', '2025-06-14 21:00:00+00:00', false),
+  --     (cho_id, 'Studio Maintenance', 'Calibrating recording equipment', '2025-06-16 14:00:00+00:00', '2025-06-16 17:00:00+00:00', false),
       
-      -- Cedric Diggory blockouts (Independence, MO - UTC-6, UTC-5 during summer))
-      (cedric_id, 'Commercial Shoot', 'Video production for local business', '2025-06-09 13:00:00+00:00', '2025-06-09 23:00:00+00:00', false),
-      (cedric_id, 'Film Festival', 'Attending regional film festival', '2025-06-13 05:00:00+00:00', '2025-06-16 04:59:59+00:00', true),
-      (cedric_id, 'Client Review', 'Presenting final cut to client', '2025-06-17 18:00:00+00:00', '2025-06-17 20:00:00+00:00', false),
+  --     -- Cedric Diggory blockouts (Independence, MO - UTC-6, UTC-5 during summer))
+  --     (cedric_id, 'Commercial Shoot', 'Video production for local business', '2025-06-09 13:00:00+00:00', '2025-06-09 23:00:00+00:00', false),
+  --     (cedric_id, 'Film Festival', 'Attending regional film festival', '2025-06-13 05:00:00+00:00', '2025-06-16 04:59:59+00:00', true),
+  --     (cedric_id, 'Client Review', 'Presenting final cut to client', '2025-06-17 18:00:00+00:00', '2025-06-17 20:00:00+00:00', false),
       
-      -- Fred Weasley blockouts (Grand Island, NE - UTC-6, UTC-5 during summer))
-      (fred_id, 'Club Night', 'DJ set at downtown venue', '2025-06-08 02:00:00+00:00', '2025-06-08 08:00:00+00:00', false),
-      (fred_id, 'Equipment Setup', 'Installing sound system for weekend event', '2025-06-11 19:00:00+00:00', '2025-06-12 01:00:00+00:00', false),
-      (fred_id, 'Music Festival', 'Headlining summer music festival', '2025-06-21 05:00:00+00:00', '2025-06-23 04:59:59+00:00', true);
+  --     -- Fred Weasley blockouts (Grand Island, NE - UTC-6, UTC-5 during summer))
+  --     (fred_id, 'Club Night', 'DJ set at downtown venue', '2025-06-08 02:00:00+00:00', '2025-06-08 08:00:00+00:00', false),
+  --     (fred_id, 'Equipment Setup', 'Installing sound system for weekend event', '2025-06-11 19:00:00+00:00', '2025-06-12 01:00:00+00:00', false),
+  --     (fred_id, 'Music Festival', 'Headlining summer music festival', '2025-06-21 05:00:00+00:00', '2025-06-23 04:59:59+00:00', true);
   
 END $$;
 

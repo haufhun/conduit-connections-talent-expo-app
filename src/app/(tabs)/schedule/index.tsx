@@ -7,30 +7,28 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { useAuth } from "@/providers/auth-provider";
 import { TalentExpandedBlockout } from "@/types/blockouts";
-import { getDayjsFromUtcDateString } from "@/utils/date";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 import { Redirect, useRouter } from "expo-router";
+import moment from "moment-timezone";
 import React from "react";
 import { ActivityIndicator, SectionList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-const DEFAULT_DAYS = 365;
+const DEFAULT_DAYS = 500;
 
 export default function ScheduleScreen() {
   const { session } = useAuth();
   const router = useRouter();
 
-  const startDate = dayjs().utc().format("YYYY-MM-DD");
-  const endDate = dayjs().utc().add(DEFAULT_DAYS, "day").format("YYYY-MM-DD");
+  const startDate = moment().local().format("YYYY-MM-DD");
+  const endDate = moment()
+    .local()
+    .add(DEFAULT_DAYS, "day")
+    .format("YYYY-MM-DD");
   const {
     data: scheduleData,
     isLoading,
     error,
+    refetch,
   } = useUserSchedule(session?.user?.id || "", startDate, endDate);
 
   if (!session?.user?.id) {
@@ -42,9 +40,9 @@ export default function ScheduleScreen() {
   // Group blockouts by date and format for SectionList
   // For multi-day blockouts, create entries for each day they span (from today onwards)
   const groupedBlockouts = blockouts.reduce((acc, blockout) => {
-    const start = getDayjsFromUtcDateString(blockout.start_time);
-    const end = getDayjsFromUtcDateString(blockout.end_time);
-    const today = dayjs().startOf("day");
+    const start = moment.utc(blockout.start_time).local();
+    const end = moment.utc(blockout.end_time).local();
+    const today = moment().startOf("day");
 
     // If it's a single day blockout, add it normally
     if (start.isSame(end, "day")) {
@@ -149,48 +147,49 @@ export default function ScheduleScreen() {
           </HStack>
         </VStack>
 
-        {/* Schedule Content */}
-        {sectionData.length === 0 ? (
-          /* Empty State */
-          <VStack
-            className="flex-1 justify-center items-center py-16"
-            space="md"
-          >
-            <Icon
-              as={CalendarDaysIcon}
-              // className="h-12 w-12 text-primary-200 opacity-60"
-            />
-            <VStack className="items-center" space="sm">
-              <Text size="lg" className="font-semibold text-primary-900">
-                No blockouts scheduled
-              </Text>
-              <Text className="text-typography-500 text-center max-w-64">
-                You don&apos;t have any blockouts in the next {DEFAULT_DAYS}{" "}
-                days. Add one to block time in your schedule.
-              </Text>
+        <SectionList
+          sections={sectionData}
+          keyExtractor={(item) => item.blockout_id.toString()}
+          renderItem={({ item: blockout }) => (
+            <BlockoutCard blockout={blockout} />
+          )}
+          renderSectionHeader={({ section: { title } }) => (
+            <Text
+              size="lg"
+              bold
+              className="text-primary-700 pt-2 pb-1 px-5 bg-white"
+            >
+              {title}
+            </Text>
+          )}
+          refreshing={isLoading}
+          onRefresh={() => {
+            refetch();
+          }}
+          contentContainerStyle={styles.sectionListContent}
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={true}
+          ListEmptyComponent={
+            <VStack
+              className="flex-1 justify-center items-center py-16"
+              space="md"
+            >
+              <Icon
+                as={CalendarDaysIcon}
+                // className="h-12 w-12 text-primary-200 opacity-60"
+              />
+              <VStack className="items-center" space="sm">
+                <Text size="lg" className="font-semibold text-primary-900">
+                  No blockouts scheduled
+                </Text>
+                <Text className="text-typography-500 text-center max-w-64">
+                  You don&apos;t have any blockouts in the next {DEFAULT_DAYS}{" "}
+                  days. Add one to block time in your schedule.
+                </Text>
+              </VStack>
             </VStack>
-          </VStack>
-        ) : (
-          <SectionList
-            sections={sectionData}
-            keyExtractor={(item) => item.blockout_id.toString()}
-            renderItem={({ item: blockout }) => (
-              <BlockoutCard blockout={blockout} />
-            )}
-            renderSectionHeader={({ section: { title } }) => (
-              <Text
-                size="lg"
-                bold
-                className="text-primary-700 pt-2 pb-1 px-5 bg-white"
-              >
-                {title}
-              </Text>
-            )}
-            contentContainerStyle={styles.sectionListContent}
-            showsVerticalScrollIndicator={false}
-            stickySectionHeadersEnabled={true}
-          />
-        )}
+          }
+        />
 
         {/* Floating Action Button */}
         <Fab

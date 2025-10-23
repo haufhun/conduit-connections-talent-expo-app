@@ -1,6 +1,13 @@
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { FormControl } from "@/components/ui/form-control";
+
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorIcon,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
 import { HStack } from "@/components/ui/hstack";
 import { Icon } from "@/components/ui/icon";
 import { Input, InputField } from "@/components/ui/input";
@@ -21,22 +28,30 @@ import {
   type SkillYoutubeUrlSchemaType,
 } from "@/validators/skills.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EditIcon, PlayIcon } from "lucide-react-native";
+import { AlertCircleIcon, EditIcon, PlayIcon } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, View } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 
 interface SkillYoutubeVideoSectionProps {
-  skill: TalentSkill;
-  isLoading: boolean;
-  onUpdateSkill: (updates: Partial<TalentSkill>) => Promise<void>;
+  skill?: TalentSkill;
+  youtubeUrl: string | null;
+  onUpdateYoutubeUrl: (url: string | null) => void | Promise<void>;
+  showEditControls?: boolean;
+  isLoading?: boolean;
+  mode?: "create" | "edit";
+  error?: string;
 }
 
 export default function SkillYoutubeVideoSection({
   skill,
-  isLoading,
-  onUpdateSkill,
+  youtubeUrl,
+  onUpdateYoutubeUrl,
+  showEditControls = true,
+  isLoading = false,
+  mode = "edit",
+  error,
 }: SkillYoutubeVideoSectionProps) {
   const [youtubeModalVisible, setYoutubeModalVisible] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -49,7 +64,7 @@ export default function SkillYoutubeVideoSection({
   } = useForm<SkillYoutubeUrlSchemaType>({
     resolver: zodResolver(skillYoutubeUrlSchema),
     defaultValues: {
-      youtube_url: skill.youtube_url || "",
+      youtube_url: youtubeUrl || "",
     },
   });
 
@@ -74,7 +89,7 @@ export default function SkillYoutubeVideoSection({
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await onUpdateSkill(data);
+      await onUpdateYoutubeUrl(data.youtube_url || null);
       setYoutubeModalVisible(false);
     } catch (error) {
       console.error("Error updating YouTube URL:", error);
@@ -83,13 +98,16 @@ export default function SkillYoutubeVideoSection({
   });
 
   const handleModalOpen = () => {
-    reset({ youtube_url: skill.youtube_url || "" });
+    reset({ youtube_url: youtubeUrl || "" });
     setYoutubeModalVisible(true);
   };
 
   return (
-    <Card className="p-4 bg-background-0 border-outline-100 rounded-lg">
-      <VStack space="md">
+    <>
+      <VStack
+        space="md"
+        className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm"
+      >
         <HStack className="justify-between items-center">
           <HStack space="sm" className="items-center">
             <Icon as={PlayIcon} size="md" className="text-tertiary-500" />
@@ -97,113 +115,185 @@ export default function SkillYoutubeVideoSection({
               YouTube Video
             </Text>
           </HStack>
-          <Button
-            variant="outline"
-            size="sm"
-            onPress={handleModalOpen}
-            className="border-primary-300 bg-primary-50"
-          >
-            <ButtonIcon as={EditIcon} size="sm" className="text-primary-600" />
-            <ButtonText className="text-primary-600 ml-1">Edit</ButtonText>
-          </Button>
+          {showEditControls && mode === "edit" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={handleModalOpen}
+              className="border-primary-300 bg-primary-50"
+            >
+              <ButtonIcon
+                as={EditIcon}
+                size="sm"
+                className="text-primary-600"
+              />
+              <ButtonText className="text-primary-600 ml-1">
+                {youtubeUrl ? "Edit" : "Add Video"}
+              </ButtonText>
+            </Button>
+          )}
         </HStack>
 
-        {skill.youtube_url ? (
-          <View className="rounded-lg overflow-hidden">
-            <YoutubePlayer
-              height={200}
-              play={playing}
-              videoId={getYoutubeVideoId(skill.youtube_url) || ""}
-              onChangeState={onStateChange}
-            />
-          </View>
+        {mode === "create" ? (
+          // Create mode: Show inline form
+          <VStack space="md">
+            <FormControl isInvalid={Boolean(error)}>
+              <FormControlLabel>
+                <FormControlLabelText className="font-medium text-typography-700">
+                  YouTube Video URL
+                </FormControlLabelText>
+              </FormControlLabel>
+              <Input size="lg" variant="outline" className="bg-background-50">
+                <InputField
+                  placeholder="Enter YouTube video URL..."
+                  value={youtubeUrl || ""}
+                  onChangeText={(text) => {
+                    onUpdateYoutubeUrl(text || null);
+                  }}
+                />
+              </Input>
+              <FormControlError>
+                <FormControlErrorIcon as={AlertCircleIcon} />
+                <FormControlErrorText size="sm">{error}</FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+
+            {youtubeUrl && (
+              <View
+                style={{
+                  height: 200,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}
+                className="bg-background-50 rounded-xl"
+              >
+                <YoutubePlayer
+                  height={200}
+                  play={playing}
+                  videoId={getYoutubeVideoId(youtubeUrl) || ""}
+                  onChangeState={onStateChange}
+                />
+              </View>
+            )}
+          </VStack>
         ) : (
-          <View className="py-8 px-4 bg-background-50 rounded-lg border-2 border-dashed border-outline-200">
-            <VStack space="sm" className="items-center">
-              <Icon as={PlayIcon} size="xl" className="text-outline-400" />
-              <Text className="text-typography-500 text-center">
-                No YouTube video added yet
+          // Edit mode: Show current behavior
+          <>
+            {!showEditControls && (
+              <Text className="text-typography-600 mb-2">
+                Add a YouTube video to showcase your work
               </Text>
-              <Text size="sm" className="text-typography-400 text-center">
-                Add a video to showcase your work
-              </Text>
-            </VStack>
-          </View>
+            )}
+
+            {youtubeUrl ? (
+              <View
+                style={{
+                  height: 200,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                }}
+                className="bg-background-50 rounded-xl"
+              >
+                <YoutubePlayer
+                  height={200}
+                  play={playing}
+                  videoId={getYoutubeVideoId(youtubeUrl) || ""}
+                  onChangeState={onStateChange}
+                />
+              </View>
+            ) : (
+              <View className="py-8 px-4 bg-background-50 rounded-xl border-2 border-dashed border-outline-200">
+                <VStack space="sm" className="items-center">
+                  <Icon as={PlayIcon} size="xl" className="text-outline-400" />
+                  <Text className="text-typography-500 text-center">
+                    No YouTube video added yet
+                  </Text>
+                  <Text size="sm" className="text-typography-400 text-center">
+                    Add a video to showcase your work
+                  </Text>
+                </VStack>
+              </View>
+            )}
+          </>
         )}
       </VStack>
 
       {/* YouTube URL Edit Modal */}
-      <Modal
-        isOpen={youtubeModalVisible}
-        onClose={() => setYoutubeModalVisible(false)}
-        size="lg"
-      >
-        <ModalBackdrop />
-        <ModalContent className="bg-background-0">
-          <ModalHeader className="border-b border-outline-100">
-            <VStack space="xs">
-              <Text size="lg" className="font-semibold text-typography-900">
-                Edit YouTube Video
-              </Text>
-              <Text size="sm" className="text-typography-500">
-                Add a YouTube URL to showcase your work
-              </Text>
-            </VStack>
-            <ModalCloseButton />
-          </ModalHeader>
-          <ModalBody className="py-6">
-            <Controller
-              control={control}
-              name="youtube_url"
-              render={({ field: { value, onChange } }) => (
-                <FormControl isInvalid={Boolean(errors.youtube_url)}>
-                  <Input
-                    size="lg"
-                    variant="outline"
-                    className="border-outline-200 focus:border-primary-500"
-                  >
-                    <InputField
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      value={value}
-                      onChangeText={onChange}
-                      className="text-typography-900"
-                    />
-                  </Input>
-                  {errors.youtube_url?.message && (
-                    <Text size="sm" className="text-error-600 mt-1">
-                      {errors.youtube_url.message}
-                    </Text>
-                  )}
-                </FormControl>
-              )}
-            />
-          </ModalBody>
-          <ModalFooter className="border-t border-outline-100">
-            <HStack space="sm" className="justify-end">
-              <Button
-                size="md"
-                variant="outline"
-                onPress={() => setYoutubeModalVisible(false)}
-                className="border-outline-300"
-              >
-                <ButtonText className="text-typography-600">Cancel</ButtonText>
-              </Button>
-              <Button
-                size="md"
-                variant="solid"
-                action="primary"
-                onPress={onSubmit}
-                isDisabled={isLoading}
-                className="bg-primary-600"
-              >
-                <ButtonText className="text-white">
-                  {isLoading ? "Saving..." : "Save Changes"}
-                </ButtonText>
-              </Button>
-            </HStack>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </Card>
+      {showEditControls && mode === "edit" && (
+        <Modal
+          isOpen={youtubeModalVisible}
+          onClose={() => setYoutubeModalVisible(false)}
+          size="lg"
+        >
+          <ModalBackdrop />
+          <ModalContent className="bg-background-0">
+            <ModalHeader className="border-b border-outline-100">
+              <VStack space="xs">
+                <Text size="lg" className="font-semibold text-typography-900">
+                  Edit YouTube Video
+                </Text>
+                <Text size="sm" className="text-typography-500">
+                  Add a YouTube URL to showcase your work
+                </Text>
+              </VStack>
+              <ModalCloseButton />
+            </ModalHeader>
+            <ModalBody className="py-6">
+              <Controller
+                control={control}
+                name="youtube_url"
+                render={({ field: { value, onChange } }) => (
+                  <FormControl isInvalid={Boolean(errors.youtube_url)}>
+                    <Input
+                      size="lg"
+                      variant="outline"
+                      className="border-outline-200 focus:border-primary-500"
+                    >
+                      <InputField
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={value}
+                        onChangeText={onChange}
+                        className="text-typography-900"
+                      />
+                    </Input>
+                    {errors.youtube_url?.message && (
+                      <Text size="sm" className="text-error-600 mt-1">
+                        {errors.youtube_url.message}
+                      </Text>
+                    )}
+                  </FormControl>
+                )}
+              />
+            </ModalBody>
+            <ModalFooter className="border-t border-outline-100">
+              <HStack space="sm" className="justify-end">
+                <Button
+                  size="md"
+                  variant="outline"
+                  onPress={() => setYoutubeModalVisible(false)}
+                  className="border-outline-300"
+                >
+                  <ButtonText className="text-typography-600">
+                    Cancel
+                  </ButtonText>
+                </Button>
+                <Button
+                  size="md"
+                  variant="solid"
+                  action="primary"
+                  onPress={onSubmit}
+                  isDisabled={isLoading}
+                  className="bg-primary-600"
+                >
+                  <ButtonText className="text-white">
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </ButtonText>
+                </Button>
+              </HStack>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+    </>
   );
 }

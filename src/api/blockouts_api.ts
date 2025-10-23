@@ -1,8 +1,5 @@
-import { getDayjsFromUtcDateString } from "@/utils/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
+import moment from "moment-timezone";
 import { useAuth } from "../providers/auth-provider";
 import type {
   CreateTalentBlockout,
@@ -21,9 +18,6 @@ import {
   getAvailableUsers,
   getUserSchedule,
 } from "./talent_blockout_schedule_spb";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export const useAvailableUsers = (filter: AvailabilityFilter) => {
   return useQuery({
@@ -58,6 +52,7 @@ export const useUserSchedule = (
     queryKey: ["user-schedule", userId, startDate, endDate],
     queryFn: () => {
       return getUserSchedule(userId, startDate, endDate);
+      // return getTalentBlockouts(userId);
     },
     enabled: enabled && !!userId && !!startDate && !!endDate,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -76,12 +71,15 @@ export const useCreateTalentBlockout = () => {
   return useMutation<TalentBlockoutDatabase, Error, CreateTalentBlockout>({
     mutationFn: async (blockoutData) => {
       if (blockoutData.is_all_day) {
-        const startTime = getDayjsFromUtcDateString(blockoutData.start_time)
+        const startTime = moment
+          .tz(blockoutData.start_time, blockoutData.timezone)
           .startOf("day")
           .toISOString();
-        const endTime = getDayjsFromUtcDateString(blockoutData.end_time)
+        const endTime = moment
+          .tz(blockoutData.end_time, blockoutData.timezone)
           .endOf("day")
           .toISOString();
+        console.log("All-day blockout times:", { startTime, endTime });
 
         blockoutData.start_time = startTime;
         blockoutData.end_time = endTime;
@@ -144,14 +142,21 @@ export const useUpdateTalentBlockout = () => {
 
       const blockout = await getTalentBlockoutsById(blockoutId);
 
+      // Preserve timezone if not explicitly updated
+      if (!updates.timezone) {
+        updates.timezone = blockout.timezone;
+      }
+
       if (updates.is_all_day || blockout.is_all_day) {
         const start = updates.start_time || blockout.start_time;
         const end = updates.end_time || blockout.end_time;
 
-        const startTime = getDayjsFromUtcDateString(start)
+        const startTime = moment
+          .tz(start, updates.timezone!)
           .startOf("day")
           .toISOString();
-        const endTime = getDayjsFromUtcDateString(end)
+        const endTime = moment
+          .tz(end, updates.timezone!)
           .endOf("day")
           .toISOString();
 

@@ -28,6 +28,26 @@ export const skillHourlyRateSchema = z.object({
 });
 export type SkillHourlyRateSchemaType = z.infer<typeof skillHourlyRateSchema>;
 
+export const skillExperienceRateSchema = z.object({
+  years_of_experience: z
+    .number({
+      invalid_type_error: "Please enter a valid number",
+    })
+    .min(1, "Years of experience must be 1 or greater")
+    .max(50, "Years of experience must be 50 or less")
+    .optional(),
+  hourly_rate: z
+    .number({
+      invalid_type_error: "Please enter a valid number",
+    })
+    .min(1, "Hourly rate must be 1 or greater")
+    .max(1000, "Hourly rate must be 1000 or less")
+    .optional(),
+});
+export type SkillExperienceRateSchemaType = z.infer<
+  typeof skillExperienceRateSchema
+>;
+
 export const skillYoutubeUrlSchema = z.object({
   youtube_url: z
     .string()

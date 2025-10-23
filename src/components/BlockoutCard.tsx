@@ -3,13 +3,10 @@ import { CalendarDaysIcon, Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { getBlockoutStatus } from "@/utils/blockout-permissions";
-import {
-  formatBlockoutTime,
-  getBlockoutDuration,
-  getDayjsFromUtcDateString,
-} from "@/utils/date";
+import { formatBlockoutTime, getBlockoutDuration } from "@/utils/date";
 import { useRouter } from "expo-router";
 import { RefreshCw } from "lucide-react-native";
+import moment from "moment-timezone";
 import { Alert, TouchableOpacity } from "react-native";
 
 interface BlockoutCardProps {
@@ -61,8 +58,8 @@ export function BlockoutCard({ blockout, onPress }: BlockoutCardProps) {
             </Text>
             {/* Multi-day badge */}
             {(() => {
-              const start = getDayjsFromUtcDateString(blockout.start_time);
-              const end = getDayjsFromUtcDateString(blockout.end_time);
+              const start = moment.utc(blockout.start_time).local();
+              const end = moment.utc(blockout.end_time).local();
               const isMultiDay = !start.isSame(end, "day");
 
               if (isMultiDay) {
@@ -107,7 +104,7 @@ export function BlockoutCard({ blockout, onPress }: BlockoutCardProps) {
         </VStack>
 
         {/* Recurring icon in bottom right */}
-        {blockout.original_blockout.is_recurring && (
+        {blockout.original_blockout.rrule && (
           <VStack className="absolute bottom-0 right-0">
             <Icon as={RefreshCw} size="sm" />
           </VStack>

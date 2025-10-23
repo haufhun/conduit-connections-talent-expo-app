@@ -1,40 +1,15 @@
 import { TalentExpandedBlockout } from "@/types/blockouts";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-export const getDayjsFromUtcDateString = (utcDateString: string) => {
-  // We should be able to do this, but it's not working b/c dayjs is a POS and won't fix it to work with Expo.
-  // return dayjs.utc(dateString).tz(getTimezone());
-
-  // So instead, here is a hack to get the local date from the UTC date string
-  // const utcDate = new Date(utcDateString);
-  // const localDate = new Date(utcDate.getTime());
-  // return dayjs(localDate);
-
-  // Alternative hack to convert UTC date string to local time
-  const utcDate = dayjs.utc(utcDateString);
-  return utcDate.local();
-};
-
-export const getDayjsFromUtcDate = (utcDate: Date) => {
-  // Convert Date to UTC string and then to local time
-  const utcDateString = utcDate.toISOString();
-  return getDayjsFromUtcDateString(utcDateString);
-};
+import moment from "moment-timezone";
 
 export const formatTime = (dateString: string) => {
-  const date = getDayjsFromUtcDateString(dateString);
+  const date = moment.utc(dateString).local();
 
   return date.format("h:mm A");
 };
 
 export const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {
-  const start = getDayjsFromUtcDateString(blockout.start_time);
-  const end = getDayjsFromUtcDateString(blockout.end_time);
+  const start = moment.utc(blockout.start_time).local();
+  const end = moment.utc(blockout.end_time).local();
 
   if (blockout.is_all_day) {
     if (!start.isSame(end, "day")) {
@@ -55,8 +30,8 @@ export const formatBlockoutTime = (blockout: TalentExpandedBlockout) => {
 
 export const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
   if (blockout.is_all_day) {
-    const start = getDayjsFromUtcDateString(blockout.start_time);
-    const end = getDayjsFromUtcDateString(blockout.end_time);
+    const start = moment.utc(blockout.start_time).local();
+    const end = moment.utc(blockout.end_time).local();
     const days = end.diff(start, "day") + 1;
 
     if (days > 1) {
@@ -65,8 +40,8 @@ export const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
     return "All Day Event";
   }
 
-  const start = getDayjsFromUtcDateString(blockout.start_time);
-  const end = getDayjsFromUtcDateString(blockout.end_time);
+  const start = moment.utc(blockout.start_time).local();
+  const end = moment.utc(blockout.end_time).local();
 
   // Check if it spans multiple days
   if (!start.isSame(end, "day")) {

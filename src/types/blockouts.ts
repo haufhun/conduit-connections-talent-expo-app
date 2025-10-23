@@ -14,10 +14,8 @@ export type TalentBlockoutDatabase = {
   start_time: string;
   title: string;
   description: string | null;
-  is_recurring: boolean;
+  timezone: string;
   rrule: string | null;
-  is_active: boolean;
-  metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
 };
@@ -37,17 +35,13 @@ export type CreateTalentBlockout = {
   description?: string;
   start_time: string;
   end_time: string;
+  timezone: string;
   is_all_day?: boolean;
-  timezone?: string;
-  is_recurring?: boolean;
-  rrule?: string;
-  metadata?: Record<string, any>;
+  rrule?: string | null;
 };
 
 // For updating existing blockouts
-export type UpdateTalentBlockout = Partial<CreateTalentBlockout> & {
-  is_active?: boolean;
-};
+export type UpdateTalentBlockout = Partial<CreateTalentBlockout>;
 
 // Helper types for working with blockouts
 export type BlockoutType = "single" | "recurring";

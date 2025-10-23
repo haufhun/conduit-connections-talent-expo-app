@@ -92,32 +92,20 @@ create table talent_blockouts (
   
   start_time timestamp without time zone not null,
   end_time timestamp without time zone not null,
-  
-  -- Simple flag for all-day events
-  is_all_day boolean default false,
+  timezone text not null, -- IANA tz (e.g., "America/Chicago")
+  is_all_day boolean not null default false,
   
   -- Recurrence using RRULE standard (RFC 5545)
-  is_recurring boolean default false,
   rrule text, -- RRULE string for maximum flexibility
   
-  -- Status and metadata
-  is_active boolean default true,
-  metadata jsonb default '{}'::jsonb,
-  
   -- Simple constraints
-  constraint valid_time_order check (start_time < end_time),
-  constraint valid_recurrence check (
-    (is_recurring = false) or
-    (is_recurring = true and rrule is not null)
-  )
+  constraint valid_time_order check (start_time < end_time)
 );
 
 -- Create indexes for better query performance
 create index talent_blockouts_talent_id_idx on talent_blockouts(talent_id);
 create index talent_blockouts_start_time_idx on talent_blockouts(start_time);
 create index talent_blockouts_end_time_idx on talent_blockouts(end_time);
-create index talent_blockouts_active_idx on talent_blockouts(is_active) where is_active = true;
-create index talent_blockouts_recurring_idx on talent_blockouts(is_recurring) where is_recurring = true;
 create index talent_blockouts_all_day_idx on talent_blockouts(is_all_day);
 
 -- Add index for user_type for better query performance
@@ -226,34 +214,28 @@ user_blockouts_agg as (
           'description', tb.description,
           'start_time', tb.start_time,
           'end_time', tb.end_time,
+          'timezone', tb.timezone,
           'is_all_day', tb.is_all_day,
-          'is_recurring', tb.is_recurring,
           'rrule', tb.rrule,
-          'is_active', tb.is_active,
-          'metadata', tb.metadata,
           'created_at', tb.created_at,
           'updated_at', tb.updated_at
         )
       ) filter (where tb.id is not null
-        and tb.is_active = true 
         and (
           tb.end_time >= now() 
           or (
-            tb.is_recurring = true 
-            and (
-              tb.rrule is null 
-              or tb.rrule !~ 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)' 
-              or (
-                tb.rrule ~ 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)' 
-                and to_timestamp(
-                  regexp_replace(
-                    substring(tb.rrule from 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)'),
-                    '^([0-9]{4})([0-9]{2})([0-9]{2})(T([0-9]{2})([0-9]{2})([0-9]{2})Z?)?$',
-                    '\1-\2-\3 \5:\6:\7'
-                  ),
-                  'YYYY-MM-DD HH24:MI:SS'
-                ) >= now()
-              )
+            tb.rrule is null 
+            or tb.rrule !~ 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)' 
+            or (
+              tb.rrule ~ 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)' 
+              and to_timestamp(
+                regexp_replace(
+                  substring(tb.rrule from 'UNTIL=([0-9]{8}T?[0-9]{0,6}Z?)'),
+                  '^([0-9]{4})([0-9]{2})([0-9]{2})(T([0-9]{2})([0-9]{2})([0-9]{2})Z?)?$',
+                  '\1-\2-\3 \5:\6:\7'
+                ),
+                'YYYY-MM-DD HH24:MI:SS'
+              ) >= now()
             )
           )
         )),
