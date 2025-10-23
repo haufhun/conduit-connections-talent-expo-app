@@ -10,6 +10,7 @@ import {
 import { HStack } from "@/components/ui/hstack";
 import { AlertCircleIcon } from "@/components/ui/icon";
 import { VStack } from "@/components/ui/vstack";
+import { PRIMARY_COLOR } from "@/constants/Colors";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import moment from "moment-timezone";
 import { useEffect, useRef, useState } from "react";
@@ -160,11 +161,12 @@ export function DateRangePicker<T extends FieldValues>({
 
             {/* Date/Time Picker positioned directly below start time fields */}
             {selectedField === "start-date" && showStartDatePicker && (
-              <VStack className="items-center mt-4">
+              <VStack className="items-center">
                 <DateTimePicker
                   value={moment.utc(value).local().toDate()}
                   mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  accentColor={PRIMARY_COLOR}
+                  display={Platform.OS === "ios" ? "inline" : "default"}
                   onChange={(_event, selectedDate) =>
                     handleDateTimeChange("start", selectedDate)
                   }
@@ -239,7 +241,8 @@ export function DateRangePicker<T extends FieldValues>({
                 <DateTimePicker
                   value={moment.utc(value).local().toDate()}
                   mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  accentColor={PRIMARY_COLOR}
+                  display={Platform.OS === "ios" ? "inline" : "default"}
                   onChange={(_event, selectedDate) =>
                     handleDateTimeChange("end", selectedDate)
                   }
