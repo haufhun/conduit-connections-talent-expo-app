@@ -8,12 +8,7 @@ import SkillExperienceRateSection from "@/components/skills/SkillExperienceRateS
 import SkillImagesSection from "@/components/skills/SkillImagesSection";
 import SkillSummarySection from "@/components/skills/SkillSummarySection";
 import SkillYoutubeVideoSection from "@/components/skills/SkillYoutubeVideoSection";
-import {
-  Button,
-  ButtonIcon,
-  ButtonSpinner,
-  ButtonText,
-} from "@/components/ui/button";
+import { Button, ButtonSpinner, ButtonText } from "@/components/ui/button";
 import { Center } from "@/components/ui/center";
 import { HStack } from "@/components/ui/hstack";
 import { Icon, TrashIcon } from "@/components/ui/icon";
@@ -107,16 +102,6 @@ export default function SkillDetailScreen() {
     navigation.setOptions({
       title:
         userProfile?.first_name + " " + userProfile?.last_name || "Profile",
-      headerRight: () => (
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={() => setDeleteModalVisible(true)}
-          className="border-error-300 bg-error-50"
-        >
-          <ButtonIcon as={TrashIcon} size="sm" className="text-error-600" />
-        </Button>
-      ),
     });
   }, [navigation, userProfile?.first_name, userProfile?.last_name]);
 
