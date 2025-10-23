@@ -8,7 +8,7 @@ import { Skill } from "@/types/skills";
 import nlp from "compromise";
 import { useRouter } from "expo-router";
 import { ChevronRightIcon, SearchIcon } from "lucide-react-native";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -24,6 +24,15 @@ export default function SkillSelectScreen() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Clear debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, []);
+
   // Debounce search input
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
@@ -36,9 +45,10 @@ export default function SkillSelectScreen() {
   const { data: skills, error, isLoading } = useGetSkills();
   const { data: userSkills } = useGetUserTalentSkills();
 
-  // Memoize processed skill names for performance
+  // Memoize processed skill names for performance, cache root word processing
   const processedSkills = useMemo(() => {
     if (!skills) return [];
+    const rootWordCache: Record<string, string> = {};
     return skills.map((skill) => {
       const skillWords = skill.name
         .toLowerCase()
@@ -47,8 +57,13 @@ export default function SkillSelectScreen() {
         .filter((word) => word.length > 0);
 
       const rootSkillWords = skillWords.map((word) => {
+        if (rootWordCache[word]) {
+          return rootWordCache[word];
+        }
         const doc = nlp(word);
-        return doc.verbs().toInfinitive().text() || doc.text();
+        const root = doc.verbs().toInfinitive().text() || doc.text();
+        rootWordCache[word] = root;
+        return root;
       });
 
       return {

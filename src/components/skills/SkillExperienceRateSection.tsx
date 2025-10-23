@@ -54,7 +54,6 @@ function isValidNumericInput(text: string): boolean {
   const num = parseFloat(text);
   return !isNaN(num) && num >= 0;
 }
-
 // Utility function to handle numeric input blur
 function handleNumericInputBlur(
   inputValue: string,
@@ -63,13 +62,13 @@ function handleNumericInputBlur(
   onChange?: (val: number) => void,
   onUpdate?: (val: number) => void
 ) {
-  const num = parseFloat(inputValue);
-  if (inputValue === "" || isNaN(num) || num < 0) {
+  if (inputValue === "" || !isValidNumericInput(inputValue)) {
     setInputValue(defaultValue.toString());
     if (onChange) onChange(defaultValue);
     if (onUpdate) onUpdate(defaultValue);
   }
 }
+
 export default function SkillExperienceRateSection({
   yearsOfExperience,
   hourlyRate,
@@ -191,6 +190,7 @@ export default function SkillExperienceRateSection({
                 <Input size="lg" variant="outline" className="bg-background-50">
                   <InputField
                     value={yearsInputValue}
+                    accessibilityLabel="Years of Experience"
                     onChangeText={(text) => {
                       setYearsInputValue(text);
                       if (text === "") {
@@ -238,6 +238,7 @@ export default function SkillExperienceRateSection({
                 <Input size="lg" variant="outline" className="bg-background-50">
                   <InputField
                     value={rateInputValue}
+                    accessibilityLabel="Hourly Rate"
                     onChangeText={(text) => {
                       setRateInputValue(text);
                       if (text === "") {
