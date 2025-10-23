@@ -22,7 +22,6 @@ import {
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
-import { TalentSkill } from "@/types/skills";
 import {
   skillExperienceRateSchema,
   type SkillExperienceRateSchemaType,
@@ -34,7 +33,6 @@ import { Controller, useForm } from "react-hook-form";
 import { Alert } from "react-native";
 
 interface SkillExperienceRateSectionProps {
-  skill?: TalentSkill;
   yearsOfExperience: number | null;
   hourlyRate: number | null;
   onUpdateExperienceRate: (data: {
@@ -48,8 +46,31 @@ interface SkillExperienceRateSectionProps {
   hourlyRateError?: string;
 }
 
+// Default values for numeric inputs
+const DEFAULT_YEARS_OF_EXPERIENCE = 0;
+const DEFAULT_HOURLY_RATE = 0;
+
+function isValidNumericInput(text: string): boolean {
+  const num = parseFloat(text);
+  return !isNaN(num) && num >= 0;
+}
+
+// Utility function to handle numeric input blur
+function handleNumericInputBlur(
+  inputValue: string,
+  defaultValue: number,
+  setInputValue: (val: string) => void,
+  onChange?: (val: number) => void,
+  onUpdate?: (val: number) => void
+) {
+  const num = parseFloat(inputValue);
+  if (inputValue === "" || isNaN(num) || num < 0) {
+    setInputValue(defaultValue.toString());
+    if (onChange) onChange(defaultValue);
+    if (onUpdate) onUpdate(defaultValue);
+  }
+}
 export default function SkillExperienceRateSection({
-  skill,
   yearsOfExperience,
   hourlyRate,
   onUpdateExperienceRate,
@@ -169,34 +190,32 @@ export default function SkillExperienceRateSection({
                 </FormControlLabel>
                 <Input size="lg" variant="outline" className="bg-background-50">
                   <InputField
-                    placeholder="Years"
                     value={yearsInputValue}
                     onChangeText={(text) => {
                       setYearsInputValue(text);
                       if (text === "") {
                         return;
                       }
-                      const num = parseFloat(text);
-                      if (!isNaN(num) && num >= 0) {
+                      if (isValidNumericInput(text)) {
                         onUpdateExperienceRate({
-                          years_of_experience: num,
+                          years_of_experience: parseFloat(text),
                           hourly_rate: hourlyRate,
                         });
                       }
                     }}
-                    onBlur={() => {
-                      if (
-                        yearsInputValue === "" ||
-                        parseFloat(yearsInputValue) < 0
-                      ) {
-                        const defaultValue = 0;
-                        setYearsInputValue(defaultValue.toString());
-                        onUpdateExperienceRate({
-                          years_of_experience: defaultValue,
-                          hourly_rate: hourlyRate,
-                        });
-                      }
-                    }}
+                    onBlur={() =>
+                      handleNumericInputBlur(
+                        yearsInputValue,
+                        DEFAULT_YEARS_OF_EXPERIENCE,
+                        setYearsInputValue,
+                        undefined,
+                        (val) =>
+                          onUpdateExperienceRate({
+                            years_of_experience: val,
+                            hourly_rate: hourlyRate,
+                          })
+                      )
+                    }
                     keyboardType="decimal-pad"
                   />
                 </Input>
@@ -218,34 +237,32 @@ export default function SkillExperienceRateSection({
                 </FormControlLabel>
                 <Input size="lg" variant="outline" className="bg-background-50">
                   <InputField
-                    placeholder="$/hr"
                     value={rateInputValue}
                     onChangeText={(text) => {
                       setRateInputValue(text);
                       if (text === "") {
                         return;
                       }
-                      const num = parseFloat(text);
-                      if (!isNaN(num) && num >= 0) {
+                      if (isValidNumericInput(text)) {
                         onUpdateExperienceRate({
                           years_of_experience: yearsOfExperience,
-                          hourly_rate: num,
+                          hourly_rate: parseFloat(text),
                         });
                       }
                     }}
-                    onBlur={() => {
-                      if (
-                        rateInputValue === "" ||
-                        parseFloat(rateInputValue) < 0
-                      ) {
-                        const defaultValue = 0;
-                        setRateInputValue(defaultValue.toString());
-                        onUpdateExperienceRate({
-                          years_of_experience: yearsOfExperience,
-                          hourly_rate: defaultValue,
-                        });
-                      }
-                    }}
+                    onBlur={() =>
+                      handleNumericInputBlur(
+                        rateInputValue,
+                        DEFAULT_HOURLY_RATE,
+                        setRateInputValue,
+                        undefined,
+                        (val) =>
+                          onUpdateExperienceRate({
+                            years_of_experience: yearsOfExperience,
+                            hourly_rate: val,
+                          })
+                      )
+                    }
                     keyboardType="decimal-pad"
                   />
                 </Input>
@@ -353,7 +370,6 @@ export default function SkillExperienceRateSection({
                         className="border-outline-200 focus:border-primary-500"
                       >
                         <InputField
-                          placeholder="e.g., 3.5"
                           value={modalYearsValue}
                           onChangeText={(text) => {
                             setModalYearsValue(text);
@@ -361,21 +377,18 @@ export default function SkillExperienceRateSection({
                               onChange(undefined);
                               return;
                             }
-                            const num = parseFloat(text);
-                            if (!isNaN(num) && num >= 0) {
-                              onChange(num);
+                            if (isValidNumericInput(text)) {
+                              onChange(parseFloat(text));
                             }
                           }}
-                          onBlur={() => {
-                            if (
-                              modalYearsValue === "" ||
-                              parseFloat(modalYearsValue) < 0
-                            ) {
-                              const defaultValue = 0;
-                              setModalYearsValue(defaultValue.toString());
-                              onChange(defaultValue);
-                            }
-                          }}
+                          onBlur={() =>
+                            handleNumericInputBlur(
+                              modalYearsValue,
+                              DEFAULT_YEARS_OF_EXPERIENCE,
+                              setModalYearsValue,
+                              onChange
+                            )
+                          }
                           keyboardType="decimal-pad"
                           className="text-typography-900"
                         />
@@ -409,7 +422,6 @@ export default function SkillExperienceRateSection({
                         className="border-outline-200 focus:border-primary-500"
                       >
                         <InputField
-                          placeholder="e.g., 75"
                           value={modalRateValue}
                           onChangeText={(text) => {
                             setModalRateValue(text);
@@ -417,21 +429,18 @@ export default function SkillExperienceRateSection({
                               onChange(undefined);
                               return;
                             }
-                            const num = parseFloat(text);
-                            if (!isNaN(num) && num >= 0) {
-                              onChange(num);
+                            if (isValidNumericInput(text)) {
+                              onChange(parseFloat(text));
                             }
                           }}
-                          onBlur={() => {
-                            if (
-                              modalRateValue === "" ||
-                              parseFloat(modalRateValue) < 0
-                            ) {
-                              const defaultValue = 0;
-                              setModalRateValue(defaultValue.toString());
-                              onChange(defaultValue);
-                            }
-                          }}
+                          onBlur={() =>
+                            handleNumericInputBlur(
+                              modalRateValue,
+                              DEFAULT_HOURLY_RATE,
+                              setModalRateValue,
+                              onChange
+                            )
+                          }
                           keyboardType="decimal-pad"
                           className="text-typography-900"
                         />

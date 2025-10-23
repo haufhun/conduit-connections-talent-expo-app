@@ -97,37 +97,6 @@ export default function EditBlockoutScreen() {
     );
   }
 
-  // // Check if blockout can be edited
-  // if (!canEdit) {
-  //   return (
-  //     <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
-  //       <VStack className="flex-1 justify-center items-center p-6" space="md">
-  //         <VStack
-  //           className="bg-white rounded-2xl p-6 border border-outline-200 shadow-sm"
-  //           space="md"
-  //         >
-  //           <Text className="text-typography-900 font-semibold text-lg text-center">
-  //             Cannot Edit Blockout
-  //           </Text>
-  //           <Text className="text-typography-600 text-center">
-  //             This blockout cannot be edited because it has already ended.
-  //           </Text>
-  //           <Text className="text-typography-500 text-center text-sm">
-  //             Blockouts can only be edited if their end time is in the future.
-  //           </Text>
-  //           <Button
-  //             onPress={() => router.back()}
-  //             action="secondary"
-  //             className="mt-2"
-  //           >
-  //             <ButtonText>Go Back</ButtonText>
-  //           </Button>
-  //         </VStack>
-  //       </VStack>
-  //     </SafeAreaView>
-  //   );
-  // }
-
   return (
     <>
       <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
