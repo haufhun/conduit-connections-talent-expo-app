@@ -13,7 +13,7 @@ export const skillExperienceSchema = z.object({
     .number({
       invalid_type_error: "Please enter a valid number",
     })
-    .min(1, "Years of experience must be 1 or greater")
+    .nonnegative("Years of experience must be 0 or greater")
     .max(50, "Years of experience must be 50 or less"),
 });
 export type SkillExperienceSchemaType = z.infer<typeof skillExperienceSchema>;
@@ -23,7 +23,7 @@ export const skillHourlyRateSchema = z.object({
     .number({
       invalid_type_error: "Please enter a valid number",
     })
-    .min(1, "Hourly rate must be 1 or greater")
+    .nonnegative("Hourly rate must be 0 or greater")
     .max(1000, "Hourly rate must be 1000 or less"),
 });
 export type SkillHourlyRateSchemaType = z.infer<typeof skillHourlyRateSchema>;
@@ -33,14 +33,14 @@ export const skillExperienceRateSchema = z.object({
     .number({
       invalid_type_error: "Please enter a valid number",
     })
-    .min(1, "Years of experience must be 1 or greater")
+    .nonnegative("Years of experience must be 0 or greater")
     .max(50, "Years of experience must be 50 or less")
     .optional(),
   hourly_rate: z
     .number({
       invalid_type_error: "Please enter a valid number",
     })
-    .min(1, "Hourly rate must be 1 or greater")
+    .nonnegative("Hourly rate must be 0 or greater")
     .max(1000, "Hourly rate must be 1000 or less")
     .optional(),
 });

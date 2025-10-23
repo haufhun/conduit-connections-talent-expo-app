@@ -61,6 +61,18 @@ export default function SkillExperienceRateSection({
 }: SkillExperienceRateSectionProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
+  const isYearsOfExperienceSpecified =
+    yearsOfExperience !== null && yearsOfExperience !== undefined;
+  const isHourlyRateSpecified = hourlyRate !== null && hourlyRate !== undefined;
+
+  // Local state for create mode inputs to allow empty strings
+  const [yearsInputValue, setYearsInputValue] = useState<string>("");
+  const [rateInputValue, setRateInputValue] = useState<string>("");
+
+  // Local state for edit modal inputs to allow empty strings
+  const [modalYearsValue, setModalYearsValue] = useState<string>("");
+  const [modalRateValue, setModalRateValue] = useState<string>("");
+
   const { control, handleSubmit, reset } =
     useForm<SkillExperienceRateSchemaType>({
       resolver: zodResolver(skillExperienceRateSchema),
@@ -84,12 +96,28 @@ export default function SkillExperienceRateSection({
   });
 
   const handleModalOpen = () => {
+    const yearsValue = yearsOfExperience ?? undefined;
+    const rateValue = hourlyRate ?? undefined;
+
     reset({
-      years_of_experience: yearsOfExperience || undefined,
-      hourly_rate: hourlyRate || undefined,
+      years_of_experience: yearsValue,
+      hourly_rate: rateValue,
     });
+
+    // Initialize modal input values
+    setModalYearsValue(yearsValue?.toString() ?? "");
+    setModalRateValue(rateValue?.toString() ?? "");
+
     setModalVisible(true);
   };
+
+  // Sync local input values with props in create mode
+  React.useEffect(() => {
+    if (mode === "create") {
+      setYearsInputValue(yearsOfExperience?.toString() ?? "");
+      setRateInputValue(hourlyRate?.toString() ?? "");
+    }
+  }, [yearsOfExperience, hourlyRate, mode]);
 
   return (
     <>
@@ -121,7 +149,9 @@ export default function SkillExperienceRateSection({
                 className="text-primary-600"
               />
               <ButtonText className="text-primary-600 ml-1">
-                {yearsOfExperience || hourlyRate ? "Edit" : "Add Details"}
+                {isYearsOfExperienceSpecified || isHourlyRateSpecified
+                  ? "Edit"
+                  : "Add Details"}
               </ButtonText>
             </Button>
           )}
@@ -140,14 +170,32 @@ export default function SkillExperienceRateSection({
                 <Input size="lg" variant="outline" className="bg-background-50">
                   <InputField
                     placeholder="Years"
-                    value={yearsOfExperience?.toString() ?? ""}
+                    value={yearsInputValue}
                     onChangeText={(text) => {
+                      setYearsInputValue(text);
+                      if (text === "") {
+                        return;
+                      }
                       const num = parseFloat(text);
-                      const newValue = isNaN(num) ? null : num;
-                      onUpdateExperienceRate({
-                        years_of_experience: newValue,
-                        hourly_rate: hourlyRate,
-                      });
+                      if (!isNaN(num) && num >= 0) {
+                        onUpdateExperienceRate({
+                          years_of_experience: num,
+                          hourly_rate: hourlyRate,
+                        });
+                      }
+                    }}
+                    onBlur={() => {
+                      if (
+                        yearsInputValue === "" ||
+                        parseFloat(yearsInputValue) < 0
+                      ) {
+                        const defaultValue = 0;
+                        setYearsInputValue(defaultValue.toString());
+                        onUpdateExperienceRate({
+                          years_of_experience: defaultValue,
+                          hourly_rate: hourlyRate,
+                        });
+                      }
                     }}
                     keyboardType="decimal-pad"
                   />
@@ -171,14 +219,32 @@ export default function SkillExperienceRateSection({
                 <Input size="lg" variant="outline" className="bg-background-50">
                   <InputField
                     placeholder="$/hr"
-                    value={hourlyRate?.toString() ?? ""}
+                    value={rateInputValue}
                     onChangeText={(text) => {
+                      setRateInputValue(text);
+                      if (text === "") {
+                        return;
+                      }
                       const num = parseFloat(text);
-                      const newValue = isNaN(num) ? null : num;
-                      onUpdateExperienceRate({
-                        years_of_experience: yearsOfExperience,
-                        hourly_rate: newValue,
-                      });
+                      if (!isNaN(num) && num >= 0) {
+                        onUpdateExperienceRate({
+                          years_of_experience: yearsOfExperience,
+                          hourly_rate: num,
+                        });
+                      }
+                    }}
+                    onBlur={() => {
+                      if (
+                        rateInputValue === "" ||
+                        parseFloat(rateInputValue) < 0
+                      ) {
+                        const defaultValue = 0;
+                        setRateInputValue(defaultValue.toString());
+                        onUpdateExperienceRate({
+                          years_of_experience: yearsOfExperience,
+                          hourly_rate: defaultValue,
+                        });
+                      }
                     }}
                     keyboardType="decimal-pad"
                   />
@@ -203,10 +269,14 @@ export default function SkillExperienceRateSection({
                 Experience
               </Text>
               <Text size="lg" className="text-typography-700">
-                {yearsOfExperience ? (
-                  `${yearsOfExperience} ${
-                    yearsOfExperience === 1 ? "year" : "years"
-                  }`
+                {isYearsOfExperienceSpecified ? (
+                  yearsOfExperience === 0 ? (
+                    "< 1 year"
+                  ) : (
+                    `${yearsOfExperience} ${
+                      yearsOfExperience === 1 ? "year" : "years"
+                    }`
+                  )
                 ) : (
                   <Text className="text-typography-500 italic">
                     Not specified
@@ -222,15 +292,21 @@ export default function SkillExperienceRateSection({
               <Text size="sm" className="text-typography-600 font-medium">
                 Hourly Rate
               </Text>
-              <Text size="lg" className="text-typography-700">
-                {hourlyRate ? (
-                  `$${hourlyRate}/hr`
-                ) : (
-                  <Text className="text-typography-500 italic">
-                    Not specified
+              {isHourlyRateSpecified ? (
+                hourlyRate === 0 ? (
+                  <Text size="lg" className="text-success-600 font-semibold">
+                    Free
                   </Text>
-                )}
-              </Text>
+                ) : (
+                  <Text size="lg" className="text-success-600 font-semibold">
+                    ${hourlyRate}/hr
+                  </Text>
+                )
+              ) : (
+                <Text size="lg" className="text-typography-500 italic">
+                  Not specified
+                </Text>
+              )}
             </VStack>
           </HStack>
         )}
@@ -278,10 +354,27 @@ export default function SkillExperienceRateSection({
                       >
                         <InputField
                           placeholder="e.g., 3.5"
-                          value={value?.toString() ?? ""}
+                          value={modalYearsValue}
                           onChangeText={(text) => {
+                            setModalYearsValue(text);
+                            if (text === "") {
+                              onChange(undefined);
+                              return;
+                            }
                             const num = parseFloat(text);
-                            onChange(isNaN(num) ? undefined : num);
+                            if (!isNaN(num) && num >= 0) {
+                              onChange(num);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (
+                              modalYearsValue === "" ||
+                              parseFloat(modalYearsValue) < 0
+                            ) {
+                              const defaultValue = 0;
+                              setModalYearsValue(defaultValue.toString());
+                              onChange(defaultValue);
+                            }
                           }}
                           keyboardType="decimal-pad"
                           className="text-typography-900"
@@ -317,10 +410,27 @@ export default function SkillExperienceRateSection({
                       >
                         <InputField
                           placeholder="e.g., 75"
-                          value={value?.toString() ?? ""}
+                          value={modalRateValue}
                           onChangeText={(text) => {
+                            setModalRateValue(text);
+                            if (text === "") {
+                              onChange(undefined);
+                              return;
+                            }
                             const num = parseFloat(text);
-                            onChange(isNaN(num) ? undefined : num);
+                            if (!isNaN(num) && num >= 0) {
+                              onChange(num);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (
+                              modalRateValue === "" ||
+                              parseFloat(modalRateValue) < 0
+                            ) {
+                              const defaultValue = 0;
+                              setModalRateValue(defaultValue.toString());
+                              onChange(defaultValue);
+                            }
                           }}
                           keyboardType="decimal-pad"
                           className="text-typography-900"
