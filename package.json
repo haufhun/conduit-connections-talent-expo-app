@@ -9,6 +9,7 @@
     "ios": "DARK_MODE=media expo start --ios",
     "web": "DARK_MODE=media expo start --web",
     "lint": "expo lint",
+    "eas:submit:ios": "eas build --platform ios --profile production --auto-submit",
     "supabase:restart": "npm run supabase:stop && npm run supabase:start",
     "supabase:start": "npx @dotenvx/dotenvx run -f supabase/.env.local -- supabase start",
     "supabase:start:dev": "npx @dotenvx/dotenvx run -f supabase/.env.development -- supabase start",
@@ -18,7 +19,7 @@
     "supabase:db:reset": "npx @dotenvx/dotenvx run -f supabase/.env.local -- supabase db reset",
     "supabase:db:reset:dev": "npx @dotenvx/dotenvx run -f supabase/.env.development -- supabase db reset --linked",
     "supabase:db:reset:staging": "npx @dotenvx/dotenvx run -f supabase/.env.staging -- supabase db reset --linked",
-    "supabase:db:reset:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- supabase db reset --linked",
+    "supabase:db:reset:prod": "npx @dotenvx/dotenvx run -f supabase/.env.production -- supabase db reset --linked --no-seed",
     "supabase:generate-types": "supabase gen types typescript --local > src/lib/database.types.ts",
     "supabase:db:push": "supabase db push",
     "supabase:db:pull": "supabase db pull",
@@ -117,7 +118,7 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "jscodeshift": "0.15.2",
-    "supabase": "2.40.7",
+    "supabase": "2.53.6",
     "typescript": "~5.8.3"
   },
   "private": true
