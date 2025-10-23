@@ -46,6 +46,7 @@ import {
   WEEKDAY_OPTIONS,
   WeekdayType,
 } from "@/types/recurring-schedule";
+import { formatFrequencyLabel } from "@/utils/date";
 import { getRecurringPresets } from "@/utils/recurring-presets";
 import { generateReadableDescription } from "@/utils/recurring-schedule";
 import { RecurringScheduleOptions } from "@/validators/blockouts.validators";
@@ -369,10 +370,10 @@ export default function ScheduleRecurringCard({
                     />
                   </Input>
                   <Text className="text-typography-600 font-medium">
-                    {(
-                      currentRecurringSchedule?.frequency || "WEEKLY"
-                    ).toLowerCase()}
-                    {(currentRecurringSchedule?.interval || 1) > 1 ? "s" : ""}
+                    {formatFrequencyLabel(
+                      currentRecurringSchedule?.frequency || "WEEKLY",
+                      currentRecurringSchedule?.interval || 1
+                    )}
                   </Text>
                 </HStack>
               </FormControl>

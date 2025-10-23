@@ -61,3 +61,27 @@ export const getBlockoutDuration = (blockout: TalentExpandedBlockout) => {
     return `${hours}h ${minutes}m`;
   }
 };
+
+/**
+ * Formats a frequency type into a human-readable string with proper pluralization
+ * @param frequency - The frequency type (DAILY, WEEKLY, MONTHLY, YEARLY)
+ * @param interval - The interval number (1, 2, 3, etc.)
+ * @returns Formatted frequency string (e.g., "day", "days", "week", "weeks")
+ */
+export const formatFrequencyLabel = (
+  frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY",
+  interval: number
+): string => {
+  const isPlural = interval > 1;
+
+  switch (frequency) {
+    case "DAILY":
+      return isPlural ? "days" : "day";
+    case "WEEKLY":
+      return isPlural ? "weeks" : "week";
+    case "MONTHLY":
+      return isPlural ? "months" : "month";
+    case "YEARLY":
+      return isPlural ? "years" : "year";
+  }
+};
