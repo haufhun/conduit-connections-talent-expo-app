@@ -5,6 +5,7 @@ import { Input, InputField } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { Skill } from "@/types/skills";
+import nlp from "compromise";
 import { useRouter } from "expo-router";
 import { ChevronRightIcon, SearchIcon } from "lucide-react-native";
 import { useMemo, useState } from "react";
@@ -26,11 +27,54 @@ export default function SkillSelectScreen() {
 
   const filteredSkills = useMemo(() => {
     if (!skills) return [];
-    return skills.filter(
-      (skill) =>
-        !userSkills?.some((userSkill) => userSkill.skill_id === skill.id) &&
-        skill.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+
+    // If no search query, return all skills not already added
+    if (!searchQuery.trim()) {
+      return skills.filter(
+        (skill) =>
+          !userSkills?.some((userSkill) => userSkill.skill_id === skill.id)
+      );
+    }
+
+    // Split search query into words, remove punctuation, and get root form
+    const searchWords = searchQuery
+      .toLowerCase()
+      .replace(/[^\w\s]/g, "") // Remove punctuation
+      .split(/\s+/)
+      .filter((word) => word.length > 0)
+      .map((word) => {
+        // Get the root form of each word using compromise
+        const doc = nlp(word);
+        return doc.verbs().toInfinitive().text() || doc.text();
+      });
+
+    return skills.filter((skill) => {
+      // Skip if user already has this skill
+      if (userSkills?.some((userSkill) => userSkill.skill_id === skill.id)) {
+        return false;
+      }
+
+      // Remove punctuation from skill name and split into words
+      const skillWords = skill.name
+        .toLowerCase()
+        .replace(/[^\w\s]/g, "")
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Get root form of each word in the skill name
+      const rootSkillWords = skillWords.map((word) => {
+        const doc = nlp(word);
+        return doc.verbs().toInfinitive().text() || doc.text();
+      });
+
+      // Check if all search words have a match in the root skill words
+      return searchWords.every((searchWord) =>
+        rootSkillWords.some(
+          (skillWord) =>
+            skillWord.includes(searchWord) || searchWord.includes(skillWord)
+        )
+      );
+    });
   }, [skills, userSkills, searchQuery]);
 
   const handleSkillSelect = (skill: Skill) => {
