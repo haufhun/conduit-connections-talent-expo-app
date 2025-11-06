@@ -19,7 +19,6 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
 import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
-import { supabase } from "@/lib/supabase";
 import { UserProfile } from "@/types/user";
 import { formatPhoneNumber } from "@/utils/common";
 import { uploadFileToSupabase } from "@/utils/storage";
@@ -27,6 +26,7 @@ import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { EditIcon } from "lucide-react-native";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -94,23 +94,8 @@ export default function ProfileScreen() {
             </Text>
           </VStack>
         </VStack>
-        <LogoutButton />
       </VStack>
     </SafeAreaView>
-  );
-
-  const LogoutButton = () => (
-    <Button
-      size="lg"
-      variant="outline"
-      action="negative"
-      onPress={() => {
-        supabase.auth.signOut();
-      }}
-      className="border-error-300 bg-background-0"
-    >
-      <ButtonText className="text-error-600">Logout</ButtonText>
-    </Button>
   );
 
   if (isLoading) {
@@ -237,18 +222,25 @@ export default function ProfileScreen() {
             <VStack space="md">
               <VStack>
                 {fullName ? (
-                  <HStack className="items-center">
+                  <HStack className="items-center justify-center" space="md">
                     <Text size="2xl" bold className="text-typography-900">
                       {fullName}
                     </Text>
-                    <TouchableOpacity onPress={() => setNameModalVisible(true)}>
-                      <IconSymbol
-                        name="square.and.pencil"
-                        size={18}
-                        color={BrandColors.PRIMARY}
-                        style={{ marginLeft: 12, marginBottom: 2 }}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setNameModalVisible(true)}
+                      className="border-primary-300 bg-primary-50"
+                    >
+                      <ButtonIcon
+                        as={EditIcon}
+                        size="sm"
+                        className="text-primary-600"
                       />
-                    </TouchableOpacity>
+                      <ButtonText className="text-primary-600 ml-1">
+                        Edit
+                      </ButtonText>
+                    </Button>
                   </HStack>
                 ) : (
                   <Button
@@ -270,26 +262,33 @@ export default function ProfileScreen() {
 
               <VStack>
                 {location ? (
-                  <HStack className="items-center">
-                    <IconSymbol
-                      name="location.fill"
-                      size={16}
-                      color={BrandColors.SECONDARY}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text size="md" className="text-typography-700">
-                      {location}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => setLocationModalVisible(true)}
-                    >
+                  <HStack className="items-center justify-center" space="md">
+                    <HStack className="items-center">
                       <IconSymbol
-                        name="square.and.pencil"
+                        name="location.fill"
                         size={16}
-                        color={BrandColors.PRIMARY}
-                        style={{ marginLeft: 12, marginBottom: 2 }}
+                        color={BrandColors.SECONDARY}
+                        style={{ marginRight: 8 }}
                       />
-                    </TouchableOpacity>
+                      <Text size="md" className="text-typography-700">
+                        {location}
+                      </Text>
+                    </HStack>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setLocationModalVisible(true)}
+                      className="border-primary-300 bg-primary-50"
+                    >
+                      <ButtonIcon
+                        as={EditIcon}
+                        size="sm"
+                        className="text-primary-600"
+                      />
+                      <ButtonText className="text-primary-600 ml-1">
+                        Edit
+                      </ButtonText>
+                    </Button>
                   </HStack>
                 ) : (
                   <Button
@@ -316,16 +315,21 @@ export default function ProfileScreen() {
               <Text size="xl" bold className="text-typography-900">
                 About Me
               </Text>
-              <TouchableOpacity
+              <Button
+                variant="outline"
+                size="sm"
                 onPress={() => setBioModalVisible(true)}
-                className="p-2 rounded-full bg-primary-50"
+                className="border-primary-300 bg-primary-50"
               >
-                <IconSymbol
-                  name="square.and.pencil"
-                  size={18}
-                  color={BrandColors.PRIMARY}
+                <ButtonIcon
+                  as={EditIcon}
+                  size="sm"
+                  className="text-primary-600"
                 />
-              </TouchableOpacity>
+                <ButtonText className="text-primary-600 ml-1">
+                  {userProfile.metadata?.bio ? "Edit" : "Add Bio"}
+                </ButtonText>
+              </Button>
             </HStack>
             {userProfile.metadata?.bio ? (
               <VStack
@@ -397,16 +401,19 @@ export default function ProfileScreen() {
                   />
                 </TouchableOpacity>
               </HStack>
-              <TouchableOpacity
+              <Button
+                variant="outline"
+                size="sm"
                 onPress={() => setContactModalVisible(true)}
-                className="p-2 rounded-full bg-primary-50"
+                className="border-primary-300 bg-primary-50"
               >
-                <IconSymbol
-                  name="square.and.pencil"
-                  size={18}
-                  color={BrandColors.PRIMARY}
+                <ButtonIcon
+                  as={EditIcon}
+                  size="sm"
+                  className="text-primary-600"
                 />
-              </TouchableOpacity>
+                <ButtonText className="text-primary-600 ml-1">Edit</ButtonText>
+              </Button>
             </HStack>
             <VStack space="md">
               <VStack className="bg-background-50 p-4 rounded-xl border border-outline-200">
@@ -524,10 +531,6 @@ export default function ProfileScreen() {
                 </VStack>
               </VStack>
             )}
-          </VStack>
-
-          <VStack space="md" style={styles.actions} className="bg-background-0">
-            <LogoutButton />
           </VStack>
         </ScrollView>
       </SafeAreaView>
@@ -745,9 +748,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   mainButton: {
-    borderRadius: 12,
-  },
-  logoutButton: {
     borderRadius: 12,
   },
   bioModalContent: {

@@ -3,7 +3,7 @@ import React from "react";
 import { ActivityIndicator, Platform } from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
-import { CalendarDaysIcon, Icon } from "@/components/ui/icon";
+import { CalendarDaysIcon, Icon, SettingsIcon } from "@/components/ui/icon";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -53,6 +53,15 @@ export default function TabLayout() {
           title: "Schedule",
           tabBarIcon: ({ color }) => (
             <Icon as={CalendarDaysIcon} className="h-8 w-8" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <Icon as={SettingsIcon} className="h-8 w-8" color={color} />
           ),
         }}
       />
