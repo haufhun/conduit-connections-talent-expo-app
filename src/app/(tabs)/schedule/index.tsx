@@ -130,11 +130,6 @@ export default function ScheduleScreen() {
           <HStack className="justify-between items-center">
             <VStack>
               <HStack space="sm">
-                <Icon
-                  as={CalendarDaysIcon}
-                  className="h-7 w-7"
-                  color="#004AAD"
-                />
                 <Text size="2xl" className="font-bold text-typography-900">
                   My Schedule
                 </Text>

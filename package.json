@@ -3,7 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "APP_VARIANT=development expo start --dev-client",
+    "build:dev:ios": "APP_VARIANT=development eas build --profile development --platform ios",
+    "build:dev:android": "APP_VARIANT=development eas build --profile development --platform android",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "DARK_MODE=media expo start --android",
     "ios": "DARK_MODE=media expo start --ios",

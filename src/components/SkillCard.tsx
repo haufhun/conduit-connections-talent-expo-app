@@ -58,7 +58,7 @@ export function SkillCard({ talentSkill, onPress }: SkillCardProps) {
                 experience
               </Text>
             )}
-            {talentSkill.hourly_rate && (
+            {!!talentSkill.hourly_rate && (
               <Text size="sm" className="text-typography-500">
                 • ${talentSkill.hourly_rate}/hr
               </Text>

@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/providers/auth-provider";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
@@ -24,12 +25,18 @@ import {
 } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
-  const { top } = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
+  const { session, mounting } = useAuth();
   const {
     data: userProfile,
     error: userProfileError,
     isLoading: isLoadingUserProfile,
+    isFetching: isFetchingUserProfile,
   } = useGetUserProfile();
+
+  const isLoading =
+    mounting || isLoadingUserProfile || isFetchingUserProfile || !session;
+  const hasError = !!userProfileError;
 
   const handleContactUs = () => {
     const email = "info@conduitconnections.com";
@@ -47,25 +54,26 @@ export default function SettingsScreen() {
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
+      { text: "Cancel", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
         onPress: () => {
-          supabase.auth.signOut();
+          supabase.auth
+            .signOut()
+            .catch((err) => console.error("Error during sign out:", err));
         },
       },
     ]);
   };
 
-  if (isLoadingUserProfile) {
+  // Loading: block all UI until auth and profile requests settle
+  if (isLoading) {
     return (
       <SafeAreaView
         style={styles.safeArea}
         className="bg-background-0 flex-1 justify-center items-center"
+        edges={["bottom", "left", "right"]}
       >
         <VStack className="items-center" space="lg">
           <ActivityIndicator size="large" color={BrandColors.PRIMARY} />
@@ -77,7 +85,8 @@ export default function SettingsScreen() {
     );
   }
 
-  if (userProfileError || !userProfile) {
+  // Error: preserve your error component and show it whenever the query errored
+  if (hasError || !userProfile) {
     return (
       <SafeAreaView style={styles.safeArea} className="bg-background-0 flex-1">
         <VStack
@@ -110,9 +119,14 @@ export default function SettingsScreen() {
     );
   }
 
-  const fullName = `${userProfile.first_name || ""} ${
-    userProfile.last_name || ""
-  }`.trim();
+  // Main UI: safe to render, ensure text never empty to avoid measurement flash
+  const firstName = userProfile.first_name?.trim();
+  const lastName = userProfile.last_name?.trim();
+  const fullName =
+    firstName || lastName
+      ? `${firstName || ""} ${lastName || ""}`.trim()
+      : "User";
+  const email = userProfile.email || " ";
 
   return (
     <SafeAreaView
@@ -126,7 +140,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <VStack style={[styles.header, { paddingTop: top + 20 }]}>
+        <VStack style={[styles.header, { paddingTop: (insets.top || 0) + 20 }]}>
           <Text size="3xl" bold className="text-typography-900 mb-4">
             Settings
           </Text>
@@ -148,10 +162,10 @@ export default function SettingsScreen() {
             </View>
             <VStack style={{ flex: 1 }} space="xs">
               <Text size="xl" bold className="text-typography-900">
-                {fullName || "User"}
+                {fullName}
               </Text>
               <Text size="sm" className="text-typography-600">
-                {userProfile.email}
+                {email}
               </Text>
             </VStack>
           </HStack>
@@ -245,18 +259,13 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
   container: {
     flex: 1,
     backgroundColor: BrandColors.WHITE,
     marginBottom: 35,
   },
-  contentContainer: {
-    flexGrow: 1,
-    paddingBottom: 32,
-  },
+  contentContainer: { flexGrow: 1, paddingBottom: 32 },
   header: {
     paddingHorizontal: 24,
     paddingBottom: 20,
@@ -270,9 +279,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
       },
-      android: {
-        elevation: 4,
-      },
+      android: { elevation: 4 },
     }),
   },
   avatarContainer: {
@@ -290,16 +297,10 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 8,
       },
-      android: {
-        elevation: 6,
-      },
+      android: { elevation: 6 },
     }),
   },
-  avatar: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 40,
-  },
+  avatar: { width: "100%", height: "100%", borderRadius: 40 },
   avatarGradient: {
     position: "absolute",
     bottom: 0,
@@ -312,13 +313,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.03)",
   },
-  settingItemWrapper: {
-    padding: 18,
-    backgroundColor: BrandColors.WHITE,
-  },
-  footer: {
-    paddingTop: 32,
-    paddingBottom: 16,
-    paddingHorizontal: 24,
-  },
+  settingItemWrapper: { padding: 18, backgroundColor: BrandColors.WHITE },
+  footer: { paddingTop: 32, paddingBottom: 16, paddingHorizontal: 24 },
 });

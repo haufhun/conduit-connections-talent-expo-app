@@ -64,12 +64,12 @@ export const useCreateTalentBlockout = () => {
   const { session } = useAuth();
   const talentId = session?.user?.id ?? "";
 
-  if (!talentId) {
-    throw new Error("User ID is not available");
-  }
-
   return useMutation<TalentBlockoutDatabase, Error, CreateTalentBlockout>({
     mutationFn: async (blockoutData) => {
+      if (!talentId) {
+        throw new Error("User ID is not available");
+      }
+
       if (blockoutData.is_all_day) {
         const startTime = moment
           .tz(blockoutData.start_time, blockoutData.timezone)
@@ -115,14 +115,15 @@ export const useGetTalentBlockouts = (enabled: boolean = true) => {
   const { session } = useAuth();
   const talentId = session?.user?.id ?? "";
 
-  if (!talentId) {
-    throw new Error("User ID is not available");
-  }
-
   return useQuery<TalentBlockoutDatabase[]>({
     queryKey: ["talent-blockouts", talentId],
-    queryFn: () => getTalentBlockouts(talentId),
-    enabled: enabled && !!talentId,
+    queryFn: () => {
+      if (!talentId) {
+        throw new Error("User ID is not available");
+      }
+      return getTalentBlockouts(talentId);
+    },
+    enabled: enabled && !!talentId, // Only run when enabled and talentId is available
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };

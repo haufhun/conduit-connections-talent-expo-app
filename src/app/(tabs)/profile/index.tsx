@@ -19,6 +19,7 @@ import { Text } from "@/components/ui/text";
 import { VStack } from "@/components/ui/vstack";
 import { BrandColors } from "@/constants/BrandColors";
 import { MAX_TALENT_SKILLS } from "@/constants/Supabase";
+import { useAuth } from "@/providers/auth-provider";
 import { UserProfile } from "@/types/user";
 import { formatPhoneNumber } from "@/utils/common";
 import { uploadFileToSupabase } from "@/utils/storage";
@@ -46,6 +47,7 @@ import {
 export default function ProfileScreen() {
   const router = useRouter();
   const { top } = useSafeAreaInsets();
+  const { session, mounting } = useAuth();
   const { mutateAsync: updateUserProfile } = useUpdateUserProfile();
   const {
     data: userProfile,
@@ -65,7 +67,8 @@ export default function ProfileScreen() {
   const [bioExpanded, setBioExpanded] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
 
-  const isLoading = isLoadingUserProfile || isLoadingTalentSkills;
+  const isLoading =
+    mounting || isLoadingUserProfile || isLoadingTalentSkills || !session;
 
   const ErrorScreen = ({ errorMessage }: { errorMessage?: string }) => (
     <SafeAreaView style={styles.safeArea} className="bg-background-0 flex-1">

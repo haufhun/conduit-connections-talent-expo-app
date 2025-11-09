@@ -7,12 +7,14 @@ import { useAuth } from "../providers/auth-provider";
 export const useGetUserProfile = () => {
   const { session } = useAuth();
   const id = session?.user.id ?? "";
-  if (!id) {
-    throw new Error("User ID is not available");
-  }
+
   return useQuery<UserProfile>({
     queryKey: ["user", id],
     queryFn: async () => {
+      if (!id) {
+        throw new Error("User ID is not available");
+      }
+
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -27,6 +29,7 @@ export const useGetUserProfile = () => {
 
       return data;
     },
+    enabled: !!id, // Only run query when user ID is available
   });
 };
 
@@ -34,11 +37,13 @@ export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const id = session?.user.id ?? "";
-  if (!id) {
-    throw new Error("User ID is not available");
-  }
+
   return useMutation<UserProfile, Error, Partial<Omit<UserProfile, "id">>>({
     mutationFn: async (newUser) => {
+      if (!id) {
+        throw new Error("User ID is not available");
+      }
+
       const { data, error } = await supabase
         .from("users")
         .update(newUser)
@@ -61,13 +66,14 @@ export const useUpdateUserProfile = () => {
 export const useGetUserTalentSkills = () => {
   const { session } = useAuth();
   const id = session?.user.id ?? "";
-  if (!id) {
-    throw new Error("User ID is not available");
-  }
 
   return useQuery<(TalentSkill & { skill: Skill })[]>({
     queryKey: ["talent_skills", id],
     queryFn: async () => {
+      if (!id) {
+        throw new Error("User ID is not available");
+      }
+
       const { data, error } = await supabase
         .from("talent_skills")
         .select("*, skill:skills(*)")
@@ -82,6 +88,7 @@ export const useGetUserTalentSkills = () => {
 
       return data;
     },
+    enabled: !!id, // Only run query when user ID is available
   });
 };
 
@@ -89,9 +96,6 @@ export const useCreateTalentSkill = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const id = session?.user?.id ?? "";
-  if (!id) {
-    throw new Error("User ID is not available");
-  }
 
   type CreateTalentSkillInput = Omit<
     TalentSkill,
@@ -100,6 +104,10 @@ export const useCreateTalentSkill = () => {
 
   return useMutation<TalentSkill, Error, CreateTalentSkillInput>({
     mutationFn: async (newSkill) => {
+      if (!id) {
+        throw new Error("User ID is not available");
+      }
+
       const { data, error } = await supabase
         .from("talent_skills")
         .insert({ ...newSkill, user_id: id })
@@ -123,9 +131,7 @@ export const useCreateTalentSkill = () => {
 export const useUpdateTalentSkill = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  if (!session?.user.id) {
-    throw new Error("User ID is not available");
-  }
+  const userId = session?.user.id ?? "";
 
   interface UpdateTalentSkillParams {
     talentSkillId: number;
@@ -139,6 +145,10 @@ export const useUpdateTalentSkill = () => {
 
   return useMutation<TalentSkill, Error, UpdateTalentSkillParams>({
     mutationFn: async ({ talentSkillId, updateData }) => {
+      if (!userId) {
+        throw new Error("User ID is not available");
+      }
+
       const { data, error } = await supabase
         .from("talent_skills")
         .update(updateData)
@@ -163,12 +173,14 @@ export const useUpdateTalentSkill = () => {
 export const useDeleteTalentSkill = () => {
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  if (!session?.user.id) {
-    throw new Error("User ID is not available");
-  }
+  const userId = session?.user.id ?? "";
 
   return useMutation<void, Error, number>({
     mutationFn: async (talentSkillId) => {
+      if (!userId) {
+        throw new Error("User ID is not available");
+      }
+
       const { error } = await supabase
         .from("talent_skills")
         .delete()
