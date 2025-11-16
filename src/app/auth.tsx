@@ -47,9 +47,6 @@ export default function Auth() {
         <VerifyCode
           email={verifyEmail}
           onBackToSignIn={() => setScreen("signin")}
-          onResendCode={() => {
-            // Could add additional resend logic here if needed
-          }}
         />
       ) : screen === "forgot-password" ? (
         <ForgotPassword

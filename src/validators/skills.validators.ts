@@ -4,7 +4,7 @@ export const skillSumarySchema = z.object({
   summary: z
     .string()
     .min(1, "Please provide a summary")
-    .max(500, "Summary must be 500 characters or less"),
+    .max(1000, "Summary must be 1000 characters or less"),
 });
 export type SkillSummarySchemaType = z.infer<typeof skillSumarySchema>;
 

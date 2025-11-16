@@ -16,7 +16,7 @@ export const profileBioSchema = z.object({
   bio: z
     .string()
     .min(1, "Please enter your bio")
-    .max(500, "Bio must be 500 characters or less"),
+    .max(1500, "Bio must be 1500 characters or less"),
 });
 export type ProfileBioSchemaType = z.infer<typeof profileBioSchema>;
 

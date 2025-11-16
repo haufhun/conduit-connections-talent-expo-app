@@ -11,7 +11,8 @@ import { ChevronRightIcon, SearchIcon } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  ScrollView,
+  FlatList,
+  ListRenderItem,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -122,7 +123,7 @@ export default function SkillSelectScreen() {
     });
   };
 
-  const renderSkillItem = (skill: Skill) => (
+  const renderSkillItem: ListRenderItem<Skill> = ({ item: skill }) => (
     <TouchableOpacity
       onPress={() => handleSkillSelect(skill)}
       style={styles.skillItem}
@@ -144,7 +145,7 @@ export default function SkillSelectScreen() {
   );
 
   const renderEmptyComponent = () => (
-    <View className="bg-white rounded-xl p-8 border border-outline-200 shadow-sm">
+    <View className="bg-white rounded-xl p-8 border border-outline-200 shadow-sm mx-6">
       <VStack space="sm" className="items-center">
         <Icon as={SearchIcon} size="xl" className="text-outline-400" />
         <Text className="text-center text-typography-500 font-medium">
@@ -160,6 +161,8 @@ export default function SkillSelectScreen() {
       </VStack>
     </View>
   );
+
+  const keyExtractor = (item: Skill) => item.id.toString();
 
   if (isLoading) {
     return (
@@ -183,11 +186,8 @@ export default function SkillSelectScreen() {
 
   return (
     <SafeAreaView edges={["bottom"]} className="flex-1 bg-background-0">
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <VStack className="flex-1">
+        {/* Header - Outside FlatList so it doesn't re-render */}
         <VStack space="lg" className="p-6">
           {/* Header Card */}
           <VStack
@@ -222,28 +222,33 @@ export default function SkillSelectScreen() {
               />
             </Input>
           </VStack>
-
-          {/* Skills List */}
-          {filteredSkills.length > 0 ? (
-            <VStack space="sm">
-              {filteredSkills.map((skill) => (
-                <View key={skill.id}>{renderSkillItem(skill)}</View>
-              ))}
-            </VStack>
-          ) : (
-            renderEmptyComponent()
-          )}
         </VStack>
 
-        {/* Bottom padding */}
-        <VStack className="h-8" />
-      </ScrollView>
+        {/* Skills List */}
+        <FlatList
+          data={filteredSkills}
+          renderItem={renderSkillItem}
+          keyExtractor={keyExtractor}
+          ListEmptyComponent={renderEmptyComponent}
+          contentContainerStyle={styles.flatListContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+        />
+      </VStack>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   skillItem: {
-    // No additional styles needed
+    paddingHorizontal: 24,
+  },
+  flatListContent: {
+    paddingBottom: 32,
+  },
+  separator: {
+    height: 8,
   },
 });
