@@ -10,6 +10,7 @@ import * as Updates from "expo-updates";
 import { ToastProvider } from "react-native-toast-notifications";
 
 import "@/global.css";
+import { NotificationsProvider } from "@/providers/notifications-provider";
 import { useEffect } from "react";
 import { Alert } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -62,40 +63,42 @@ export default function RootLayout() {
   }
 
   return (
-    <GluestackUIProvider mode={colorScheme ?? "light"}>
-      <ToastProvider>
-        <AuthProvider>
-          <QueryProvider>
-            <ThemeProvider
-              // value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-              value={DefaultTheme}
-            >
-              <GestureHandlerRootView>
-                <Stack
-                  screenOptions={{
-                    animation: "slide_from_right",
-                    gestureDirection: "horizontal",
-                  }}
-                >
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="auth"
-                    options={{
-                      headerShown: false,
-                      animation: "slide_from_left",
+    <NotificationsProvider>
+      <GluestackUIProvider mode={colorScheme ?? "light"}>
+        <ToastProvider>
+          <AuthProvider>
+            <QueryProvider>
+              <ThemeProvider
+                // value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+                value={DefaultTheme}
+              >
+                <GestureHandlerRootView>
+                  <Stack
+                    screenOptions={{
+                      animation: "slide_from_right",
+                      gestureDirection: "horizontal",
                     }}
-                  />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <StatusBar style="auto" />
-              </GestureHandlerRootView>
-            </ThemeProvider>
-          </QueryProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </GluestackUIProvider>
+                  >
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="auth"
+                      options={{
+                        headerShown: false,
+                        animation: "slide_from_left",
+                      }}
+                    />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <StatusBar style="auto" />
+                </GestureHandlerRootView>
+              </ThemeProvider>
+            </QueryProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </GluestackUIProvider>
+    </NotificationsProvider>
   );
 }

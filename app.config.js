@@ -69,7 +69,7 @@ export default {
       edgeToEdgeEnabled: true,
       permissions: [
         "android.permission.RECORD_AUDIO",
-        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS",
       ],
     },
     web: {
@@ -94,6 +94,15 @@ export default {
         {
           photosPermission:
             "The app accesses your photos for uploading images to your profile or skills.",
+        },
+      ],
+      [
+        "expo-notifications",
+        {
+          icon: "./src/assets/images/conduit-logo-1024.png",
+          color: "#ffffff",
+          defaultChannel: "default",
+          enableBackgroundRemoteNotifications: false,
         },
       ],
     ],
