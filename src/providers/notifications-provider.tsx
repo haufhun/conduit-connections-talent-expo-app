@@ -11,7 +11,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 
 type NotificationsContextValue = {
   expoPushToken: string | null;
@@ -37,7 +37,27 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function getExpoPushToken(): Promise<string> {
+async function getExpoPushToken(): Promise<string | null> {
+  // Skip push notifications in simulator or Expo Go
+  if (!Device.isDevice) {
+    console.log("Skipping push notifications: running on simulator");
+    Alert.alert(
+      "Push Notifications Disabled",
+      "Push notifications are not supported on simulators. Please use a physical device."
+    );
+    return null;
+  }
+
+  const projectId =
+    Constants?.expoConfig?.extra?.eas?.projectId ??
+    Constants?.easConfig?.projectId;
+  if (!projectId) {
+    console.log(
+      "Skipping push notifications: running in Expo Go (no project ID)"
+    );
+    return null;
+  }
+
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -47,10 +67,6 @@ async function getExpoPushToken(): Promise<string> {
     });
   }
 
-  if (!Device.isDevice) {
-    throw new Error("Must use physical device for push notifications");
-  }
-
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
   if (existingStatus !== "granted") {
@@ -58,22 +74,18 @@ async function getExpoPushToken(): Promise<string> {
     finalStatus = status;
   }
   if (finalStatus !== "granted") {
-    throw new Error(
-      "Permission not granted to get push token for push notification"
-    );
+    console.warn("Permission not granted for push notifications");
+    return null;
   }
 
-  const projectId =
-    Constants?.expoConfig?.extra?.eas?.projectId ??
-    Constants?.easConfig?.projectId;
-  if (!projectId) {
-    throw new Error(
-      "Project ID not found. Ensure EAS projectId is available in Constants."
-    );
+  try {
+    const token = (await Notifications.getExpoPushTokenAsync({ projectId }))
+      .data;
+    return token;
+  } catch (error) {
+    console.warn("Failed to get push token:", error);
+    return null;
   }
-
-  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  return token;
 }
 
 export function NotificationsProvider({
@@ -91,7 +103,7 @@ export function NotificationsProvider({
   const responseListenerRef = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
-    // Kick off registration on mount
+    // Kick off registration on mount (safely handles simulator/Expo Go)
     getExpoPushToken()
       .then((token) => setExpoPushToken(token))
       .catch((err) => {
@@ -99,19 +111,22 @@ export function NotificationsProvider({
         setExpoPushToken(null);
       });
 
-    // Listen for foreground notifications
-    notificationListenerRef.current =
-      Notifications.addNotificationReceivedListener((n) => {
-        setLastNotification(n);
-      });
+    // Only set up listeners if we can support notifications
+    if (Device.isDevice) {
+      // Listen for foreground notifications
+      notificationListenerRef.current =
+        Notifications.addNotificationReceivedListener((n) => {
+          setLastNotification(n);
+        });
 
-    // Listen for user responses (taps) to notifications
-    responseListenerRef.current =
-      Notifications.addNotificationResponseReceivedListener((r) => {
-        // You can route/navigation here using r.notification.request.content.data
-        // Example: Router.push based on a "screen" field in data
-        console.log("Notification response:", r);
-      });
+      // Listen for user responses (taps) to notifications
+      responseListenerRef.current =
+        Notifications.addNotificationResponseReceivedListener((r) => {
+          // You can route/navigation here using r.notification.request.content.data
+          // Example: Router.push based on a "screen" field in data
+          console.log("Notification response:", r);
+        });
+    }
 
     return () => {
       notificationListenerRef.current?.remove();
@@ -136,9 +151,14 @@ export function NotificationsProvider({
       data: Record<string, any> = {}
     ) => {
       if (!expoPushToken) {
-        throw new Error(
-          "No Expo push token yet. Ensure permissions are granted and registration completed."
+        console.warn(
+          "Cannot send test notification: No push token available (simulator/Expo Go or permissions not granted)"
         );
+        Alert.alert(
+          "Cannot Send Notification",
+          "Push notifications are not available on this device."
+        );
+        return;
       }
 
       const message = {
