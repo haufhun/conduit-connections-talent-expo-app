@@ -44,7 +44,7 @@ export default {
     version: "1.0.0",
     orientation: "portrait",
     icon: "./src/assets/images/conduit-logo-1024.png",
-    scheme: "conduitconnectionstalentexpoapp",
+    scheme: appName.toLowerCase().replace(/\s+/g, ""),
     userInterfaceStyle: "light",
     owner: "haufhun",
     newArchEnabled: true,
