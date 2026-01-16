@@ -58,7 +58,7 @@ const ProfileBioSection: React.FC<ProfileBioSectionProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} size="lg" avoidKeyboard>
       <ModalBackdrop />
       <ModalContent>
         <ModalHeader>

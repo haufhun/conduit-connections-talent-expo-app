@@ -59,7 +59,7 @@ const ProfileLocationSection: React.FC<ProfileLocationSectionProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} size="lg" avoidKeyboard>
       <ModalBackdrop />
       <ModalContent>
         <ModalHeader>
