@@ -76,9 +76,6 @@ const signUpSchema = zod
     agreeToTerms: zod.boolean().refine((val) => val === true, {
       message: "You must agree to the Terms of Service and EULA",
     }),
-    agreeToAlphaNDA: zod.boolean().refine((val) => val === true, {
-      message: "You must agree to the Alpha NDA",
-    }),
   })
   .refine((data) => data.password === data.repeatPassword, {
     message: "Passwords do not match",
@@ -104,7 +101,6 @@ export default function SignUp({
       password: "",
       repeatPassword: "",
       agreeToTerms: false,
-      agreeToAlphaNDA: false,
     },
   });
 
@@ -120,9 +116,6 @@ export default function SignUp({
           last_name: data.lastName,
           full_name: `${data.firstName} ${data.lastName}`,
           agree_to_terms: data.agreeToTerms ? new Date().toISOString() : null,
-          agree_to_alpha_nda: data.agreeToAlphaNDA
-            ? new Date().toISOString()
-            : null,
         },
       },
     });
@@ -376,43 +369,6 @@ export default function SignUp({
                       <ExternalLink href="https://app.conduitconnections.com/eula">
                         <Text size="sm" className="text-primary-600 underline">
                           EULA
-                        </Text>
-                      </ExternalLink>
-                    </Text>
-                  </CheckboxLabel>
-                </Checkbox>
-
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText size="sm">
-                    {error?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="agreeToAlphaNDA"
-            render={({ field: { value, onChange }, fieldState: { error } }) => (
-              <FormControl isInvalid={!!error} className="mt-4 w-full">
-                <Checkbox
-                  size="sm"
-                  value="agreeToAlphaNDA"
-                  isChecked={value}
-                  onChange={onChange}
-                  isInvalid={!!error}
-                >
-                  <CheckboxIndicator>
-                    <CheckboxIcon as={CheckIcon} />
-                  </CheckboxIndicator>
-                  <CheckboxLabel className="flex-1">
-                    <Text size="sm" className="text-typography-600">
-                      I agree to the{" "}
-                      <ExternalLink href="https://app.conduitconnections.com/alpha-nda">
-                        <Text size="sm" className="text-primary-600 underline">
-                          Alpha NDA
                         </Text>
                       </ExternalLink>
                     </Text>
