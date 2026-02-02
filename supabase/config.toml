@@ -132,6 +132,9 @@ minimum_password_length = "env(SUPABASE_AUTH_MINIMUM_PASSWORD_LENGTH)"
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
 password_requirements = "env(SUPABASE_AUTH_PASSWORD_REQUIREMENTS)"
 
+[auth.rate_limit]
+email_sent = "env(SUPABASE_AUTH_EMAIL_HOURLY_RATE_LIMIT_SENT)"
+
 [auth.email]
 # Allow/disallow new user signups via email to your project.
 enable_signup = true

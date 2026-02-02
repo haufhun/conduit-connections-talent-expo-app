@@ -60,7 +60,7 @@ const ProfileContactSection: React.FC<ProfileContactSectionProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} size="lg" avoidKeyboard>
       <ModalBackdrop />
       <ModalContent>
         <ModalHeader>

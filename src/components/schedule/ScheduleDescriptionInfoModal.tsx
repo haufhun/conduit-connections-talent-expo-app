@@ -27,7 +27,7 @@ export default function ScheduleDescriptionInfoModal({
   onClose,
 }: ScheduleDescriptionInfoModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} size="md" avoidKeyboard>
       <ModalBackdrop />
       <ModalContent className="bg-white">
         <ModalHeader className="border-b border-outline-200">

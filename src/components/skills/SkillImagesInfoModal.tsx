@@ -18,7 +18,7 @@ type Props = {
 
 const SkillImagesInfoModal = ({ isOpen, onClose }: Props) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} size="lg" avoidKeyboard>
       <ModalBackdrop />
       <ModalContent>
         <ModalHeader>
