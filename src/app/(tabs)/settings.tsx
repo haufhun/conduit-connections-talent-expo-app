@@ -38,6 +38,14 @@ export default function SettingsScreen() {
     mounting || isLoadingUserProfile || isFetchingUserProfile || !session;
   const hasError = !!userProfileError;
 
+  const handleRequestNewSkill = () => {
+    const formUrl = "https://forms.office.com/r/DMpR8F6r98";
+    Linking.openURL(formUrl).catch((err) => {
+      console.error("Failed to open form:", err);
+      Alert.alert("Error", "Unable to open form. Please try again later.");
+    });
+  };
+
   const handleContactUs = () => {
     const email = "info@conduitconnections.com";
     const subject = "Contact from Conduit App";
@@ -47,7 +55,7 @@ export default function SettingsScreen() {
       console.error("Failed to open email app:", err);
       Alert.alert(
         "Error",
-        "Unable to open email app. Please email us at info@conduitconnections.com"
+        "Unable to open email app. Please email us at info@conduitconnections.com",
       );
     });
   };
@@ -101,6 +109,7 @@ export default function SettingsScreen() {
                 color="#dc2626"
               />
             </Center>
+
             <VStack className="items-center" space="xs">
               <Text size="xl" bold className="text-typography-900 text-center">
                 Oops! Something went wrong
@@ -112,6 +121,33 @@ export default function SettingsScreen() {
                 {userProfileError?.message ||
                   "We couldn't load your settings. Please try again in a moment."}
               </Text>
+
+              <TouchableHighlight
+                onPress={handleLogout}
+                underlayColor="rgba(220, 38, 38, 0.1)"
+                style={{ borderRadius: 12, marginTop: 24 }}
+              >
+                <HStack
+                  space="md"
+                  className="items-center bg-error-500 px-6 py-4 rounded-xl"
+                >
+                  <Center className="w-10 h-10 rounded-full bg-white/20">
+                    <IconSymbol
+                      name="rectangle.portrait.and.arrow.right"
+                      size={20}
+                      color={BrandColors.WHITE}
+                    />
+                  </Center>
+                  <Text size="md" bold className="text-white flex-1">
+                    Log Out
+                  </Text>
+                  <IconSymbol
+                    name="chevron.right"
+                    size={20}
+                    color={BrandColors.WHITE}
+                  />
+                </HStack>
+              </TouchableHighlight>
             </VStack>
           </VStack>
         </VStack>
@@ -177,6 +213,37 @@ export default function SettingsScreen() {
             Support
           </Text>
           <VStack className="rounded-xl overflow-hidden border border-primary-200">
+            <TouchableHighlight
+              onPress={handleRequestNewSkill}
+              underlayColor="rgba(93, 224, 230, 0.15)"
+              style={styles.settingItemWrapper}
+            >
+              <HStack space="md" className="items-center flex-1">
+                <Center className="w-12 h-12 rounded-full bg-secondary-500">
+                  <IconSymbol
+                    name="plus.circle.fill"
+                    size={22}
+                    color={BrandColors.WHITE}
+                  />
+                </Center>
+                <VStack style={{ flex: 1 }}>
+                  <Text size="md" bold className="text-typography-900">
+                    Request New Skill
+                  </Text>
+                  <Text size="sm" className="text-typography-500">
+                    Suggest a skill to add
+                  </Text>
+                </VStack>
+                <IconSymbol
+                  name="chevron.right"
+                  size={20}
+                  color={BrandColors.GRAY_400}
+                />
+              </HStack>
+            </TouchableHighlight>
+
+            <View style={styles.separator} />
+
             <TouchableHighlight
               onPress={handleContactUs}
               underlayColor="rgba(93, 224, 230, 0.15)"
@@ -314,5 +381,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(0,0,0,0.03)",
   },
   settingItemWrapper: { padding: 18, backgroundColor: BrandColors.WHITE },
+  separator: {
+    height: 1,
+    backgroundColor: "rgba(93, 224, 230, 0.1)",
+  },
   footer: { paddingTop: 32, paddingBottom: 16, paddingHorizontal: 24 },
 });
