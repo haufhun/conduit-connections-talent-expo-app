@@ -42,7 +42,10 @@ export default function SettingsScreen() {
     const formUrl = "https://forms.office.com/r/DMpR8F6r98";
     Linking.openURL(formUrl).catch((err) => {
       console.error("Failed to open form:", err);
-      Alert.alert("Error", "Unable to open form. Please try again later.");
+      Alert.alert(
+        "Error",
+        `Unable to open the form automatically. Please copy and paste this link into your browser:\n\n${formUrl}`,
+      );
     });
   };
 
