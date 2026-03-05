@@ -52,9 +52,10 @@ export default {
       bundleIdentifier: iosBundleId,
       // buildNumber: '0', // Don't need this anymore due to auto-incrementing build numbers with EAS
       supportsTablet: true,
-      // infoPlist: { // For if we need this in the future
-      //   UIBackgroundModes: ['audio', 'remote-notification'],
-      // },
+      infoPlist: {
+        NSCameraUsageDescription:
+          "Conduit uses your camera so you can take profile and portfolio photos directly in the app, for example when updating your profile or adding a skill sample.",
+      },
       config: {
         usesNonExemptEncryption: false,
       },
@@ -93,7 +94,9 @@ export default {
         "expo-image-picker",
         {
           photosPermission:
-            "The app accesses your photos for uploading images to your profile or skills.",
+            "Conduit accesses your photo library so you can select profile and portfolio images, for example when updating your profile or adding a skill sample.",
+          cameraPermission:
+            "Conduit accesses your camera so you can take profile and portfolio photos directly in the app, for example when updating your profile or adding a skill sample.",
         },
       ],
       [

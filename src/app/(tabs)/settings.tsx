@@ -63,6 +63,17 @@ export default function SettingsScreen() {
     });
   };
 
+  const handleRequestAccountDeletion = () => {
+    const formUrl = "https://forms.office.com/r/V47nL8sP8Y";
+    Linking.openURL(formUrl).catch((err) => {
+      console.error("Failed to open form:", err);
+      Alert.alert(
+        "Error",
+        `Unable to open the form automatically. Please copy and paste this link into your browser:\n\n${formUrl}`,
+      );
+    });
+  };
+
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
       { text: "Cancel", style: "cancel" },
@@ -266,6 +277,37 @@ export default function SettingsScreen() {
                   </Text>
                   <Text size="sm" className="text-typography-500">
                     Get help or send feedback
+                  </Text>
+                </VStack>
+                <IconSymbol
+                  name="chevron.right"
+                  size={20}
+                  color={BrandColors.GRAY_400}
+                />
+              </HStack>
+            </TouchableHighlight>
+
+            <View style={styles.separator} />
+
+            <TouchableHighlight
+              onPress={handleRequestAccountDeletion}
+              underlayColor="rgba(93, 224, 230, 0.15)"
+              style={styles.settingItemWrapper}
+            >
+              <HStack space="md" className="items-center flex-1">
+                <Center className="w-12 h-12 rounded-full bg-warning-500">
+                  <IconSymbol
+                    name="trash.fill"
+                    size={22}
+                    color={BrandColors.WHITE}
+                  />
+                </Center>
+                <VStack style={{ flex: 1 }}>
+                  <Text size="md" bold className="text-typography-900">
+                    Request Account Deletion
+                  </Text>
+                  <Text size="sm" className="text-typography-500">
+                    Permanently delete your account
                   </Text>
                 </VStack>
                 <IconSymbol
